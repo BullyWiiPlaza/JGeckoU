@@ -1750,7 +1750,11 @@ public class JGeckoUGUI extends JFrame
 		{
 			WatchListStorage watchListStorage = new WatchListStorage(gameId);
 			List<WatchListElement> watchListElements = watchListStorage.restore();
-			watchListManager.setRows(watchListElements);
+
+			if (watchListElements != null)
+			{
+				watchListManager.setRows(watchListElements);
+			}
 		} catch (Exception exception)
 		{
 			StackTraceUtils.handleException(rootPane, exception);
