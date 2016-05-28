@@ -14,6 +14,12 @@ public class MemoryPointerExpression
 	public String notation;
 	public static final int INVALID_POINTER = -1;
 
+	public MemoryPointerExpression(long baseAddress, int[] offsets)
+	{
+		this.baseAddress = baseAddress;
+		this.offsets = offsets;
+	}
+
 	public MemoryPointerExpression(String notation)
 	{
 		this.notation = notation;

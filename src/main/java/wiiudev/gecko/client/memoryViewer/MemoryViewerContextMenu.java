@@ -37,6 +37,7 @@ public class MemoryViewerContextMenu extends JPopupMenu
 		codeWizardDialog.setAddress(selectedMemoryViewerAddress);
 		int value = jGeckoUGUI.getSelectedMemoryViewerValue();
 		codeWizardDialog.setValue(value);
+		codeWizardDialog.generateCode();
 		codeWizardDialog.setVisible(true);
 	}
 

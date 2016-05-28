@@ -113,6 +113,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton exportCodeListButton;
 	private JButton saveWatchListButton;
 	private JButton exportWatchListButton;
+	private JSpinner watchListUpdateDelaySpinner;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -149,6 +150,9 @@ public class JGeckoUGUI extends JFrame
 
 	private void configureWatchListTab()
 	{
+		int updateDelayMinimum = 10;
+		watchListUpdateDelaySpinner.setValue(updateDelayMinimum);
+		((SpinnerNumberModel) watchListUpdateDelaySpinner.getModel()).setMinimum(updateDelayMinimum);
 		watchListManager = new WatchListManager(watchListTable);
 		addWatchListDeleteRowsDeleteKey();
 		watchListManager.configure(watchListTable);
@@ -349,8 +353,8 @@ public class JGeckoUGUI extends JFrame
 							watchListManager.updateValues();
 						}
 
-						// Update every milliseconds
-						Thread.sleep(50);
+						int updateDelay = Integer.parseInt(watchListUpdateDelaySpinner.getValue().toString());
+						Thread.sleep(updateDelay);
 					} catch (ArrayIndexOutOfBoundsException ignored)
 					{
 
@@ -409,6 +413,7 @@ public class JGeckoUGUI extends JFrame
 			simpleProperties.put("AUTO_DETECT", String.valueOf(autoDetect));
 			simpleProperties.put("MEMORY_VIEWER_ADDRESS", memoryViewerAddressField.getText());
 			simpleProperties.put("IP_ADDRESS", ipAddressField.getText());
+			simpleProperties.put("WATCH_LIST_UPDATE_DELAY", watchListUpdateDelaySpinner.getValue().toString());
 			simpleProperties.writeToFile();
 		}));
 	}
@@ -434,6 +439,12 @@ public class JGeckoUGUI extends JFrame
 		if (memoryViewerAddress != null)
 		{
 			memoryViewerAddressField.setText(memoryViewerAddress);
+		}
+
+		String updateDelay = simpleProperties.get("WATCH_LIST_UPDATE_DELAY");
+		if (updateDelay != null)
+		{
+			watchListUpdateDelaySpinner.setValue(Integer.parseInt(updateDelay));
 		}
 	}
 

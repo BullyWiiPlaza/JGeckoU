@@ -22,6 +22,11 @@ public abstract class SocketCommunication
 		dataReceiver = Connector.getInstance().getDataReceiver();
 	}
 
+	public static boolean isConnected()
+	{
+		return Connector.getInstance().getDataSender() != null && Connector.getInstance().getDataReceiver() != null;
+	}
+
 	/**
 	 * Sends a command to the Wii U
 	 *

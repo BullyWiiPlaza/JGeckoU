@@ -2,18 +2,27 @@ package wiiudev.gecko.client.gui.code_list.code_wizard;
 
 public class AddressRounding
 {
-	public static long roundDown(long address, double percentage)
+	private double percentage;
+
+	public AddressRounding(double percentage)
 	{
-		return round(address, percentage, false);
+		this.percentage = percentage;
 	}
 
-	public static long roundUp(long address, double percentage)
+	public long roundDown(long address)
 	{
-		return round(address, percentage, true);
+		return round(address, false);
 	}
 
-	private static long round(long address, double percentage, boolean up)
+	public long roundUp(long address)
 	{
+		return round(address, true);
+	}
+
+	private long round(long address, boolean up)
+	{
+		double percentage = this.percentage;
+
 		if (up)
 		{
 			percentage = -1 * percentage;
@@ -24,7 +33,7 @@ public class AddressRounding
 		return align_32(rounded);
 	}
 
-	private static long align_32(long address)
+	private long align_32(long address)
 	{
 		return address & -4;
 	}

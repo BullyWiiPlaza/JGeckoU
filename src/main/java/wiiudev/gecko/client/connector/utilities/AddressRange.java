@@ -6,7 +6,7 @@ public class AddressRange
 	{
 		if (!isValidAccess(address, length, memoryAccessLevel))
 		{
-			throw new IllegalArgumentException("The request for address " + Integer.toHexString(address).toUpperCase() + " with length " + length + " AND memoryAccessLevel level " + memoryAccessLevel.toString() + " is invalid!");
+			throw new IllegalArgumentException("The request for address " + Integer.toHexString(address).toUpperCase() + " with length " + length + " and memoryAccessLevel level " + memoryAccessLevel.toString() + " is invalid!");
 		}
 	}
 
@@ -58,6 +58,11 @@ public class AddressRange
 		}
 
 		return false;
+	}
+
+	public static boolean isInRange(int address)
+	{
+		return isInRange(address, address + 4, new MemoryRange(0x10000000, 0x50000000));
 	}
 
 	private static boolean isInRange(int address, int endAddress, MemoryRange addressRange)

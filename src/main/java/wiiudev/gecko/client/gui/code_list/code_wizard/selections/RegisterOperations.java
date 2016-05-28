@@ -2,7 +2,7 @@ package wiiudev.gecko.client.gui.code_list.code_wizard.selections;
 
 import wiiudev.gecko.client.connector.utilities.Hexadecimal;
 
-public enum IntegerOperations
+public enum RegisterOperations
 {
 	add_register(0x00, "Add Register"),
 	subtract_register(0x01, "Subtract Register"),
@@ -11,12 +11,13 @@ public enum IntegerOperations
 	add_value(0x04, "Add Value"),
 	subtract_value(0x05, "Subtract Value"),
 	multiply_value(0x06, "Multiply Value"),
-	divide_value(0x07, "Divide Value");
+	divide_value(0x07, "Divide Value"),
+	convert(0x08, "Convert Float To Integer");
 
 	private short value;
 	private String text;
 
-	IntegerOperations(int value, String text)
+	RegisterOperations(int value, String text)
 	{
 		this.value = (short) value;
 		this.text = text;
