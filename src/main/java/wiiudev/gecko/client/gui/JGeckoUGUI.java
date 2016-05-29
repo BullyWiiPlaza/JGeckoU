@@ -208,7 +208,7 @@ public class JGeckoUGUI extends JFrame
 
 			JOptionPane.showMessageDialog(rootPane,
 					"Watch list stored to " + filePath,
-					"Stored",
+					"Success",
 					JOptionPane.INFORMATION_MESSAGE);
 		} catch (Exception exception)
 		{
@@ -286,7 +286,7 @@ public class JGeckoUGUI extends JFrame
 
 		if (selectedAnswer == JOptionPane.YES_OPTION)
 		{
-			watchListManager.deleteSelectedRows();
+			JTableUtilities.deleteSelectedRows(watchListTable);
 			setWatchButtonsAvailability();
 		}
 	}
@@ -387,7 +387,7 @@ public class JGeckoUGUI extends JFrame
 
 			if (modify)
 			{
-				watchListManager.deleteSelectedRows();
+				JTableUtilities.deleteSelectedRows(watchListTable);
 			}
 
 			watchListManager.addRow(watchListElement);
@@ -521,8 +521,8 @@ public class JGeckoUGUI extends JFrame
 	{
 		dumpStartingAddressField.setDocument(new InputLengthFilter(8));
 		dumpEndingAddressField.setDocument(new InputLengthFilter(8));
-		new DefaultContextMenu().attachTo(dumpStartingAddressField);
-		new DefaultContextMenu().attachTo(dumpEndingAddressField);
+		new DefaultContextMenu().addTo(dumpStartingAddressField);
+		new DefaultContextMenu().addTo(dumpEndingAddressField);
 
 		dumpStartingAddressField.getDocument().addDocumentListener(new DocumentListener()
 		{
@@ -743,7 +743,7 @@ public class JGeckoUGUI extends JFrame
 
 		HexadecimalInputFilter.addHexadecimalInputFilter(memoryViewerAddressField);
 		addMemoryViewerAddressChangedListener();
-		new DefaultContextMenu().attachTo(memoryViewerAddressField);
+		new DefaultContextMenu().addTo(memoryViewerAddressField);
 
 		handleUpdateMemoryViewerButton();
 
@@ -751,7 +751,7 @@ public class JGeckoUGUI extends JFrame
 
 		memoryViewerAddressField.setText(Conversions.toHexadecimal(MemoryViewerTableManager.STARTING_ADDRESS));
 		memoryViewerValueField.setDocument(new InputLengthFilter(ValueSizes.THIRTY_TWO_BIT.getSize()));
-		new DefaultContextMenu().attachTo(memoryViewerValueField);
+		new DefaultContextMenu().addTo(memoryViewerValueField);
 
 		valueSizePokeComboBox.addItemListener(itemEvent ->
 		{
@@ -832,7 +832,7 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		new DefaultContextMenu().attachTo(searchLengthField);
+		new DefaultContextMenu().addTo(searchLengthField);
 
 		searchLengthField.getDocument().addDocumentListener(new DocumentListener()
 		{
@@ -1023,7 +1023,7 @@ public class JGeckoUGUI extends JFrame
 				Object[] options = {"Yes", "No"};
 
 				int selectAnswer = JOptionPane.showOptionDialog(this,
-						availableCodes + " codes found. Would you like to attachTo them to your current code list?",
+						availableCodes + " codes found. Would you like to add them to your current code list?",
 						"Download codes?",
 						JOptionPane.YES_NO_CANCEL_OPTION,
 						JOptionPane.QUESTION_MESSAGE,
@@ -1066,7 +1066,7 @@ public class JGeckoUGUI extends JFrame
 
 		initializeGameTitlesDatabaseConcurrently();
 		addIPAddressDocumentListener();
-		new DefaultContextMenu().attachTo(ipAddressField);
+		new DefaultContextMenu().addTo(ipAddressField);
 		connectButton.addActionListener(actionEvent -> connect());
 		autoDetectCheckBox.addActionListener(actionEvent -> handleConnectionButtonsAvailability());
 		reconnectButton.addActionListener(actionEvent -> reconnect());
@@ -1897,6 +1897,10 @@ public class JGeckoUGUI extends JFrame
 		memoryViewerViews.setEnabled(connected);
 		pokeValueButton.setEnabled(connected);
 		followPointerButton.setEnabled(connected);
+		addWatchButton.setEnabled(connected);
+		addAddressExpressionsButton.setEnabled(connected);
+		exportWatchListButton.setEnabled(connected);
+		saveWatchListButton.setEnabled(connected);
 		setMemoryViewerSearchButtonAvailability();
 
 		if (isAutoDetect)
@@ -1931,7 +1935,7 @@ public class JGeckoUGUI extends JFrame
 		programName = "JGecko U";
 		setTitle(programName);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		setSize(750, 350);
+		setSize(780, 350);
 		setLocationRelativeTo(null);
 		WindowUtilities.setIconImage(this);
 	}
@@ -1954,5 +1958,10 @@ public class JGeckoUGUI extends JFrame
 	public int getSelectedMemoryViewerValue()
 	{
 		return (int) Long.parseLong(memoryViewerTableManager.getSelectedValue(), 16);
+	}
+
+	public void updateMemoryViewer()
+	{
+		updateMemoryViewer(true, true);
 	}
 }

@@ -39,8 +39,8 @@ public class AddCodeDialog extends JDialog
 		codeTitleField.setText(codeListEntry.getTitle());
 		codeArea.setText(codeListEntry.getCode());
 		codeCommentField.setText(codeListEntry.getComment());
-		new DefaultContextMenu().attachTo(codeCommentField);
-		new DefaultContextMenu().attachTo(codeTitleField);
+		new DefaultContextMenu().addTo(codeCommentField);
+		new DefaultContextMenu().addTo(codeTitleField);
 
 		setContentPane(contentPane);
 		setModal(true);
@@ -84,7 +84,7 @@ public class AddCodeDialog extends JDialog
 			}
 		});
 
-		new DefaultContextMenu().attachTo(codeArea);
+		new DefaultContextMenu().addTo(codeArea);
 
 		validateCode();
 		codeWizardButton.addActionListener(actionEvent -> new CodeWizardDialog().setVisible(true));

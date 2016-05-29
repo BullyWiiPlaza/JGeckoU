@@ -1,7 +1,8 @@
 package wiiudev.gecko.client.gui.watch_list;
 
+import wiiudev.gecko.client.gui.JTableUtilities;
+
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.util.ArrayList;
@@ -32,36 +33,19 @@ public class WatchListManager
 		Object[] columnHeaders = new Object[]{"Name", "Address Expression", "Value Size", "Value"};
 		tableModel.setColumnCount(columnHeaders.length);
 		tableModel.setColumnIdentifiers(columnHeaders);
-		setHeaderAlignment();
+		JTableUtilities.setHeaderAlignment(table);
 
 		table.setModel(tableModel);
 		JTableHeader tableHeader = table.getTableHeader();
 		tableHeader.setReorderingAllowed(false);
 		tableHeader.setResizingAllowed(false);
 		tableHeader.setVisible(true);
-		setCellsAlignment();
-	}
-
-	private void setHeaderAlignment()
-	{
-		JTableHeader header = table.getTableHeader();
-		header.setDefaultRenderer(new HeaderRenderer(table));
+		JTableUtilities.setCellsAlignment(table, SwingConstants.CENTER);
 	}
 
 	public void addRow(WatchListElement watchListElement)
 	{
 		tableModel.addRow(new Object[]{watchListElement.getName(), watchListElement.getAddressExpression(), watchListElement.getValueSize(), ""});
-	}
-
-	public void deleteSelectedRows()
-	{
-		DefaultTableModel model = (DefaultTableModel) this.table.getModel();
-		int[] rows = table.getSelectedRows();
-
-		for (int rowIndex = 0; rowIndex < rows.length; rowIndex++)
-		{
-			model.removeRow(rows[rowIndex] - rowIndex);
-		}
 	}
 
 	public boolean areMultipleRowsSelected()
@@ -91,22 +75,6 @@ public class WatchListManager
 	public boolean rowExists()
 	{
 		return tableModel.getRowCount() > 0;
-	}
-
-	private void setCellsAlignment()
-	{
-		DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
-		rightRenderer.setHorizontalAlignment(JLabel.CENTER);
-
-		for (int columnIndex = 0; columnIndex < tableModel.getColumnCount(); columnIndex++)
-		{
-			table.getColumnModel().getColumn(columnIndex).setCellRenderer(rightRenderer);
-		}
-	}
-
-	private void setSelected(int rowIndex)
-	{
-		table.setRowSelectionInterval(rowIndex, rowIndex);
 	}
 
 	public WatchListElement getSelectedWatchListElement()

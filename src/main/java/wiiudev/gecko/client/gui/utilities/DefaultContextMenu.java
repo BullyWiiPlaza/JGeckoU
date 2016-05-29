@@ -84,7 +84,7 @@ public class DefaultContextMenu extends JPopupMenu
         add(selectAll);
     }
 
-    public void attachTo(JTextComponent textComponent)
+    public void addTo(JTextComponent textComponent)
     {
         textComponent.addKeyListener(new KeyAdapter()
         {

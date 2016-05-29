@@ -3,6 +3,7 @@ package wiiudev.gecko.client.memoryViewer;
 import wiiudev.gecko.client.connector.MemoryReader;
 import wiiudev.gecko.client.conversion.Conversions;
 import wiiudev.gecko.client.conversion.SystemClipboard;
+import wiiudev.gecko.client.gui.JTableUtilities;
 import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
 
 import javax.swing.*;
@@ -17,12 +18,11 @@ public class MemoryViewerTableManager
 	private MemoryViews memoryView;
 	private int[] cellValues;
 	private static final int INTEGER_SIZE = ValueSizes.SIXTEEN_BIT.getSize();
-	private int topMemoryAddress;
 	public static final int STARTING_ADDRESS = 0x10000000;
 
 	public MemoryViewerTableManager(JTable table, MemoryViews memoryView)
 	{
-		new MemoryViewerContextMenu().attachTo(table);
+		new MemoryViewerContextMenu().addListeners(table);
 		this.table = table;
 		setMemoryView(memoryView);
 	}
@@ -54,6 +54,7 @@ public class MemoryViewerTableManager
 		tableHeader.setReorderingAllowed(false);
 		table.setRowSelectionAllowed(false);
 		tableHeader.setResizingAllowed(false);
+		JTableUtilities.setCellsAlignment(table, SwingConstants.CENTER);
 		selectFirstCell();
 	}
 
@@ -82,13 +83,13 @@ public class MemoryViewerTableManager
 		int columnCount = tableModel.getColumnCount();
 		int cellAddressOffset = 4;
 
-		for(int rowIndex = 0; rowIndex < rowCount; rowIndex++)
+		for (int rowIndex = 0; rowIndex < rowCount; rowIndex++)
 		{
 			String memoryAddress = (String) tableModel.getValueAt(rowIndex, 0);
 			int memoryViewerAddress = Integer.parseInt(memoryAddress, 16);
 			int difference = address - memoryViewerAddress;
 
-			if(difference <= cellAddressOffset * columnCount)
+			if (difference <= cellAddressOffset * columnCount)
 			{
 				int columnIndex = difference / cellAddressOffset;
 				setCellSelection(rowIndex, columnIndex + 1);
@@ -117,7 +118,6 @@ public class MemoryViewerTableManager
 	public void updateCells(int memoryAddress, boolean resetSelection) throws IOException
 	{
 		MemoryReader memoryReader = new MemoryReader();
-		topMemoryAddress = memoryAddress;
 		int normalizedAddress = normalize(memoryAddress);
 		byte[] readBytes = memoryReader.readBytes(normalizedAddress, getDisplayedBytes());
 		cellValues = Conversions.toIntegerArray(readBytes);
@@ -240,20 +240,20 @@ public class MemoryViewerTableManager
 		int columnCount = tableModel.getColumnCount();
 		int rowCount = tableModel.getRowCount();
 
-		for(int rowIndex = 0; rowIndex < rowCount; rowIndex++)
+		for (int rowIndex = 0; rowIndex < rowCount; rowIndex++)
 		{
-			for(int columnIndex = 0; columnIndex < columnCount; columnIndex++)
+			for (int columnIndex = 0; columnIndex < columnCount; columnIndex++)
 			{
 				String cellValue = (String) tableModel.getValueAt(rowIndex, columnIndex);
 				copiedCellsBuilder.append(cellValue);
 
-				if(columnIndex != columnCount - 1)
+				if (columnIndex != columnCount - 1)
 				{
 					copiedCellsBuilder.append(" ");
 				}
 			}
 
-			if(rowIndex != rowCount - 1)
+			if (rowIndex != rowCount - 1)
 			{
 				copiedCellsBuilder.append(System.lineSeparator());
 			}

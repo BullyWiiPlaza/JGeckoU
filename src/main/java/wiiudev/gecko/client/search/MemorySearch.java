@@ -43,7 +43,7 @@ public class MemorySearch
 
 		if (isFirstDump)
 		{
-			// dumpedBytesHistory.attachTo(dumpedBytes);
+			// dumpedBytesHistory.addListeners(dumpedBytes);
 			searchResults = new SearchResults(dumpedBytes);
 			isFirstDump = false;
 		} else

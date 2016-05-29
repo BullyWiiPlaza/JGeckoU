@@ -5,7 +5,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
-class HeaderRenderer implements TableCellRenderer
+public class HeaderRenderer implements TableCellRenderer
 {
 	private DefaultTableCellRenderer renderer;
 

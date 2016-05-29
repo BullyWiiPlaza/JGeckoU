@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import java.nio.charset.StandardCharsets;
 
 public class Conversions
 {
@@ -187,6 +188,15 @@ public class Conversions
 		return unicodeBuilder.toString();
 	}
 
+	public static byte[] getNullTerminatedBytes(String text)
+	{
+		byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+		byte[] nullTerminated = new byte[bytes.length + 1];
+		System.arraycopy(bytes, 0, nullTerminated, 0, bytes.length);
+
+		return nullTerminated;
+	}
+
 	public static String unicodeToHexadecimal(String unicode)
 	{
 		StringBuilder hexadecimalBuilder = new StringBuilder();
@@ -210,6 +220,21 @@ public class Conversions
 		unicodeLetters = unicodeLetters.concat("" + Character.toChars(toDecimal(hexadecimal.substring(4, 8)))[0]);
 
 		return unicodeLetters;
+	}
+
+	public static byte[] toUnicode(byte[] bytes)
+	{
+		byte[] unicodeBytes = new byte[bytes.length * 2];
+
+		int bytesIndex = 0;
+
+		for (int unicodeBytesIndex = 1; unicodeBytesIndex < unicodeBytes.length; unicodeBytesIndex += 2)
+		{
+			unicodeBytes[unicodeBytesIndex] = bytes[bytesIndex];
+			bytesIndex++;
+		}
+
+		return unicodeBytes;
 	}
 
 	public static int parseSignedInteger(String hexadecimal)

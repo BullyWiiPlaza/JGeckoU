@@ -1,19 +1,29 @@
 package wiiudev.gecko.client.memoryViewer;
 
+import wiiudev.gecko.client.connector.MemoryWriter;
+import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.code_list.code_wizard.CodeWizardDialog;
+import wiiudev.gecko.client.gui.utilities.JFileChooserUtilities;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 public class MemoryViewerContextMenu extends JPopupMenu
 {
+	private JMenuItem writeStringOption;
+	private JMenuItem uploadFileOption;
+
 	public MemoryViewerContextMenu()
 	{
-		JMenuItem offsetOption = new JMenuItem("Offset");
+		JMenuItem offsetOption = new JMenuItem("Add Offset");
 		offsetOption.setAccelerator(KeyStroke.getKeyStroke("control G"));
 		offsetOption.addActionListener(actionEvent -> showOffsetDialog());
 		add(offsetOption);
@@ -27,6 +37,45 @@ public class MemoryViewerContextMenu extends JPopupMenu
 		codeWizardOption.setAccelerator(KeyStroke.getKeyStroke("control W"));
 		codeWizardOption.addActionListener(actionEvent -> displayCodeWizard());
 		add(codeWizardOption);
+
+		writeStringOption = new JMenuItem("Write Text");
+		writeStringOption.setAccelerator(KeyStroke.getKeyStroke("control T"));
+		writeStringOption.addActionListener(actionEvent -> displayStringWriteDialog());
+		add(writeStringOption);
+
+		uploadFileOption = new JMenuItem("Upload File");
+		uploadFileOption.setAccelerator(KeyStroke.getKeyStroke("control F"));
+		uploadFileOption.addActionListener(actionEvent -> uploadFile());
+		add(uploadFileOption);
+	}
+
+	private void uploadFile()
+	{
+		JFileChooser fileChooser = new JFileChooser();
+		fileChooser.setDialogTitle(uploadFileOption.getText());
+		JFileChooserUtilities.registerDeleteAction(fileChooser);
+		File programDirectory = new File(System.getProperty("user.dir"));
+		fileChooser.setCurrentDirectory(programDirectory);
+		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		FileNameExtensionFilter filter = new FileNameExtensionFilter("Binary Files", "bin");
+		fileChooser.setFileFilter(filter);
+		int selectedAnswer = fileChooser.showOpenDialog(JGeckoUGUI.getInstance());
+
+		try
+		{
+			if (selectedAnswer == JFileChooser.APPROVE_OPTION)
+			{
+				File selectedFile = fileChooser.getSelectedFile();
+				byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
+				MemoryWriter memoryWriter = new MemoryWriter();
+				int selectedAddress = JGeckoUGUI.getInstance().getSelectedMemoryViewerAddress();
+				memoryWriter.writeBytes(selectedAddress, fileBytes);
+				JGeckoUGUI.getInstance().updateMemoryViewer();
+			}
+		} catch (IOException exception)
+		{
+			StackTraceUtils.handleException(null, exception);
+		}
 	}
 
 	private void displayCodeWizard()
@@ -41,7 +90,7 @@ public class MemoryViewerContextMenu extends JPopupMenu
 		codeWizardDialog.setVisible(true);
 	}
 
-	public void attachTo(JTable table)
+	public void addListeners(JTable table)
 	{
 		addKeyShortcuts(table);
 		addRightClickListener(table);
@@ -88,9 +137,26 @@ public class MemoryViewerContextMenu extends JPopupMenu
 					{
 						displayCodeWizard();
 					}
+
+					if (keyEventPressed(pressedEvent, KeyEvent.VK_T))
+					{
+						displayStringWriteDialog();
+					}
+
+					if (keyEventPressed(pressedEvent, KeyEvent.VK_F))
+					{
+						uploadFile();
+					}
 				}
 			}
 		});
+	}
+
+	private void displayStringWriteDialog()
+	{
+		int selectedAddress = JGeckoUGUI.getInstance().getSelectedMemoryViewerAddress();
+		StringWriteDialog stringWriteDialog = new StringWriteDialog(selectedAddress, writeStringOption.getText());
+		stringWriteDialog.setVisible(true);
 	}
 
 	private boolean keyEventPressed(KeyEvent event, int targetKeyCode)

@@ -38,8 +38,8 @@ public class ConversionDialog extends JDialog
 
 		addInputFieldDocumentListener();
 
-		new DefaultContextMenu().attachTo(convertedResultField);
-		new DefaultContextMenu().attachTo(inputField);
+		new DefaultContextMenu().addTo(convertedResultField);
+		new DefaultContextMenu().addTo(inputField);
 
 		copyResultButton.addActionListener(actionEvent -> onCopyResult());
 		buttonCancel.addActionListener(actionEvent -> onCancel());

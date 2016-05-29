@@ -88,7 +88,7 @@ public class CodeDatabaseDownloader
 				}
 				catch(InvalidCheatCodeException invalidCheatCodeException)
 				{
-					// Otherwise attachTo it as a comment
+					// Otherwise addListeners it as a comment
 					commentBuilder.append(codeLine);
 					commentBuilder.append(lineBreak);
 				}
