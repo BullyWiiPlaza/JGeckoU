@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="rootPanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="855" height="592"/>
+      <xy x="20" y="20" width="855" height="680"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -19,103 +19,6 @@
         </properties>
         <border type="none"/>
         <children>
-          <grid id="6f9d7" layout-manager="GridLayoutManager" row-count="10" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
-            <constraints>
-              <tabbedpane title="Connection"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children>
-              <vspacer id="4b681">
-                <constraints>
-                  <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-                </constraints>
-              </vspacer>
-              <component id="966be" class="javax.swing.JLabel">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Wii U IP Address:"/>
-                </properties>
-              </component>
-              <component id="3a14d" class="javax.swing.JButton" binding="connectButton" default-binding="true">
-                <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Connect"/>
-                  <toolTipText value="Connect to the Wii U using above settings"/>
-                </properties>
-              </component>
-              <component id="d27a3" class="javax.swing.JButton" binding="disconnectButton" default-binding="true">
-                <constraints>
-                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Disconnect"/>
-                  <toolTipText value="Disconnect from the Wii U"/>
-                </properties>
-              </component>
-              <component id="564c9" class="javax.swing.JButton" binding="connectionHelpButton" default-binding="true">
-                <constraints>
-                  <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Help"/>
-                  <toolTipText value="Receive help on connecting to your Wii U console"/>
-                </properties>
-              </component>
-              <component id="3563b" class="javax.swing.JTextField" binding="ipAddressField">
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                    <preferred-size width="150" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <toolTipText value="The Wii U's IP addressExpression"/>
-                </properties>
-              </component>
-              <component id="72743" class="javax.swing.JCheckBox" binding="autoDetectCheckBox" default-binding="true">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <selected value="true"/>
-                  <text value="Auto Detect"/>
-                  <toolTipText value="Whether to automatically find the Wii U or not"/>
-                </properties>
-              </component>
-              <component id="1981f" class="javax.swing.JButton" binding="updateGameTitlesButton" default-binding="true">
-                <constraints>
-                  <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Update Game Titles"/>
-                  <toolTipText value="Update the game titles to hopefully fix game detection issues"/>
-                </properties>
-              </component>
-              <component id="28f48" class="javax.swing.JButton" binding="reconnectButton" default-binding="true">
-                <constraints>
-                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Reconnect"/>
-                  <toolTipText value="Disconnect and connect again"/>
-                </properties>
-              </component>
-              <component id="e28d0" class="javax.swing.JButton" binding="firmwareVersionButton" default-binding="true">
-                <constraints>
-                  <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Firmware Version"/>
-                  <toolTipText value="Shows your Wii U firmware version"/>
-                </properties>
-              </component>
-            </children>
-          </grid>
           <grid id="5b446" binding="codesPanel" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
@@ -449,7 +352,9 @@
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
-                <properties/>
+                <properties>
+                  <toolTipText value="The list of addresses to watch in real time"/>
+                </properties>
                 <border type="none"/>
                 <children>
                   <component id="4b565" class="javax.swing.JTable" binding="watchListTable">
@@ -472,6 +377,7 @@
                     </constraints>
                     <properties>
                       <text value="Add Watch"/>
+                      <toolTipText value="Adds a new watch entry to the watch list"/>
                     </properties>
                   </component>
                   <component id="e0c9f" class="javax.swing.JButton" binding="modifyWatchButton" default-binding="true">
@@ -480,6 +386,7 @@
                     </constraints>
                     <properties>
                       <text value="Modify Watch"/>
+                      <toolTipText value="Modifies the currently selected watch list element"/>
                     </properties>
                   </component>
                   <component id="43638" class="javax.swing.JButton" binding="deleteWatchButton" default-binding="true">
@@ -488,6 +395,7 @@
                     </constraints>
                     <properties>
                       <text value="Delete Watch"/>
+                      <toolTipText value="Deletes the currently selected watch list element"/>
                     </properties>
                   </component>
                   <component id="f85f" class="javax.swing.JButton" binding="addAddressExpressionsButton" default-binding="true">
@@ -496,6 +404,7 @@
                     </constraints>
                     <properties>
                       <text value="Add Address Expressions"/>
+                      <toolTipText value="Adds a list of (pointer) address expressions"/>
                     </properties>
                   </component>
                   <component id="28cd0" class="javax.swing.JButton" binding="clearWatchListButton" default-binding="true">
@@ -504,14 +413,7 @@
                     </constraints>
                     <properties>
                       <text value="Clear Watch List"/>
-                    </properties>
-                  </component>
-                  <component id="6b9be" class="javax.swing.JButton" binding="saveWatchListButton" default-binding="true">
-                    <constraints>
-                      <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <text value="Save Watch List"/>
+                      <toolTipText value="Deletes all watch list elements"/>
                     </properties>
                   </component>
                   <component id="767ba" class="javax.swing.JButton" binding="exportWatchListButton" default-binding="true">
@@ -520,6 +422,16 @@
                     </constraints>
                     <properties>
                       <text value="Export Watch List"/>
+                      <toolTipText value="Exports the watch list in text format"/>
+                    </properties>
+                  </component>
+                  <component id="6b9be" class="javax.swing.JButton" binding="saveWatchListButton" default-binding="true">
+                    <constraints>
+                      <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Save Watch List"/>
+                      <toolTipText value="Saves the watch list to be reloaded by this software"/>
                     </properties>
                   </component>
                 </children>
@@ -864,13 +776,46 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <font size="12"/>
+                  <font size="20"/>
                   <text value="Not implemented"/>
                 </properties>
               </component>
             </children>
           </grid>
-          <grid id="2ab31" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="149a6" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <tabbedpane title="Miscellaneous"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="ba24" class="javax.swing.JButton" binding="firmwareVersionButton" default-binding="true">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Firmware Version"/>
+                  <toolTipText value="Shows your Wii U firmware version"/>
+                </properties>
+              </component>
+              <vspacer id="42940">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                </constraints>
+              </vspacer>
+              <component id="6845a" class="javax.swing.JButton" binding="updateGameTitlesButton" default-binding="true">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Update Game Titles"/>
+                  <toolTipText value="Update the game titles to hopefully fix game detection issues"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="2ab31" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <tabbedpane title="External Tools"/>
@@ -878,18 +823,9 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="c084" class="javax.swing.JButton" binding="pointerSearchApplicationButton">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Pointer Search"/>
-                  <toolTipText value="Downloads and starts an external pointer searcher application"/>
-                </properties>
-              </component>
               <vspacer id="74238">
                 <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
               <component id="f7113" class="javax.swing.JButton" binding="powerPCAssemblyCompilerButton" default-binding="true">
@@ -898,6 +834,25 @@
                 </constraints>
                 <properties>
                   <text value="PowerPC Assembly Compiler"/>
+                  <toolTipText value="Downloads and starts the external PowerPC Assembly Compiler program"/>
+                </properties>
+              </component>
+              <component id="71cf" class="javax.swing.JButton" binding="hexEditorButton" default-binding="true">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Hex Editor"/>
+                  <toolTipText value="Downloads and installs the hex editor HxD or starts it"/>
+                </properties>
+              </component>
+              <component id="c084" class="javax.swing.JButton" binding="pointerSearchApplicationButton">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Pointer Searcher"/>
+                  <toolTipText value="Downloads and starts an external pointer searcher application"/>
                 </properties>
               </component>
             </children>
@@ -926,6 +881,80 @@
           </grid>
         </children>
       </tabbedpane>
+      <grid id="2da6d" layout-manager="GridLayoutManager" row-count="1" column-count="7" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="0" right="0"/>
+        <constraints>
+          <grid row="1" column="0" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="2cdc4" class="javax.swing.JCheckBox" binding="autoDetectCheckBox" default-binding="true">
+            <constraints>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <selected value="true"/>
+              <text value="Auto Detect"/>
+              <toolTipText value="Whether to automatically find the Wii U or not"/>
+            </properties>
+          </component>
+          <component id="a49e3" class="javax.swing.JTextField" binding="ipAddressField">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                <preferred-size width="150" height="-1"/>
+              </grid>
+            </constraints>
+            <properties>
+              <toolTipText value="The Wii U's IP addressExpression"/>
+            </properties>
+          </component>
+          <component id="a90a9" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Wii U IP Address:"/>
+            </properties>
+          </component>
+          <component id="f00d3" class="javax.swing.JButton" binding="disconnectButton" default-binding="true">
+            <constraints>
+              <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Disconnect"/>
+              <toolTipText value="Disconnects from the Wii U"/>
+            </properties>
+          </component>
+          <component id="55cbd" class="javax.swing.JButton" binding="connectButton" default-binding="true">
+            <constraints>
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Connect"/>
+              <toolTipText value="Connects to the Wii U using the given settings"/>
+            </properties>
+          </component>
+          <component id="cb846" class="javax.swing.JButton" binding="reconnectButton" default-binding="true">
+            <constraints>
+              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Reconnect"/>
+              <toolTipText value="Disconnects and connects again"/>
+            </properties>
+          </component>
+          <component id="d4df9" class="javax.swing.JButton" binding="connectionHelpButton" default-binding="true">
+            <constraints>
+              <grid row="0" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Help"/>
+              <toolTipText value="Receive help on connecting to your Wii U console"/>
+            </properties>
+          </component>
+        </children>
+      </grid>
     </children>
   </grid>
 </form>

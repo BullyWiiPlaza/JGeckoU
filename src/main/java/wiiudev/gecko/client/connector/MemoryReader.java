@@ -305,6 +305,11 @@ public class MemoryReader extends SocketCommunication
 		}
 	}
 
+	public boolean isRunning() throws IOException
+	{
+		return getStatus() == Status.RUNNING;
+	}
+
 	public static String getExpectedWaitingTime(int bytesCount)
 	{
 		int bytesPerMillisecond = 61; // The network bandwidth might differ

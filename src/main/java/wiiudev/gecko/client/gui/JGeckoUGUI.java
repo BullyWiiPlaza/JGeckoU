@@ -1,6 +1,7 @@
 package wiiudev.gecko.client.gui;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.SystemUtils;
 import wiiudev.gecko.client.ValueOperations;
 import wiiudev.gecko.client.codes.*;
 import wiiudev.gecko.client.connector.Connector;
@@ -25,6 +26,7 @@ import wiiudev.gecko.client.gui.watch_list.*;
 import wiiudev.gecko.client.memoryViewer.MemoryViewerTableManager;
 import wiiudev.gecko.client.memoryViewer.MemoryViews;
 import wiiudev.gecko.client.pointer_search.DownloadingUtilities;
+import wiiudev.gecko.client.pointer_search.ZipUtils;
 import wiiudev.gecko.client.scanner.WiiUFinder;
 import wiiudev.gecko.client.titles.FirmwareNotImplementedException;
 import wiiudev.gecko.client.titles.Title;
@@ -39,6 +41,9 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -114,6 +119,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton saveWatchListButton;
 	private JButton exportWatchListButton;
 	private JSpinner watchListUpdateDelaySpinner;
+	private JButton hexEditorButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -123,7 +129,6 @@ public class JGeckoUGUI extends JFrame
 	private String connectedIPAddress;
 	private CodeListSender codeListSender;
 	private TitleDatabaseManager titleDatabaseManager;
-	private int firmwareVersion = -1;
 	private boolean titlesInitialized;
 	private String gameId;
 	private String programName;
@@ -146,6 +151,40 @@ public class JGeckoUGUI extends JFrame
 		configureAboutTab();
 		restorePersistentSettings();
 		addSettingsBackupShutdownHook();
+		// disconnectWhenServerDied();
+	}
+
+	private void disconnectWhenServerDied()
+	{
+		new Thread(() ->
+		{
+			while (true)
+			{
+				if (connected)
+				{
+					try
+					{
+						boolean isRunning = new MemoryReader().isRunning();
+
+						if (!isRunning)
+						{
+							disconnect();
+						}
+					} catch (IOException exception)
+					{
+						disconnect();
+					}
+				}
+
+				try
+				{
+					Thread.sleep(1000);
+				} catch (InterruptedException exception)
+				{
+					exception.printStackTrace();
+				}
+			}
+		}).start();
 	}
 
 	private void configureWatchListTab()
@@ -452,6 +491,99 @@ public class JGeckoUGUI extends JFrame
 	{
 		powerPCAssemblyCompilerButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/PowerPC-Assembly-Compiler/blob/master/PowerPC-Assembly-Compiler.jar?raw=true", actionEvent));
 		pointerSearchApplicationButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/Universal-Pointer-Searcher/blob/master/Universal-Pointer-Searcher.jar?raw=true", actionEvent));
+		hexEditorButton.setEnabled(SystemUtils.IS_OS_WINDOWS); // So far Windows only
+		hexEditorButton.addActionListener(actionEvent -> downloadAndExecuteHexEditor());
+	}
+
+	private void downloadAndExecuteHexEditor()
+	{
+		String localExecutablePath = "C:\\Program Files (x86)\\HxD\\HxD.exe";
+		Path path = Paths.get(localExecutablePath);
+		boolean exists = Files.exists(path);
+
+		if (isFileLocked("setup.exe"))
+		{
+			return;
+		}
+
+		try
+		{
+			String messageText = exists ? "Would you like to start HxD?" : "Would you like to download and run the HxD installation setup?";
+			String[] options = {"Yes", "No"};
+			int selectedAnswer = JOptionPane.showOptionDialog(rootPane,
+					messageText,
+					"",
+					JOptionPane.YES_NO_CANCEL_OPTION,
+					JOptionPane.QUESTION_MESSAGE,
+					null,
+					options,
+					null);
+
+			if (selectedAnswer == JOptionPane.YES_OPTION)
+			{
+				String buttonText = hexEditorButton.getText();
+
+				if (exists)
+				{
+					hexEditorButton.setText("Starting...");
+					Desktop.getDesktop().open(path.toFile());
+					hexEditorButton.setText(buttonText);
+				} else
+				{
+					new SwingWorker<String, String>()
+					{
+						@Override
+						protected String doInBackground() throws Exception
+						{
+							try
+							{
+								hexEditorButton.setEnabled(false);
+								hexEditorButton.setText("Downloading...");
+								DownloadingUtilities.trustAllCertificates();
+								String downloadURL = "https://mh-nexus.de/downloads/HxDSetupEN.zip";
+								DownloadingUtilities.download(downloadURL);
+								String fileName = DownloadingUtilities.getFileName(downloadURL);
+								hexEditorButton.setText("Unzipping...");
+								File unzippedFile = ZipUtils.unZipFile(fileName);
+								Files.delete(Paths.get(fileName));
+								hexEditorButton.setText("Executing...");
+								Desktop.getDesktop().open(unzippedFile);
+							} catch (Exception exception)
+							{
+								StackTraceUtils.handleException(rootPane, exception);
+							}
+
+							return null;
+						}
+
+						@Override
+						protected void done()
+						{
+							hexEditorButton.setEnabled(true);
+							hexEditorButton.setText(buttonText);
+						}
+					}.execute();
+				}
+			}
+		} catch (Exception exception)
+		{
+			StackTraceUtils.handleException(rootPane, exception);
+		}
+	}
+
+	private boolean isFileLocked(String fileName)
+	{
+		if (!DownloadingUtilities.canDownload(fileName))
+		{
+			JOptionPane.showMessageDialog(rootPane,
+					"The application seems to be running already.",
+					"Error",
+					JOptionPane.ERROR_MESSAGE);
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private void configureAboutTab()
@@ -472,13 +604,8 @@ public class JGeckoUGUI extends JFrame
 		JButton downloadButton = (JButton) actionEvent.getSource();
 		String downloadedFileName = DownloadingUtilities.getFileName(downloadURL);
 
-		if (!DownloadingUtilities.canDownload(downloadedFileName))
+		if (isFileLocked(downloadedFileName))
 		{
-			JOptionPane.showMessageDialog(rootPane,
-					"The application seems to be running already.",
-					"Error",
-					JOptionPane.ERROR_MESSAGE);
-
 			return;
 		}
 
@@ -1252,18 +1379,15 @@ public class JGeckoUGUI extends JFrame
 	{
 		firmwareVersionButton.addActionListener(actionEvent ->
 		{
-			// Retrieve the firmware version the first time it is requested only
-			if (firmwareVersion == -1)
-			{
-				MemoryReader memoryReader = new MemoryReader();
+			MemoryReader memoryReader = new MemoryReader();
+			int firmwareVersion = -1;
 
-				try
-				{
-					firmwareVersion = memoryReader.readFirmwareVersion();
-				} catch (IOException exception)
-				{
-					StackTraceUtils.handleException(rootPane, exception);
-				}
+			try
+			{
+				firmwareVersion = memoryReader.readFirmwareVersion();
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
 			}
 
 			// Display it to the user
