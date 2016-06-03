@@ -4,6 +4,7 @@ import javax.swing.*;
 
 public class JGeckoULauncher
 {
+	// TODO Auto-save codes list
 	// TODO Do not clear code list on disconnect
 	// TODO Get symbol and call symbol
 	// TODO File system access (extract and replace)

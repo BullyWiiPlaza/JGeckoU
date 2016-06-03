@@ -1871,7 +1871,7 @@ public class JGeckoUGUI extends JFrame
 		}
 
 		connected = true;
-		connectButton.setText(connectButtonText + "ed [" + ipAddress + ":" + Connector.PORT + "]");
+		connectButton.setText(connectButtonText + "ed [" + ipAddress + "]");
 		connectedIPAddress = ipAddress;
 
 		setGameSpecificTitle();
@@ -2059,7 +2059,7 @@ public class JGeckoUGUI extends JFrame
 		programName = "JGecko U";
 		setTitle(programName);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		setSize(780, 350);
+		setSize(850, 350);
 		setLocationRelativeTo(null);
 		WindowUtilities.setIconImage(this);
 	}
