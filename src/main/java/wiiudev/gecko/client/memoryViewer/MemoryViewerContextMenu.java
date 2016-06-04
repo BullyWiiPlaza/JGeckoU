@@ -14,12 +14,13 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class MemoryViewerContextMenu extends JPopupMenu
 {
 	private JMenuItem writeStringOption;
 	private JMenuItem uploadFileOption;
+	private JMenuItem dumpFileOption;
 
 	public MemoryViewerContextMenu()
 	{
@@ -47,6 +48,17 @@ public class MemoryViewerContextMenu extends JPopupMenu
 		uploadFileOption.setAccelerator(KeyStroke.getKeyStroke("control F"));
 		uploadFileOption.addActionListener(actionEvent -> uploadFile());
 		add(uploadFileOption);
+
+		dumpFileOption = new JMenuItem("Dump File");
+		dumpFileOption.setAccelerator(KeyStroke.getKeyStroke("control D"));
+		dumpFileOption.addActionListener(actionEvent -> switchToDumpingTab());
+		add(dumpFileOption);
+	}
+
+	private void switchToDumpingTab()
+	{
+		JGeckoUGUI jGeckoUGUI = JGeckoUGUI.getInstance();
+		jGeckoUGUI.selectDumpingTab();
 	}
 
 	private void uploadFile()
@@ -65,11 +77,10 @@ public class MemoryViewerContextMenu extends JPopupMenu
 		{
 			if (selectedAnswer == JFileChooser.APPROVE_OPTION)
 			{
-				File selectedFile = fileChooser.getSelectedFile();
-				byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
+				Path selectedFile = fileChooser.getSelectedFile().toPath();
 				MemoryWriter memoryWriter = new MemoryWriter();
 				int selectedAddress = JGeckoUGUI.getInstance().getSelectedMemoryViewerAddress();
-				memoryWriter.writeBytes(selectedAddress, fileBytes);
+				memoryWriter.upload(selectedAddress, selectedFile);
 				JGeckoUGUI.getInstance().updateMemoryViewer();
 			}
 		} catch (IOException exception)
@@ -146,6 +157,11 @@ public class MemoryViewerContextMenu extends JPopupMenu
 					if (keyEventPressed(pressedEvent, KeyEvent.VK_F))
 					{
 						uploadFile();
+					}
+
+					if (keyEventPressed(pressedEvent, KeyEvent.VK_D))
+					{
+						switchToDumpingTab();
 					}
 				}
 			}

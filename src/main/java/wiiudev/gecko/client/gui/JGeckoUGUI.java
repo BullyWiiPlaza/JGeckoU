@@ -120,6 +120,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton exportWatchListButton;
 	private JSpinner watchListUpdateDelaySpinner;
 	private JButton hexEditorButton;
+	private JPanel dumpingTab;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -185,6 +186,16 @@ public class JGeckoUGUI extends JFrame
 				}
 			}
 		}).start();
+	}
+
+	public void selectDumpingTab()
+	{
+		int selectedAddress = getSelectedMemoryViewerAddress();
+		dumpStartingAddressField.setText(Long.toHexString(selectedAddress).toUpperCase());
+		dumpEndingAddressField.setText(Long.toHexString(selectedAddress + 0x1000).toUpperCase());
+		dumpFilePathField.setText("dumped.bin");
+		tabs.setSelectedComponent(dumpingTab);
+		handleDumpMemoryButtonAvailability();
 	}
 
 	private void configureWatchListTab()

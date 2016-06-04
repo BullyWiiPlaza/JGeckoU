@@ -10,6 +10,7 @@ public abstract class SocketCommunication
 	protected DataOutputStream dataSender;
 	protected DataInputStream dataReceiver;
 	protected static final ReentrantLock reentrantLock = new ReentrantLock(true);
+	public static final int MAXIMUM_MEMORY_CHUNK_SIZE = 0x400;
 
 	public SocketCommunication()
 	{
@@ -25,6 +26,20 @@ public abstract class SocketCommunication
 	public static boolean isConnected()
 	{
 		return Connector.getInstance().getDataSender() != null && Connector.getInstance().getDataReceiver() != null;
+	}
+
+	protected Status readStatus() throws IOException
+	{
+		reentrantLock.lock();
+
+		try
+		{
+			byte serverStatus = dataReceiver.readByte();
+			return Status.getStatus(serverStatus);
+		} finally
+		{
+			reentrantLock.unlock();
+		}
 	}
 
 	/**

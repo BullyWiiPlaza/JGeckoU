@@ -1,13 +1,12 @@
 package wiiudev.gecko.client.connector;
 
-import org.apache.commons.io.FileUtils;
 import wiiudev.gecko.client.connector.utilities.AddressRange;
 import wiiudev.gecko.client.connector.utilities.DataConversions;
 import wiiudev.gecko.client.connector.utilities.MemoryAccessLevel;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.nio.file.Path;
+import java.util.List;
 
 /**
  * A class for writing data to the memory
@@ -172,8 +171,8 @@ public class MemoryWriter extends SocketCommunication
 	/**
 	 * Writes a null-terminated String <code>value</code> to the memory starting at <code>address</code> with a maximum length of <code>maximumLength</code>
 	 *
-	 * @param address       The address to ASSIGN to
-	 * @param value         The value to ASSIGN
+	 * @param address       The address to write to
+	 * @param value         The value to write
 	 * @param maximumLength The value's maximum allowed amount of characters
 	 * @throws IOException
 	 */
@@ -198,21 +197,39 @@ public class MemoryWriter extends SocketCommunication
 	}
 
 	/**
-	 * Writes an entire <code>file</code> to the memory starting at <code>address</code>
+	 * Writes an entire local <code>sourcePath</code> to the memory starting at <code>address</code>
 	 *
-	 * @param address The address to ASSIGN to
-	 * @param file    The file to ASSIGN
+	 * @param address    The address to write to
+	 * @param sourcePath The file to write
 	 * @throws IOException
 	 */
-	public void upload(int address, File file) throws IOException
+	public void upload(int address, Path sourcePath) throws IOException
+	{
+		List<byte[]> partitionedBytes = ByteUtilities.readPartitionedBytes(sourcePath, MAXIMUM_MEMORY_CHUNK_SIZE);
+		writePartitionedBytes(address, partitionedBytes);
+	}
+
+	private void writePartitionedBytes(int address, List<byte[]> partitionedBytes) throws IOException
 	{
 		reentrantLock.lock();
 
 		try
 		{
-			byte[] bytes = FileUtils.readFileToByteArray(file);
+			for (byte[] bytesChunk : partitionedBytes)
+			{
+				sendCommand(Commands.MEMORY_UPLOAD);
+				dataSender.writeInt(address);
+				int endAddress = address + bytesChunk.length;
+				dataSender.writeInt(endAddress);
+				dataSender.write(bytesChunk);
+				dataSender.flush();
 
-			writeBytes(address, bytes);
+				// No need to check the status, but we need to read it at least
+				readStatus();
+
+				// The end address is the next starting address
+				address = endAddress;
+			}
 		} finally
 		{
 			reentrantLock.unlock();
@@ -222,73 +239,13 @@ public class MemoryWriter extends SocketCommunication
 	/**
 	 * Writes <code>bytes</code> to the memory starting at <code>address</code>
 	 *
-	 * @param address The address to ASSIGN to
-	 * @param bytes   The value to ASSIGN
+	 * @param address The address to write to
+	 * @param bytes   The value to write
 	 * @throws IOException
 	 */
 	public void writeBytes(int address, byte[] bytes) throws IOException
 	{
-		reentrantLock.lock();
-
-		try
-		{
-			ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-			int bufferPointer = 0;
-
-			while (byteBuffer.hasRemaining())
-			{
-				// We can read an int
-				if (byteBuffer.remaining() > 3)
-				{
-					int intValue = byteBuffer.getInt();
-					writeInt(address + bufferPointer, intValue);
-					bufferPointer += 4;
-
-					continue;
-				}
-
-				// We can read a short
-				if (byteBuffer.remaining() > 1)
-				{
-					short shortValue = byteBuffer.getShort();
-					writeShort(address + bufferPointer, shortValue);
-					bufferPointer += 2;
-
-					continue;
-				}
-
-				// We only have a byte left
-				byte byteValue = byteBuffer.get();
-				write(address + bufferPointer, byteValue);
-				bufferPointer++;
-			}
-		} finally
-		{
-			reentrantLock.unlock();
-		}
-	}
-
-	/**
-	 * Pokes successive addresses with the same value
-	 *
-	 * @param startingAddress       The address to start poking memory at
-	 * @param value                 The value to writeInt
-	 * @param additionalWritesCount The amount of additional pokes to perform
-	 * @throws IOException
-	 */
-	public void serialWrite(int startingAddress, int value, int additionalWritesCount) throws IOException
-	{
-		reentrantLock.lock();
-
-		try
-		{
-			for (int writesIndex = 0; writesIndex < additionalWritesCount + 1; writesIndex++)
-			{
-				writeInt(startingAddress + writesIndex * 4, value);
-			}
-		} finally
-		{
-			reentrantLock.lock();
-		}
+		List<byte[]> partitionedBytes = ByteUtilities.partition(bytes, MAXIMUM_MEMORY_CHUNK_SIZE);
+		writePartitionedBytes(address, partitionedBytes);
 	}
 }

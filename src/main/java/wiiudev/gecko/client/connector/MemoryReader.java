@@ -19,8 +19,6 @@ import java.util.List;
  */
 public class MemoryReader extends SocketCommunication
 {
-	public static final int MAXIMUM_MEMORY_CHUNK_SIZE = 0x400;
-
 	/**
 	 * Reads an 8-bit value from the memory at the given <code>address</code>
 	 *
@@ -277,7 +275,7 @@ public class MemoryReader extends SocketCommunication
 			dataSender.writeInt(address + length);
 			dataSender.flush();
 
-			Status status = getStatus();
+			Status status = readStatus();
 
 			if (status == Status.OK)
 			{
@@ -291,23 +289,9 @@ public class MemoryReader extends SocketCommunication
 		}
 	}
 
-	private Status getStatus() throws IOException
-	{
-		reentrantLock.lock();
-
-		try
-		{
-			byte serverStatus = dataReceiver.readByte();
-			return Status.getStatus(serverStatus);
-		} finally
-		{
-			reentrantLock.unlock();
-		}
-	}
-
 	public boolean isRunning() throws IOException
 	{
-		return getStatus() == Status.RUNNING;
+		return readStatus() == Status.RUNNING;
 	}
 
 	public static String getExpectedWaitingTime(int bytesCount)
@@ -322,7 +306,7 @@ public class MemoryReader extends SocketCommunication
 		long minutes = (expectedWaitingTimeMilliseconds / (1000 * 60)) % 60;
 		long hours = (expectedWaitingTimeMilliseconds / (1000 * 60 * 60)) % 24;
 
-		return String.format("%02d hours %02d minutes AND %02d seconds", hours, minutes, seconds);
+		return String.format("%02d hours %02d minutes and %02d seconds", hours, minutes, seconds);
 	}
 
 	public int readValue(int targetAddress, ValueSizes valueSize) throws IOException

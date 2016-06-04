@@ -16,7 +16,7 @@ public class JGeckoULauncher
 	// TODO Watch list fix random deadlock (bigger memory dumps getting stuck)
 	/*
 		// Process returned data
-		Status status = getStatus();
+		Status status = readStatus();
 		switch (status)
 		{
 			// The memory is not all 0, read the data

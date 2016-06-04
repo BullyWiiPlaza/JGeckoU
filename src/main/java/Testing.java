@@ -1,14 +1,20 @@
-import wiiudev.gecko.client.gui.code_list.code_wizard.CheatCodeFormatter;
+import wiiudev.gecko.client.connector.Connector;
+import wiiudev.gecko.client.connector.MemoryWriter;
 
-import java.lang.reflect.Field;
+import java.nio.file.Paths;
 
 public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
+		Connector.getInstance().connect("192.168.178.35");
+		MemoryWriter memoryWriter = new MemoryWriter();
+		memoryWriter.upload(0x3FD00000, Paths.get("binary.bin"));
+		Connector.getInstance().closeConnection();
+
 		// String waitingTime = MemoryReader.getExpectedWaitingTime(0x49000000 - 0x3A000000);
 		// System.out.println(waitingTime);
-		Field field = System.class.getDeclaredField("lineSeparator");
+		/*Field field = System.class.getDeclaredField("lineSeparator");
 		field.setAccessible(true);
 		field.set(System.class, "\n");
 		String formatted = CheatCodeFormatter.format("12345678123456781234567812345678", false);
@@ -18,7 +24,7 @@ public class Testing
 				"00000024 00000000\n" +
 				"10000000 50000000\n" +
 				"000002E8 41000000", false);
-		System.out.println(formatted);
+		System.out.println(formatted);*/
 		// String s = "FFFFF160";
 		// System.out.println();
 		// MemoryPointerExpression memoryPointerExpression = new MemoryPointerExpression("[0x4443BB4C]");
