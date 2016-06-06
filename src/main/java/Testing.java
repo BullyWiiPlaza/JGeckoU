@@ -37,7 +37,7 @@ public class Testing
 
 			if(codesExist)
 			{
-				List<GeckoCode> codes = codeDatabaseDownloader.downloadCodes();
+				List<GeckoCode> codes = codeDatabaseDownloader.parseCodes();
 			}
 		} catch (Exception e)
 		{

@@ -18,46 +18,42 @@ import java.util.List;
 public class CodeDatabaseDownloader
 {
 	private Document webDocument;
-	private String codesDatabaseURL;
-	private String gameId;
-	private int availableCodesCount;
 	private static String lineBreak = "\n";
+	private List<GeckoCode> codes;
 
 	public CodeDatabaseDownloader(String gameId) throws Exception
 	{
-		this.gameId = gameId;
 		String codeDatabaseBaseURL = "http://wiiucodes.tk/codes.php?id=";
 		String titleId = Title.getTitleId(gameId);
-		codesDatabaseURL = codeDatabaseBaseURL + titleId;
+		String codesDatabaseURL = codeDatabaseBaseURL + titleId;
 		webDocument = Jsoup.connect(codesDatabaseURL).get();
-		setAvailableCodesCount();
+		codes = new ArrayList<>();
+		parseCodes();
 	}
 
-	public String getCodeDatabaseURL()
+	public void parseCodes() throws IOException
 	{
-		return codesDatabaseURL;
-	}
-
-	public boolean codesExist() throws Exception
-	{
-		return availableCodesCount > 0;
-	}
-
-	public List<GeckoCode> downloadCodes() throws IOException
-	{
-		List<GeckoCode> codes = new ArrayList<>();
 		Elements elements = webDocument.select("body");
 		String bodyHTML = elements.toString();
 		bodyHTML = stripHeaderAndFooter(bodyHTML);
 		String plainText = parsePlainTextFromHTML(bodyHTML);
 		String[] parsedCodes = plainText.split(lineBreak + lineBreak);
 
-		for(String parsedCode : parsedCodes)
+		for (String parsedCode : parsedCodes)
 		{
+			// No codes found?
+			if(parsedCode.contains("No codes found."))
+			{
+				return;
+			}
+
 			GeckoCode code = parseCode(parsedCode);
 			codes.add(code);
 		}
+	}
 
+	public List<GeckoCode> getCodes()
+	{
 		return codes;
 	}
 
@@ -68,16 +64,15 @@ public class CodeDatabaseDownloader
 		StringBuilder codeBuilder = new StringBuilder();
 		StringBuilder commentBuilder = new StringBuilder();
 
-		for(int codeLineIndex = 0; codeLineIndex < codeLines.length; codeLineIndex++)
+		for (int codeLineIndex = 0; codeLineIndex < codeLines.length; codeLineIndex++)
 		{
 			String codeLine = codeLines[codeLineIndex];
 
-			if(codeLineIndex == 0)
+			if (codeLineIndex == 0)
 			{
 				// The first line is always the title
 				code.setTitle(codeLine);
-			}
-			else
+			} else
 			{
 				try
 				{
@@ -85,10 +80,9 @@ public class CodeDatabaseDownloader
 					new CheatCode(codeLine);
 					codeBuilder.append(codeLine);
 					codeBuilder.append(lineBreak);
-				}
-				catch(InvalidCheatCodeException invalidCheatCodeException)
+				} catch (InvalidCheatCodeException invalidCheatCodeException)
 				{
-					// Otherwise addListeners it as a comment
+					// Otherwise add it as a comment
 					commentBuilder.append(codeLine);
 					commentBuilder.append(lineBreak);
 				}
@@ -97,7 +91,7 @@ public class CodeDatabaseDownloader
 
 		String builtCode = codeBuilder.toString().trim();
 
-		if(builtCode.equals(""))
+		if (builtCode.equals(""))
 		{
 			// No valid code given, let's use no operation
 			builtCode = CodeWizardDialog.NOP_CODE;
@@ -127,14 +121,14 @@ public class CodeDatabaseDownloader
 		HTMLEditorKit.ParserCallback parserCallback = new HTMLEditorKit.ParserCallback()
 		{
 			@Override
-			public void handleText(final char[] data, final int pos)
+			public void handleText(char[] data, int pos)
 			{
 				String string = new String(data);
 				stringBuilder.append(string.trim());
 			}
 
 			@Override
-			public void handleStartTag(final HTML.Tag t, final MutableAttributeSet a, final int pos)
+			public void handleStartTag(HTML.Tag t, MutableAttributeSet a, int pos)
 			{
 				if (t == HTML.Tag.DIV || t == HTML.Tag.BR || t == HTML.Tag.P)
 				{
@@ -143,7 +137,7 @@ public class CodeDatabaseDownloader
 			}
 
 			@Override
-			public void handleSimpleTag(final HTML.Tag t, final MutableAttributeSet a, final int pos)
+			public void handleSimpleTag(HTML.Tag t, MutableAttributeSet a, int pos)
 			{
 				handleStartTag(t, a, pos);
 			}
@@ -152,25 +146,5 @@ public class CodeDatabaseDownloader
 		new ParserDelegator().parse(new StringReader(html), parserCallback, false);
 
 		return stringBuilder.toString().trim();
-	}
-
-	private void setAvailableCodesCount()
-	{
-		Elements codeListStatistics = webDocument.select("body > p");
-		String codeStatistics = codeListStatistics.toString();
-		codeStatistics = codeStatistics.replace("<p>Amount: ", "");
-		int index = codeStatistics.indexOf(" ");
-		codeStatistics = codeStatistics.substring(0, index);
-		availableCodesCount = Integer.parseInt(codeStatistics);
-	}
-
-	public int getAvailableCodesCount()
-	{
-		return availableCodesCount;
-	}
-
-	public String getGameId()
-	{
-		return gameId;
 	}
 }

@@ -121,6 +121,7 @@ public class JGeckoUGUI extends JFrame
 	private JSpinner watchListUpdateDelaySpinner;
 	private JButton hexEditorButton;
 	private JPanel dumpingTab;
+	private JCheckBox autoSaveCodeListCheckBox;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -459,8 +460,8 @@ public class JGeckoUGUI extends JFrame
 	{
 		Runtime.getRuntime().addShutdownHook(new Thread(() ->
 		{
-			boolean autoDetect = autoDetectCheckBox.isSelected();
-			simpleProperties.put("AUTO_DETECT", String.valueOf(autoDetect));
+			simpleProperties.put("AUTO_DETECT", String.valueOf(autoDetectCheckBox.isSelected()));
+			simpleProperties.put("AUTO_SAVE_CODES", String.valueOf(autoSaveCodeListCheckBox.isSelected()));
 			simpleProperties.put("MEMORY_VIEWER_ADDRESS", memoryViewerAddressField.getText());
 			simpleProperties.put("IP_ADDRESS", ipAddressField.getText());
 			simpleProperties.put("WATCH_LIST_UPDATE_DELAY", watchListUpdateDelaySpinner.getValue().toString());
@@ -477,6 +478,13 @@ public class JGeckoUGUI extends JFrame
 		{
 			boolean autoDetect = Boolean.parseBoolean(autoDetectString);
 			autoDetectCheckBox.setSelected(autoDetect);
+		}
+
+		String autoSaveString = simpleProperties.get("AUTO_SAVE_CODES");
+		if (autoSaveString != null)
+		{
+			boolean autoSave = Boolean.parseBoolean(autoSaveString);
+			autoSaveCodeListCheckBox.setSelected(autoSave);
 		}
 
 		String ipAddress = simpleProperties.get("IP_ADDRESS");
@@ -1079,19 +1087,32 @@ public class JGeckoUGUI extends JFrame
 	{
 		codeListSender = new CodeListSender();
 
+		codesListManager.getCodesJList().addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mousePressed(MouseEvent mouseEvent)
+			{
+				if (autoSaveCodeListCheckBox.isSelected())
+				{
+					storeCurrentCodeList(true);
+				}
+			}
+		});
+
+		autoSaveCodeListCheckBox.addItemListener(actionEvent -> setCodeListButtonsAvailability());
 		addCodeButton.addActionListener(actionEvent -> addCode());
 		deleteCodeButton.addActionListener(actionEvent -> deleteSelectedCodeListEntry());
 		sendCodesButton.addActionListener(actionEvent -> sendCodes());
 		disableCodesButton.addActionListener(actionEvent -> disableCodes());
 		codesHelpButton.addActionListener(actionEvent -> visitCodeHandlerGBATempThread());
 		editCodeButton.addActionListener(actionEvent -> editSelectedCode());
-		storeCodeListButton.addActionListener(actionEvent -> storeCurrentCodeList());
+		storeCodeListButton.addActionListener(actionEvent -> storeCurrentCodeList(false));
 		downloadCodeDatabaseButton.addActionListener(actionEvent -> handleDownloadingCodeDatabase());
 		exportCodeListButton.addActionListener(actionEvent -> exportCodeList());
+		loadCodeListButton.addActionListener(actionEvent -> loadCodeList());
 
 		addCodeListBoxesMouseListener();
 		addCodeListChangedListener();
-		loadCodeListButton.addActionListener(actionEvent -> loadCodeList());
 
 		updateCodeDatabaseDownloadButtonAvailability();
 		handleCodeListButtonAvailability();
@@ -1149,45 +1170,63 @@ public class JGeckoUGUI extends JFrame
 
 	private void handleDownloadingCodeDatabase()
 	{
-		try
+		new SwingWorker<String, String>()
 		{
-			CodeDatabaseDownloader codeDatabaseDownloader = new CodeDatabaseDownloader(gameId);
-			boolean codesExist = codeDatabaseDownloader.codesExist();
-
-			if (codesExist)
+			@Override
+			protected String doInBackground() throws Exception
 			{
-				int availableCodes = codeDatabaseDownloader.getAvailableCodesCount();
+				String buttonText = downloadCodeDatabaseButton.getText();
 
-				Object[] options = {"Yes", "No"};
-
-				int selectAnswer = JOptionPane.showOptionDialog(this,
-						availableCodes + " codes found. Would you like to add them to your current code list?",
-						"Download codes?",
-						JOptionPane.YES_NO_CANCEL_OPTION,
-						JOptionPane.QUESTION_MESSAGE,
-						null,
-						options, null);
-
-				if (selectAnswer == JOptionPane.YES_OPTION)
+				try
 				{
-					List<GeckoCode> downloadedCodes = codeDatabaseDownloader.downloadCodes();
+					downloadCodeDatabaseButton.setText("Downloading...");
+					downloadCodeDatabaseButton.setEnabled(false);
+					CodeDatabaseDownloader codeDatabaseDownloader = new CodeDatabaseDownloader(gameId);
+					List<GeckoCode> downloadedCodes = codeDatabaseDownloader.getCodes();
+					int codesCount = downloadedCodes.size();
+					boolean codesExist = codesCount > 0;
+					Title title = titleDatabaseManager.getTitle(gameId);
+					String gameName = title.getGameName();
 
-					for (GeckoCode code : downloadedCodes)
+					if (codesExist)
 					{
-						codesListManager.addCode(code);
+						Object[] options = {"Yes", "No"};
+
+						int selectAnswer = JOptionPane.showOptionDialog(rootPane,
+								codesCount + " code(s) found for " + gameName + "." + System.lineSeparator()
+										+ "Would you like to add them to your current code list?"
+										+ System.lineSeparator() + "Duplicates will not be added!",
+								"Download Codes?",
+								JOptionPane.YES_NO_CANCEL_OPTION,
+								JOptionPane.QUESTION_MESSAGE,
+								null,
+								options, null);
+
+						if (selectAnswer == JOptionPane.YES_OPTION)
+						{
+							// Add non-duplicate codes
+							downloadedCodes.stream().filter(code -> !codesListManager.containsCode(code))
+									.forEach(code -> codesListManager.addCode(code));
+						}
+					} else
+					{
+						JOptionPane.showMessageDialog(rootPane,
+								"No codes found for " + gameName + "!",
+								":(",
+								JOptionPane.ERROR_MESSAGE);
 					}
+				} catch (Exception exception)
+				{
+					StackTraceUtils.handleException(rootPane, exception);
+				} finally
+				{
+					downloadCodeDatabaseButton.setText(buttonText);
+					downloadCodeDatabaseButton.setEnabled(true);
 				}
-			} else
-			{
-				JOptionPane.showMessageDialog(this,
-						"No codes found for " + gameId + " on " + codeDatabaseDownloader.getCodeDatabaseURL(),
-						"No codes",
-						JOptionPane.ERROR_MESSAGE);
+
+				return null;
 			}
-		} catch (Exception exception)
-		{
-			StackTraceUtils.handleException(rootPane, exception);
-		}
+		}.execute();
 	}
 
 	private void configureConnectionTab()
@@ -1391,17 +1430,23 @@ public class JGeckoUGUI extends JFrame
 		firmwareVersionButton.addActionListener(actionEvent ->
 		{
 			MemoryReader memoryReader = new MemoryReader();
-			int firmwareVersion = -1;
+			String firmwareVersion = "";
 
 			try
 			{
-				firmwareVersion = memoryReader.readFirmwareVersion();
+				firmwareVersion = Integer.toString(memoryReader.readFirmwareVersion());
+
+				// A "hack" to not confuse 551 users by a "wrong" firmware output
+				if (firmwareVersion.equals("550"))
+				{
+					firmwareVersion = "55X";
+				}
 			} catch (IOException exception)
 			{
 				StackTraceUtils.handleException(rootPane, exception);
 			}
 
-			// Display it to the user
+			// Display the message to the user
 			JOptionPane.showMessageDialog(rootPane,
 					"Wii U Firmware Version: " + firmwareVersion,
 					"Information",
@@ -1582,7 +1627,7 @@ public class JGeckoUGUI extends JFrame
 
 	private void addCodeListChangedListener()
 	{
-		codesListManager.getCodesListBoxes().addListSelectionListener(selectionEvent -> handleCodeListButtonAvailability());
+		codesListManager.getCodesJList().addListSelectionListener(selectionEvent -> handleCodeListButtonAvailability());
 	}
 
 	private void handleCodeListButtonAvailability()
@@ -1648,12 +1693,22 @@ public class JGeckoUGUI extends JFrame
 		{
 			CodeListEntry codeListEntry = addCodeDialog.getCodeListEntry();
 			codesListManager.addCodeListEntry(codeListEntry);
+
+			if (autoSaveCodeListCheckBox.isSelected())
+			{
+				storeCurrentCodeList(true);
+			}
 		}
 	}
 
 	private void deleteSelectedCodeListEntry()
 	{
 		codesListManager.deleteSelectedCodeListEntry(false);
+
+		if (autoSaveCodeListCheckBox.isSelected())
+		{
+			storeCurrentCodeList(true);
+		}
 	}
 
 	private void sendCodes()
@@ -1766,21 +1821,29 @@ public class JGeckoUGUI extends JFrame
 				codesListManager.deleteSelectedCodeListEntry(true);
 				codeListEntry = addCodeDialog.getCodeListEntry();
 				codesListManager.addCodeListEntry(codeListEntry, selected);
+
+				if (autoSaveCodeListCheckBox.isSelected())
+				{
+					storeCurrentCodeList(true);
+				}
 			}
 		}
 	}
 
-	private void storeCurrentCodeList()
+	private void storeCurrentCodeList(boolean silent)
 	{
 		try
 		{
 			List<GeckoCode> codes = codesListManager.getCodeListBackup();
 			String codeListFilePath = codesStorage.writeCodeList(codes);
 
-			JOptionPane.showMessageDialog(rootPane,
-					"Code list stored to " + codeListFilePath,
-					"Stored",
-					JOptionPane.INFORMATION_MESSAGE);
+			if (!silent)
+			{
+				JOptionPane.showMessageDialog(rootPane,
+						"Code list stored to " + codeListFilePath,
+						"Stored",
+						JOptionPane.INFORMATION_MESSAGE);
+			}
 		} catch (Exception exception)
 		{
 			StackTraceUtils.handleException(rootPane, exception);
@@ -2049,7 +2112,7 @@ public class JGeckoUGUI extends JFrame
 
 	private void setCodeListButtonsAvailability()
 	{
-		storeCodeListButton.setEnabled(codesStorage != null);
+		storeCodeListButton.setEnabled(codesStorage != null && !autoSaveCodeListCheckBox.isSelected());
 		exportCodeListButton.setEnabled(codesStorage != null);
 	}
 

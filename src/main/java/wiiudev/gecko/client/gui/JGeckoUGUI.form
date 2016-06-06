@@ -27,7 +27,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <grid id="6fa1e" layout-manager="GridLayoutManager" row-count="2" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="6fa1e" layout-manager="GridLayoutManager" row-count="3" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -104,7 +104,7 @@
                     </constraints>
                     <properties>
                       <enabled value="true"/>
-                      <text value="Store Code List"/>
+                      <text value="Save Code List"/>
                       <toolTipText value="Saves the whole cheat codes list"/>
                     </properties>
                   </component>
@@ -123,6 +123,17 @@
                     </constraints>
                     <properties>
                       <text value="Export Code List"/>
+                      <toolTipText value="Exports the code list in plain text format"/>
+                    </properties>
+                  </component>
+                  <component id="fdce" class="javax.swing.JCheckBox" binding="autoSaveCodeListCheckBox">
+                    <constraints>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <selected value="true"/>
+                      <text value="Auto Save"/>
+                      <toolTipText value="Automatically saves the code list when modified"/>
                     </properties>
                   </component>
                 </children>
@@ -906,6 +917,7 @@
               </grid>
             </constraints>
             <properties>
+              <horizontalAlignment value="0"/>
               <toolTipText value="The Wii U's IP addressExpression"/>
             </properties>
           </component>
