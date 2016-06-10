@@ -1813,7 +1813,7 @@ public class JGeckoUGUI extends JFrame
 		if (codeListEntry != null)
 		{
 			boolean selected = codesListManager.isSelectedCodeListEntryTicked();
-			AddCodeDialog addCodeDialog = new AddCodeDialog(codeListEntry);
+			AddCodeDialog addCodeDialog = new AddCodeDialog(codeListEntry, true);
 			addCodeDialog.display();
 
 			if (addCodeDialog.isConfirmed())
@@ -1862,7 +1862,7 @@ public class JGeckoUGUI extends JFrame
 			connectButton.setText(connectButtonText);
 			setTitle(programName);
 			handleConnectionButtonsAvailability();
-			codesListManager.clearCodeList();
+			// codesListManager.clearCodeList();
 		} catch (Exception ioException)
 		{
 			StackTraceUtils.handleException(rootPane, ioException);

@@ -28,13 +28,15 @@ public class AddCodeDialog extends JDialog
 	private JTextArea codeCommentField;
 	private JButton codeWizardButton;
 	private JScrollPane codeAreaScroller;
+	private boolean editMode;
 
 	private String codeTitle;
 	private String cheatCode;
 	private String comment;
 
-	public AddCodeDialog(CodeListEntry codeListEntry)
+	public AddCodeDialog(CodeListEntry codeListEntry, boolean editMode)
 	{
+		this.editMode = editMode;
 		codeArea.setDocument(new InputCapitalizer());
 		codeTitleField.setText(codeListEntry.getTitle());
 		codeArea.setText(codeListEntry.getCode());
@@ -92,7 +94,7 @@ public class AddCodeDialog extends JDialog
 
 	public AddCodeDialog()
 	{
-		this(new CodeListEntry("", "", ""));
+		this(new CodeListEntry("", "", ""), true);
 	}
 
 	private void validateCode()
@@ -146,7 +148,16 @@ public class AddCodeDialog extends JDialog
 	private void setDialogProperties()
 	{
 		setLocationRelativeTo(JGeckoUGUI.getInstance());
-		setTitle("Add code");
+
+		if(editMode)
+		{
+			setTitle("Edit Code");
+		}
+		else
+		{
+			setTitle("Add Code");
+		}
+
 		setSize(650, 500);
 		WindowUtilities.setIconImage(this);
 	}
