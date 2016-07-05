@@ -4,6 +4,7 @@ import org.apache.commons.io.FileUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
 import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSSerializer;
@@ -26,6 +27,14 @@ public class XMLHelper
 		String text = writer.getBuffer().toString();
 		text = XMLHelper.format(text);
 		writeFile(text, targetFilePath);
+	}
+
+	public static NodeList getNodesList(String filePath, String tagName) throws ParserConfigurationException, SAXException, IOException
+	{
+		File xmlFile = new File(filePath);
+		Document document = getDocument(xmlFile);
+
+		return document.getElementsByTagName(tagName);
 	}
 
 	public static void writeFile(String text, String targetFilePath) throws IOException

@@ -1,16 +1,18 @@
-import wiiudev.gecko.client.connector.Connector;
-import wiiudev.gecko.client.connector.MemoryWriter;
-
-import java.nio.file.Paths;
+import wiiudev.gecko.client.titles.Title;
+import wiiudev.gecko.client.titles.TitleDatabaseManager;
 
 public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
-		Connector.getInstance().connect("192.168.178.35");
+		TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
+		Title title = titleDatabaseManager.getTitle("00050000-10102000");
+		System.out.println(title.getGameId());
+
+		/*Connector.getInstance().connect("192.168.178.35");
 		MemoryWriter memoryWriter = new MemoryWriter();
 		memoryWriter.upload(0x3FD00000, Paths.get("binary.bin"));
-		Connector.getInstance().closeConnection();
+		Connector.getInstance().closeConnection();*/
 
 		// String waitingTime = MemoryReader.getExpectedWaitingTime(0x49000000 - 0x3A000000);
 		// System.out.println(waitingTime);
@@ -46,7 +48,7 @@ public class Testing
 
 		/*TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
 		titleDatabaseManager.restore();
-		Title title = titleDatabaseManager.getTitle("AGMP01");
+		Title title = titleDatabaseManager.getTitleFromGameId("AGMP01");
 		System.out.println(title.getTitleId().replace("-", ""));*/
 
 		// System.out.println();

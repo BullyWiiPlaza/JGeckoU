@@ -1185,7 +1185,7 @@ public class JGeckoUGUI extends JFrame
 					List<GeckoCode> downloadedCodes = codeDatabaseDownloader.getCodes();
 					int codesCount = downloadedCodes.size();
 					boolean codesExist = codesCount > 0;
-					Title title = titleDatabaseManager.getTitle(gameId);
+					Title title = titleDatabaseManager.getTitleFromGameId(gameId);
 					String gameName = title.getGameName();
 
 					if (codesExist)
@@ -2006,7 +2006,7 @@ public class JGeckoUGUI extends JFrame
 				updateCodeDatabaseDownloadButtonAvailability();
 			} else
 			{
-				title = titleDatabaseManager.getTitle(gameId);
+				title = titleDatabaseManager.getTitleFromGameId(gameId);
 			}
 
 			gameName = title.getGameName();
@@ -2029,7 +2029,7 @@ public class JGeckoUGUI extends JFrame
 				gameId = newGameDialog.getGameId();
 				gameName = newGameDialog.getGameName();
 
-				Title title = titleDatabaseManager.getTitle(gameId);
+				Title title = titleDatabaseManager.getTitleFromGameId(gameId);
 
 				if (title != null)
 				{

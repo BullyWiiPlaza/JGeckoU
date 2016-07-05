@@ -1,6 +1,7 @@
 package wiiudev.gecko.client.titles;
 
-import org.w3c.dom.Document;
+import org.jsoup.Jsoup;
+import org.jsoup.select.Elements;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -13,9 +14,13 @@ import javax.xml.stream.XMLStreamWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class TitleDatabaseManager
 {
@@ -33,11 +38,12 @@ public class TitleDatabaseManager
 		titleDatabase = Collections.synchronizedList(new LinkedList<>());
 		titleDatabaseFilePath = "Titles.xml";
 
-		if(new File(titleDatabaseFilePath).exists())
+		boolean titleDatabaseFileExists = new File(titleDatabaseFilePath).exists();
+
+		if (titleDatabaseFileExists)
 		{
 			restore();
-		}
-		else
+		} else
 		{
 			update();
 		}
@@ -49,43 +55,71 @@ public class TitleDatabaseManager
 	public Title getTitle() throws IOException
 	{
 		String dashedTitleId = TitleIdentifierUtilities.readDashedTitleId();
+		return getTitle(dashedTitleId);
+	}
 
-		for(Title currentTitle : titleDatabase)
+	public Title getTitle(String dashedTitleId)
+	{
+		for (Title currentTitle : titleDatabase)
 		{
-			if(currentTitle.getTitleId().equals(dashedTitleId))
+			if (currentTitle.getTitleId().equals(dashedTitleId))
 			{
 				return currentTitle;
 			}
 		}
 
-		throw new TitleNotFoundException("Title " + dashedTitleId + " not found!");
+		throw new TitleNotFoundException(dashedTitleId);
 	}
 
-	public Title getTitle(String gameId)
+	public Title getTitleFromGameId(String gameId)
 	{
+		int gameIdLength = gameId.length();
+
 		for (Title title : titleDatabase)
 		{
+			// Using title id as game id
+			if (gameIdLength == Title.TITLE_ID_DASHED_LENGTH)
+			{
+				String titleId = title.getTitleId();
+
+				if (titleId.endsWith(gameId))
+				{
+					return title;
+				}
+			}
+			// Using product code as game id
+			else if (gameIdLength == Title.PRODUCT_CODE_ID_LENGTH)
+			{
+				String productCode = title.getProductCode();
+
+				if (productCode.endsWith(gameId))
+				{
+					return title;
+				}
+			}
+
 			String productCode = title.getProductCode();
 
-			if(productCode.length() <= 4)
+			if (productCode.length() != Title.PRODUCT_CODE_FULL_LENGTH)
 			{
 				continue;
 			}
 
-			String productCodePart = productCode.substring(productCode.length() - 4);
+			String currentProductCodePart = productCode.substring(productCode.length() - Title.PRODUCT_CODE_ID_LENGTH);
+			String gameIdProductCodePart = gameId.substring(0, gameId.length() - Title.COMPANY_CODE_ID_LENGTH);
 
-			if (productCodePart.equals(gameId.substring(0, gameId.length() - 2)))
+			if (currentProductCodePart.equals(gameIdProductCodePart))
 			{
 				return title;
 			}
 		}
 
-		throw new TitleNotFoundException("Title not found for game id " + gameId + "!");
+		throw new TitleNotFoundException(gameId);
 	}
 
 	public void restore() throws IOException, SAXException, ParserConfigurationException
 	{
-		NodeList nodesList = getNodesList();
+		NodeList nodesList = XMLHelper.getNodesList(titleDatabaseFilePath, titleTagName);
 
 		for (int nodeIndex = 0; nodeIndex < nodesList.getLength(); nodeIndex++)
 		{
@@ -108,16 +142,57 @@ public class TitleDatabaseManager
 
 	public void update() throws Exception
 	{
-		TitleDatabaseUpdater.update(titleDatabase);
+		update(titleDatabase);
 		store();
 	}
 
-	private NodeList getNodesList() throws ParserConfigurationException, SAXException, IOException
+	/**
+	 * Parses and stores all Wii U game's title ids.
+	 * This method may take a while and slow down your computer
+	 *
+	 * @throws Exception
+	 */
+	public static void update(List<Title> titlesDatabase) throws Exception
 	{
-		File xmlFile = new File(titleDatabaseFilePath);
-		Document document = XMLHelper.getDocument(xmlFile);
+		titlesDatabase.clear();
+		int poolSize = Runtime.getRuntime().availableProcessors() * 2;
+		ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
+		List<Future<?>> tasks = new ArrayList<>();
 
-		return document.getElementsByTagName(titleTagName);
+		// Connect to the website and parse the table
+		String titleDatabaseURL = "http://wiiubrew.org/wiki/Title_database";
+		org.jsoup.nodes.Document titleDatabaseDocument = Jsoup.connect(titleDatabaseURL).get();
+		Elements titlesTable = titleDatabaseDocument.select("#mw-content-text > table:nth-child(16) > tbody");
+		Elements rows = titlesTable.select("tr");
+		int rowsCount = rows.size();
+
+		for (int rowsIndex = 1; rowsIndex < rowsCount; rowsIndex++)
+		{
+			org.jsoup.nodes.Element row = rows.get(rowsIndex);
+
+			// Parse each row multi-threaded
+			Future task = threadPool.submit(new Thread(() ->
+			{
+				int columnIndex = 0;
+				String titleId = row.child(columnIndex++).text();
+				String gameName = row.child(columnIndex++).text();
+				String productCode = row.child(columnIndex++).text();
+				String companyCode = row.child(columnIndex).text();
+
+				Title title = new Title(titleId, gameName, productCode, companyCode);
+				titlesDatabase.add(title);
+			}));
+
+			tasks.add(task);
+		}
+
+		// Wait for all tasks to finish
+		for (Future<?> task : tasks)
+		{
+			task.get();
+		}
+
+		threadPool.shutdownNow();
 	}
 
 	private void store() throws Exception

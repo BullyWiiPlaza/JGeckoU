@@ -7,6 +7,12 @@ public class Title
 	private String productCode;
 	private String companyCode;
 
+	public static int TITLE_ID_DASHED_LENGTH = 17;
+	public static int PRODUCT_CODE_ID_LENGTH = 4;
+	public static int PRODUCT_CODE_FULL_LENGTH = 10;
+	public static int COMPANY_CODE_LENGTH = 4;
+	public static int COMPANY_CODE_ID_LENGTH = 2;
+
 	public Title(String titleId, String gameName, String productCode, String companyCode)
 	{
 		this.titleId = titleId;
@@ -37,11 +43,27 @@ public class Title
 
 	public String getGameId()
 	{
-		int lastProductCodeIndex = productCode.length();
-		String productCodePart = productCode.substring(lastProductCodeIndex - 4, lastProductCodeIndex);
+		int productCodeLength = productCode.length();
+		String productCodePart = "";
 
-		int lastCompanyCodeIndex = companyCode.length();
-		String companyCodePart = companyCode.substring(lastCompanyCodeIndex - 2, lastCompanyCodeIndex);
+		if (productCodeLength == PRODUCT_CODE_FULL_LENGTH)
+		{
+			productCodePart = productCode.substring(productCodeLength - PRODUCT_CODE_ID_LENGTH);
+		}
+
+		int companyCodeLength = companyCode.length();
+		String companyCodePart = "";
+
+		// Only do this for valid company codes
+		if (companyCodeLength == COMPANY_CODE_LENGTH)
+		{
+			companyCodePart = companyCode.substring(companyCodeLength - COMPANY_CODE_ID_LENGTH);
+		}
+
+		if (productCodePart.equals("") && companyCodePart.equals(""))
+		{
+			return titleId;
+		}
 
 		return productCodePart + companyCodePart;
 	}
@@ -49,7 +71,8 @@ public class Title
 	public static String getTitleId(String gameId) throws Exception
 	{
 		TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
-		Title title = titleDatabaseManager.getTitle(gameId);
+		Title title = titleDatabaseManager.getTitleFromGameId(gameId);
+
 		return title.getTitleId().replace("-", "");
 	}
 }
