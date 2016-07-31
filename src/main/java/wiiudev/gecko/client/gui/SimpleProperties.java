@@ -6,7 +6,6 @@ import java.util.Properties;
 public class SimpleProperties
 {
 	private Properties properties;
-	private OutputStream propertiesWriter;
 	private String propertiesFileName;
 
 	public SimpleProperties()
@@ -36,7 +35,7 @@ public class SimpleProperties
 	{
 		try
 		{
-			propertiesWriter = new FileOutputStream(propertiesFileName);
+			OutputStream propertiesWriter = new FileOutputStream(propertiesFileName);
 			properties.store(propertiesWriter, null);
 		} catch (IOException exception)
 		{

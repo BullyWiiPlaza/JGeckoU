@@ -7,16 +7,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ByteUtilities
+class ByteUtilities
 {
-	public static List<byte[]> readPartitionedBytes(Path sourcePath, int chunkSize) throws IOException
+	static List<byte[]> readPartitionedBytes(Path sourcePath, int chunkSize) throws IOException
 	{
 		byte[] fileBytes = Files.readAllBytes(sourcePath);
 
 		return partition(fileBytes, chunkSize);
 	}
 
-	public static List<byte[]> partition(byte[] bytes, int chunkSize)
+	static List<byte[]> partition(byte[] bytes, int chunkSize)
 	{
 		List<byte[]> byteArrayChunks = new ArrayList<>();
 		int startingIndex = 0;

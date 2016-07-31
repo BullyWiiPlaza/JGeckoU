@@ -16,7 +16,7 @@ public class AddressRange
 	 * @param address     The starting address
 	 * @param length      The request length
 	 * @param memoryAccessLevel The memoryAccessLevel level
-	 * @return Whether the request is valid OR not
+	 * @return Whether the request is valid or not
 	 */
 	public static boolean isValidAccess(int address, int length, MemoryAccessLevel memoryAccessLevel)
 	{

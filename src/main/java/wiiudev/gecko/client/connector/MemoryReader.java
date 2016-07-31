@@ -11,8 +11,6 @@ import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A class for reading data from the memory based on the {@link Connector} class
@@ -171,36 +169,35 @@ public class MemoryReader extends SocketCommunication
 	 * @param address    The address to start dumping memory at
 	 * @param bytesCount The amount of bytes to dump
 	 * @param targetFile The file to store the data to
-	 * @throws IOException
 	 */
 	public void dump(int address, int bytesCount, File targetFile) throws IOException
 	{
 		reentrantLock.lock();
 
+		int startingBytesCount = bytesCount;
+		int bytesDumped = 0;
+
 		try
 		{
-
-			List<byte[]> retrievedByteChunks = new ArrayList<>();
+			// Delete the target file before dumping into it
+			FileUtils.deleteQuietly(targetFile);
 
 			// Read in chunks
 			while (bytesCount > MAXIMUM_MEMORY_CHUNK_SIZE)
 			{
 				byte[] retrievedBytes = readBytes(address, MAXIMUM_MEMORY_CHUNK_SIZE);
-				retrievedByteChunks.add(retrievedBytes);
+				FileUtils.writeByteArrayToFile(targetFile, retrievedBytes, true);
 
 				bytesCount -= MAXIMUM_MEMORY_CHUNK_SIZE;
 				address += MAXIMUM_MEMORY_CHUNK_SIZE;
+				bytesDumped += MAXIMUM_MEMORY_CHUNK_SIZE;
+				System.out.println("Dumped: " + (double) bytesDumped/startingBytesCount);
 			}
 
-			// Read the rest
-			retrievedByteChunks.add(readBytes(address, bytesCount));
-
-			FileUtils.deleteQuietly(targetFile);
-
-			// Write all chunks to the file
-			for (byte[] retrievedByteChunk : retrievedByteChunks)
+			if(bytesCount <= MAXIMUM_MEMORY_CHUNK_SIZE)
 			{
-				FileUtils.writeByteArrayToFile(targetFile, retrievedByteChunk, true);
+				byte[] retrievedBytes = readBytes(address, bytesCount);
+				FileUtils.writeByteArrayToFile(targetFile, retrievedBytes, true);
 			}
 		} finally
 		{
@@ -259,7 +256,6 @@ public class MemoryReader extends SocketCommunication
 	 * @param address The address to start reading memory from
 	 * @param length  The amount of bytes to read
 	 * @return A byte array containing all read bytes
-	 * @throws IOException
 	 */
 	public byte[] readBytes(int address, int length) throws IOException
 	{
@@ -287,11 +283,6 @@ public class MemoryReader extends SocketCommunication
 		{
 			reentrantLock.unlock();
 		}
-	}
-
-	public boolean isRunning() throws IOException
-	{
-		return readStatus() == Status.RUNNING;
 	}
 
 	public static String getExpectedWaitingTime(int bytesCount)

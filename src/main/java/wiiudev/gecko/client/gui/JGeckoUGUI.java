@@ -18,7 +18,6 @@ import wiiudev.gecko.client.gui.code_list.CodesListManager;
 import wiiudev.gecko.client.gui.inputFilter.HexadecimalInputFilter;
 import wiiudev.gecko.client.gui.inputFilter.InputLengthFilter;
 import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
-import wiiudev.gecko.client.gui.utilities.Benchmark;
 import wiiudev.gecko.client.gui.utilities.DefaultContextMenu;
 import wiiudev.gecko.client.gui.utilities.JFileChooserUtilities;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
@@ -122,6 +121,8 @@ public class JGeckoUGUI extends JFrame
 	private JButton hexEditorButton;
 	private JPanel dumpingTab;
 	private JCheckBox autoSaveCodeListCheckBox;
+	private JProgressBar memoryDumpingProgressBar;
+	private JPanel searchTab;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -149,6 +150,7 @@ public class JGeckoUGUI extends JFrame
 		configureMemoryViewerTab();
 		configureConversionsTab();
 		configureWatchListTab();
+		removeSearchTab();
 		configureMemoryDumpingTab();
 		configureAboutTab();
 		restorePersistentSettings();
@@ -156,7 +158,12 @@ public class JGeckoUGUI extends JFrame
 		// disconnectWhenServerDied();
 	}
 
-	private void disconnectWhenServerDied()
+	private void removeSearchTab()
+	{
+		tabs.remove(searchTab);
+	}
+
+	/*private void disconnectWhenServerDied()
 	{
 		new Thread(() ->
 		{
@@ -187,7 +194,7 @@ public class JGeckoUGUI extends JFrame
 				}
 			}
 		}).start();
-	}
+	}*/
 
 	public void selectDumpingTab()
 	{
@@ -460,11 +467,15 @@ public class JGeckoUGUI extends JFrame
 	{
 		Runtime.getRuntime().addShutdownHook(new Thread(() ->
 		{
+			simpleProperties.put("SELECTED_TAB_INDEX", tabs.getSelectedIndex() + "");
 			simpleProperties.put("AUTO_DETECT", String.valueOf(autoDetectCheckBox.isSelected()));
 			simpleProperties.put("AUTO_SAVE_CODES", String.valueOf(autoSaveCodeListCheckBox.isSelected()));
 			simpleProperties.put("MEMORY_VIEWER_ADDRESS", memoryViewerAddressField.getText());
 			simpleProperties.put("IP_ADDRESS", ipAddressField.getText());
 			simpleProperties.put("WATCH_LIST_UPDATE_DELAY", watchListUpdateDelaySpinner.getValue().toString());
+			simpleProperties.put("DUMPING_START_ADDRESS", dumpStartingAddressField.getText());
+			simpleProperties.put("DUMPING_END_ADDRESS", dumpEndingAddressField.getText());
+			simpleProperties.put("DUMPING_FILE_PATH", dumpFilePathField.getText());
 			simpleProperties.writeToFile();
 		}));
 	}
@@ -472,6 +483,17 @@ public class JGeckoUGUI extends JFrame
 	private void restorePersistentSettings()
 	{
 		simpleProperties = new SimpleProperties();
+
+		String tab = simpleProperties.get("SELECTED_TAB_INDEX");
+
+		if (tab != null)
+		{
+			int tabIndex = Integer.parseInt(tab);
+			if (tabIndex > 0 && tabIndex < tabs.getComponents().length)
+			{
+				tabs.setSelectedIndex(tabIndex);
+			}
+		}
 
 		String autoDetectString = simpleProperties.get("AUTO_DETECT");
 		if (autoDetectString != null)
@@ -503,6 +525,24 @@ public class JGeckoUGUI extends JFrame
 		if (updateDelay != null)
 		{
 			watchListUpdateDelaySpinner.setValue(Integer.parseInt(updateDelay));
+		}
+
+		String dumpStartingAddress = simpleProperties.get("DUMPING_START_ADDRESS");
+		if (dumpStartingAddress != null)
+		{
+			dumpStartingAddressField.setText(dumpStartingAddress);
+		}
+
+		String dumpEndAddress = simpleProperties.get("DUMPING_END_ADDRESS");
+		if (dumpEndAddress != null)
+		{
+			dumpEndingAddressField.setText(dumpEndAddress);
+		}
+
+		String dumpFilePath = simpleProperties.get("DUMPING_FILE_PATH");
+		if (dumpFilePath != null)
+		{
+			dumpFilePathField.setText(dumpFilePath);
 		}
 	}
 
@@ -712,6 +752,8 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
+		memoryDumpingProgressBar.setStringPainted(true);
+
 		dumpMemoryButton.addActionListener(actionEvent ->
 		{
 			int startingAddress = Integer.parseInt(dumpStartingAddressField.getText(), 16);
@@ -727,7 +769,14 @@ public class JGeckoUGUI extends JFrame
 
 			if (selectedAnswer == JOptionPane.YES_OPTION)
 			{
-				new SwingWorker<String, String>()
+				String targetFilePath = dumpFilePathField.getText();
+				String dumpText = dumpMemoryButton.getText();
+				File targetFile = new File(targetFilePath);
+
+				GraphicalMemoryDumper graphicalMemoryDumper = new GraphicalMemoryDumper(startingAddress, length, targetFile, memoryDumpingProgressBar, dumpMemoryButton);
+				graphicalMemoryDumper.dumpMemory();
+
+				/*new SwingWorker<String, String>()
 				{
 					@Override
 					protected String doInBackground() throws Exception
@@ -761,7 +810,7 @@ public class JGeckoUGUI extends JFrame
 
 						return null;
 					}
-				}.execute();
+				}.execute();*/
 			}
 		});
 
@@ -771,6 +820,15 @@ public class JGeckoUGUI extends JFrame
 			fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			String applicationDirectory = System.getProperty("user.dir");
 			fileChooser.setCurrentDirectory(new File(applicationDirectory));
+
+			String chosenFile = dumpFilePathField.getText();
+
+			if (!chosenFile.equals(""))
+			{
+				File chosen = new File(chosenFile);
+				fileChooser.setCurrentDirectory(chosen.getParentFile());
+			}
+
 			JFileChooserUtilities.registerDeleteAction(fileChooser);
 			int selectedOption = fileChooser.showSaveDialog(rootPane);
 
@@ -1245,7 +1303,7 @@ public class JGeckoUGUI extends JFrame
 		addIPAddressDocumentListener();
 		new DefaultContextMenu().addTo(ipAddressField);
 		connectButton.addActionListener(actionEvent -> connect());
-		autoDetectCheckBox.addActionListener(actionEvent -> handleConnectionButtonsAvailability());
+		autoDetectCheckBox.addActionListener(actionEvent -> setConnectionButtonsAvailability());
 		reconnectButton.addActionListener(actionEvent -> reconnect());
 		disconnectButton.addActionListener(actionEvent -> disconnect());
 		updateGameTitlesButton.addActionListener(actionEvent -> updateGameTitles());
@@ -1253,7 +1311,7 @@ public class JGeckoUGUI extends JFrame
 		addFirmwareVersionButtonListener();
 		codesListManager = new CodesListManager(codesListBoxes, rootPane);
 		codesListManager.addCodeListEntryClickedListener();
-		handleConnectionButtonsAvailability();
+		setConnectionButtonsAvailability();
 	}
 
 	private void initializeGameTitlesDatabaseConcurrently()
@@ -1265,7 +1323,7 @@ public class JGeckoUGUI extends JFrame
 			{
 				// titleDatabaseManager.populateTitles();
 				titlesInitialized = true;
-				handleConnectionButtonsAvailability();
+				setConnectionButtonsAvailability();
 
 				return null;
 			}
@@ -1312,7 +1370,7 @@ public class JGeckoUGUI extends JFrame
 
 			if (connected)
 			{
-				String memoryAddress = Conversions.decimalToHexadecimal(Integer.toString(memoryViewerTableManager.getSelectedAddress()));
+				String memoryAddress = Conversions.toHexadecimal(memoryViewerTableManager.getSelectedAddress());
 				memoryViewerAddressField.setText(memoryAddress);
 			}
 		}
@@ -1861,7 +1919,7 @@ public class JGeckoUGUI extends JFrame
 			connected = false;
 			connectButton.setText(connectButtonText);
 			setTitle(programName);
-			handleConnectionButtonsAvailability();
+			setConnectionButtonsAvailability();
 			// codesListManager.clearCodeList();
 		} catch (Exception ioException)
 		{
@@ -1882,7 +1940,7 @@ public class JGeckoUGUI extends JFrame
 				tabs.setEnabled(false);
 				connectButton.setText("Connecting...");
 				connecting = true;
-				handleConnectionButtonsAvailability();
+				setConnectionButtonsAvailability();
 
 				try
 				{
@@ -1917,7 +1975,7 @@ public class JGeckoUGUI extends JFrame
 				{
 					tabs.setEnabled(true);
 					connecting = false;
-					handleConnectionButtonsAvailability();
+					setConnectionButtonsAvailability();
 				}
 
 				return null;
@@ -2055,19 +2113,19 @@ public class JGeckoUGUI extends JFrame
 			@Override
 			public void insertUpdate(DocumentEvent documentEvent)
 			{
-				handleConnectionButtonsAvailability();
+				setConnectionButtonsAvailability();
 			}
 
 			@Override
 			public void removeUpdate(DocumentEvent documentEvent)
 			{
-				handleConnectionButtonsAvailability();
+				setConnectionButtonsAvailability();
 			}
 
 			@Override
 			public void changedUpdate(DocumentEvent documentEvent)
 			{
-				handleConnectionButtonsAvailability();
+				setConnectionButtonsAvailability();
 			}
 		});
 	}
@@ -2075,7 +2133,7 @@ public class JGeckoUGUI extends JFrame
 	/**
 	 * Contains the logic for the availability of buttons and field on the connect tab
 	 */
-	private void handleConnectionButtonsAvailability()
+	private void setConnectionButtonsAvailability()
 	{
 		String inputtedIPAddress = ipAddressField.getText();
 		boolean isValidIPAddress = IPAddressValidator.validateIPv4Address(inputtedIPAddress);

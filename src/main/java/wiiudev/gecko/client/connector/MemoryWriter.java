@@ -19,7 +19,6 @@ public class MemoryWriter extends SocketCommunication
 	 * @param address The address to ASSIGN to
 	 * @param value   The value to ASSIGN
 	 * @param command The {@link Commands} to execute
-	 * @throws IOException
 	 */
 	private void sendWriteCommand(int address, int value, Commands command) throws IOException
 	{
@@ -201,7 +200,6 @@ public class MemoryWriter extends SocketCommunication
 	 *
 	 * @param address    The address to write to
 	 * @param sourcePath The file to write
-	 * @throws IOException
 	 */
 	public void upload(int address, Path sourcePath) throws IOException
 	{
@@ -211,25 +209,31 @@ public class MemoryWriter extends SocketCommunication
 
 	private void writePartitionedBytes(int address, List<byte[]> partitionedBytes) throws IOException
 	{
+		for (byte[] bytesChunk : partitionedBytes)
+		{
+			// The end address is the next starting address
+			address = uploadBytes(address, bytesChunk);
+		}
+	}
+
+	private int uploadBytes(int start, byte[] bytes) throws IOException
+	{
 		reentrantLock.lock();
 
 		try
 		{
-			for (byte[] bytesChunk : partitionedBytes)
-			{
-				sendCommand(Commands.MEMORY_UPLOAD);
-				dataSender.writeInt(address);
-				int endAddress = address + bytesChunk.length;
-				dataSender.writeInt(endAddress);
-				dataSender.write(bytesChunk);
-				dataSender.flush();
+			AddressRange.assertValidAccess(start, bytes.length, MemoryAccessLevel.WRITE);
+			int end = start + bytes.length;
+			sendCommand(Commands.MEMORY_UPLOAD);
+			dataSender.writeInt(start);
+			dataSender.writeInt(end);
+			dataSender.write(bytes);
+			dataSender.flush();
 
-				// No need to check the status, but we need to read it at least
-				readStatus();
+			// No need to check the status,but we need to read it at least
+			readStatus();
 
-				// The end address is the next starting address
-				address = endAddress;
-			}
+			return end;
 		} finally
 		{
 			reentrantLock.unlock();

@@ -4,16 +4,13 @@ import javax.swing.*;
 
 public class JGeckoULauncher
 {
-	// TODO Auto-save codes list
-	// TODO Do not clear code list on disconnect
 	// TODO Get symbol and call symbol
 	// TODO File system access (extract and replace)
 	// TODO Search tab
-	// TODO Memory viewer right-click dump memory
 	// TODO Move up and down buttons for codes and watch list
 	// TODO When code or watch modified, put it back at its original spot
 	// TODO Copy buttons for add and modify code to reduce redundancy
-	// TODO Watch list fix random deadlock (bigger memory dumps getting stuck)
+	// TODO Watch list "random" deadlock when updating?
 	/*
 		// Process returned data
 		Status status = readStatus();
@@ -36,9 +33,8 @@ public class JGeckoULauncher
 	*/
 	// TODO Watch list ASSIGN [0xADDRESS] = 0xVALUE for the retrieved value
 	// TODO Finish code wizard fix input availability for new code types fully
-	// TODO Only toggle checkbox when clicked on that checkbox
-	// TODO Add connection tab to the bottom of the GUI on every tab
-	// TODO Keeping checking if the server is still alive and disconnect if not
+	// TODO Only toggle cheat code checkbox when clicked on that checkbox
+	// TODO Keep checking if the server is still alive and disconnect if not
 	// TODO Combine connect and disconnect button into one
 	public static void main(String[] arguments) throws Exception
 	{
