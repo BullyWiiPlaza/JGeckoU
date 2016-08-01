@@ -7,10 +7,11 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public abstract class SocketCommunication
 {
-	protected DataOutputStream dataSender;
-	protected DataInputStream dataReceiver;
-	protected static final ReentrantLock reentrantLock = new ReentrantLock(true);
+	DataOutputStream dataSender;
+	DataInputStream dataReceiver;
+	static final ReentrantLock reentrantLock = new ReentrantLock(true);
 	public static final int MAXIMUM_MEMORY_CHUNK_SIZE = 0x400;
+	public static boolean enforceMemoryAccessProtection = true;
 
 	public SocketCommunication()
 	{

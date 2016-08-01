@@ -4,7 +4,9 @@ import wiiudev.gecko.client.connector.utilities.Hexadecimal;
 
 public enum ValueSize
 {
-	eight_bit(0x00, "8-Bit"), sixteen_bit(0x01, "16-Bit"), thirty_two_bit(0x02, "32-Bit");
+	EIGHT_BIT(0x00, "8-Bit"),
+	SIXTEEN_BIT(0x01, "16-Bit"),
+	THIRTY_TWO_BIT(0x02, "32-Bit");
 
 	private short value;
 	private String text;

@@ -16,8 +16,8 @@ public class MemoryWriter extends SocketCommunication
 	/**
 	 * Sends <code>command</code> to the server followed by the <code>address</code> AND <code>value</code> to ASSIGN
 	 *
-	 * @param address The address to ASSIGN to
-	 * @param value   The value to ASSIGN
+	 * @param address The address to write to
+	 * @param value   The value to write
 	 * @param command The {@link Commands} to execute
 	 */
 	private void sendWriteCommand(int address, int value, Commands command) throws IOException
@@ -42,9 +42,8 @@ public class MemoryWriter extends SocketCommunication
 	/**
 	 * Writes an 8-bit <code>value</code> to the memory starting at <code>address</code>
 	 *
-	 * @param address The address to ASSIGN to
-	 * @param value   The value to ASSIGN
-	 * @throws IOException
+	 * @param address The address to write to
+	 * @param value   The value to write
 	 */
 	public void write(int address, byte value) throws IOException
 	{
@@ -62,9 +61,8 @@ public class MemoryWriter extends SocketCommunication
 	/**
 	 * Writes a 16-bit <code>value</code> to the memory starting at <code>address</code>
 	 *
-	 * @param address The address to ASSIGN to
-	 * @param value   The value to ASSIGN
-	 * @throws IOException
+	 * @param address The address to write to
+	 * @param value   The value to write
 	 */
 	public void writeShort(int address, short value) throws IOException
 	{
@@ -82,9 +80,8 @@ public class MemoryWriter extends SocketCommunication
 	/**
 	 * Writes a 32-bit <code>value</code> to the memory starting at <code>address</code>
 	 *
-	 * @param address The address to ASSIGN to
-	 * @param value   The value to ASSIGN
-	 * @throws IOException
+	 * @param address The address to write to
+	 * @param value   The value to write
 	 */
 	public void writeInt(int address, int value) throws IOException
 	{
@@ -102,9 +99,8 @@ public class MemoryWriter extends SocketCommunication
 	/**
 	 * Writes a 32-bit <code>value</code> to the memory starting at <code>address</code>
 	 *
-	 * @param address The address to ASSIGN to
-	 * @param value   The value to ASSIGN
-	 * @throws IOException
+	 * @param address The address to write to
+	 * @param value   The value to write
 	 */
 	public void writeBoolean(int address, boolean value) throws IOException
 	{
@@ -123,9 +119,8 @@ public class MemoryWriter extends SocketCommunication
 	/**
 	 * Writes a 32-bit <code>value</code> to the memory starting at <code>address</code>
 	 *
-	 * @param address The address to ASSIGN to
-	 * @param value   The value to ASSIGN
-	 * @throws IOException
+	 * @param address The address to write to
+	 * @param value   The value to write
 	 */
 	public void writeFloat(int address, float value) throws IOException
 	{
@@ -144,9 +139,8 @@ public class MemoryWriter extends SocketCommunication
 	/**
 	 * Writes a null-terminated String <code>value</code> to the memory starting at <code>address</code>
 	 *
-	 * @param address The address to ASSIGN to
-	 * @param value   The value to ASSIGN
-	 * @throws IOException
+	 * @param address The address to write to
+	 * @param value   The value to write
 	 */
 	public void writeString(int address, String value) throws IOException
 	{
@@ -173,26 +167,17 @@ public class MemoryWriter extends SocketCommunication
 	 * @param address       The address to write to
 	 * @param value         The value to write
 	 * @param maximumLength The value's maximum allowed amount of characters
-	 * @throws IOException
 	 */
 	public void writeString(int address, String value, int maximumLength) throws IOException
 	{
-		reentrantLock.lock();
+		int valueLength = value.length();
 
-		try
+		if (valueLength > maximumLength)
 		{
-			int valueLength = value.length();
-
-			if (valueLength > maximumLength)
-			{
-				throw new IllegalArgumentException("The text's length is " + valueLength + " but may not exceed " + maximumLength + " characters!");
-			}
-
-			writeString(address, value);
-		} finally
-		{
-			reentrantLock.unlock();
+			throw new IllegalArgumentException("The text's length is " + valueLength + " but may not exceed " + maximumLength + " characters!");
 		}
+
+		writeString(address, value);
 	}
 
 	/**
@@ -245,7 +230,6 @@ public class MemoryWriter extends SocketCommunication
 	 *
 	 * @param address The address to write to
 	 * @param bytes   The value to write
-	 * @throws IOException
 	 */
 	public void writeBytes(int address, byte[] bytes) throws IOException
 	{

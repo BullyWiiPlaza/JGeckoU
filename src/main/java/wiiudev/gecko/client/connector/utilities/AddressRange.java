@@ -1,5 +1,7 @@
 package wiiudev.gecko.client.connector.utilities;
 
+import wiiudev.gecko.client.connector.SocketCommunication;
+
 public class AddressRange
 {
 	public static void assertValidAccess(int address, int length, MemoryAccessLevel memoryAccessLevel)
@@ -20,6 +22,11 @@ public class AddressRange
 	 */
 	public static boolean isValidAccess(int address, int length, MemoryAccessLevel memoryAccessLevel)
 	{
+		if(!SocketCommunication.enforceMemoryAccessProtection)
+		{
+			return true;
+		}
+
 		int endAddress = address + length;
 
 		if (isInRange(address, endAddress, new MemoryRange(0x01000000, 0x01800000)))

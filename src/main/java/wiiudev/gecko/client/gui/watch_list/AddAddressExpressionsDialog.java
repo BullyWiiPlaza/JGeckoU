@@ -67,7 +67,7 @@ public class AddAddressExpressionsDialog extends JDialog
 			for (int addressExpressionsIndex = 0; addressExpressionsIndex < addressExpressionsArray.length; addressExpressionsIndex++)
 			{
 				String addressExpression = addressExpressionsArray[addressExpressionsIndex];
-				WatchListElement watchListElement = new WatchListElement("#" + (addressExpressionsIndex + 1), new MemoryPointerExpression(addressExpression), ValueSize.thirty_two_bit);
+				WatchListElement watchListElement = new WatchListElement("#" + (addressExpressionsIndex + 1), new MemoryPointerExpression(addressExpression), ValueSize.THIRTY_TWO_BIT);
 				watchListElements.add(watchListElement);
 			}
 

@@ -65,7 +65,7 @@ public class CodeWizardDialog extends JDialog
 
 		DefaultComboBoxModel<ValueSize> valueSizeDefaultComboBoxModel = new DefaultComboBoxModel<>(ValueSize.values());
 		valueSizeSelection.setModel(valueSizeDefaultComboBoxModel);
-		valueSizeSelection.setSelectedItem(ValueSize.thirty_two_bit);
+		valueSizeSelection.setSelectedItem(ValueSize.THIRTY_TWO_BIT);
 
 		HexadecimalInputFilter.addHexadecimalInputFilter(addressField);
 
@@ -163,7 +163,7 @@ public class CodeWizardDialog extends JDialog
 
 					codeTypeSelection.setSelectedItem(CodeTypes.ram_write);
 					pointerSelection.setSelectedItem(offsetsCount == 1 ? Pointer.pointer : Pointer.pointer_in_pointer);
-					valueSizeSelection.setSelectedItem(ValueSize.thirty_two_bit);
+					valueSizeSelection.setSelectedItem(ValueSize.THIRTY_TWO_BIT);
 					pointerOffsetField.setText(Integer.toHexString(offsets[0]).toUpperCase());
 
 					if (offsetsCount == 2)
@@ -349,15 +349,15 @@ public class CodeWizardDialog extends JDialog
 
 		switch ((ValueSize) valueSizeSelection.getSelectedItem())
 		{
-			case eight_bit:
+			case EIGHT_BIT:
 				valueSize = 2;
 				break;
 
-			case sixteen_bit:
+			case SIXTEEN_BIT:
 				valueSize = 4;
 				break;
 
-			case thirty_two_bit:
+			case THIRTY_TWO_BIT:
 				valueSize = 8;
 				break;
 

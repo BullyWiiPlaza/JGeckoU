@@ -4,11 +4,9 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.SystemUtils;
 import wiiudev.gecko.client.ValueOperations;
 import wiiudev.gecko.client.codes.*;
-import wiiudev.gecko.client.connector.Connector;
-import wiiudev.gecko.client.connector.IPAddressValidator;
-import wiiudev.gecko.client.connector.MemoryReader;
-import wiiudev.gecko.client.connector.MemoryWriter;
+import wiiudev.gecko.client.connector.*;
 import wiiudev.gecko.client.connector.utilities.AddressRange;
+import wiiudev.gecko.client.connector.utilities.Hexadecimal;
 import wiiudev.gecko.client.connector.utilities.MemoryAccessLevel;
 import wiiudev.gecko.client.conversion.ConversionType;
 import wiiudev.gecko.client.conversion.Conversions;
@@ -123,6 +121,10 @@ public class JGeckoUGUI extends JFrame
 	private JCheckBox autoSaveCodeListCheckBox;
 	private JProgressBar memoryDumpingProgressBar;
 	private JPanel searchTab;
+	private JCheckBox memoryAddressProtectionCheckBox;
+	private JButton convertEffectiveToPhysicalButton;
+	private JButton displayFatalErrorMessageButton;
+	private JButton remoteProcedureCallButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -150,12 +152,80 @@ public class JGeckoUGUI extends JFrame
 		configureMemoryViewerTab();
 		configureConversionsTab();
 		configureWatchListTab();
-		removeSearchTab();
 		configureMemoryDumpingTab();
+		removeSearchTab();
+		configureMiscellaneousTab();
 		configureAboutTab();
+
 		restorePersistentSettings();
 		addSettingsBackupShutdownHook();
+
 		// disconnectWhenServerDied();
+
+		displayFatalErrorMessageButton.addActionListener(actionEvent ->
+		{
+			String suppliedInput = JOptionPane.showInputDialog(this,
+					"Please enter the message to display on-screen:",
+					"OSFatal",
+					JOptionPane.INFORMATION_MESSAGE);
+
+			if (suppliedInput != null)
+			{
+				try
+				{
+					MemoryReader memoryReader = new MemoryReader();
+					memoryReader.displayFatalErrorMessage(suppliedInput);
+				} catch (Exception exception)
+				{
+					StackTraceUtils.handleException(rootPane, exception);
+				}
+			}
+		});
+
+		displayFatalErrorMessageButton.setVisible(false);
+
+		convertEffectiveToPhysicalButton.addActionListener(actionEvent ->
+		{
+			String suppliedInput = JOptionPane.showInputDialog(this,
+					"Please enter the effective address to convert:",
+					"OSEffectiveToPhysical",
+					JOptionPane.INFORMATION_MESSAGE);
+
+			if (suppliedInput != null)
+			{
+				try
+				{
+					int address = Integer.parseInt(suppliedInput, 16);
+					MemoryReader memoryReader = new MemoryReader();
+					int physical = memoryReader.getEffectiveToPhysical(address);
+
+					JOptionPane.showMessageDialog(this,
+							"0x" + new Hexadecimal(physical, 8),
+							"Procedure Call Result",
+							JOptionPane.INFORMATION_MESSAGE);
+				} catch (Exception exception)
+				{
+					StackTraceUtils.handleException(rootPane, exception);
+				}
+			}
+		});
+
+		remoteProcedureCallButton.addActionListener(actionEvent ->
+		{
+			RemoteProcedureCallDialog remoteProcedureCallDialog = new RemoteProcedureCallDialog();
+			remoteProcedureCallDialog.setTitle(remoteProcedureCallButton.getText());
+			remoteProcedureCallDialog.setLocationRelativeTo(rootPane);
+			remoteProcedureCallDialog.setVisible(true);
+		});
+	}
+
+	private void configureMiscellaneousTab()
+	{
+		addFirmwareVersionButtonListener();
+		updateGameTitlesButton.addActionListener(actionEvent -> updateGameTitles());
+
+		memoryAddressProtectionCheckBox.addChangeListener(changeEvent ->
+				SocketCommunication.enforceMemoryAccessProtection = memoryAddressProtectionCheckBox.isSelected());
 	}
 
 	private void removeSearchTab()
@@ -468,11 +538,11 @@ public class JGeckoUGUI extends JFrame
 		Runtime.getRuntime().addShutdownHook(new Thread(() ->
 		{
 			simpleProperties.put("SELECTED_TAB_INDEX", tabs.getSelectedIndex() + "");
-			simpleProperties.put("AUTO_DETECT", String.valueOf(autoDetectCheckBox.isSelected()));
+			simpleProperties.put("IP_ADDRESS_AUTO_DETECT", String.valueOf(autoDetectCheckBox.isSelected()));
 			simpleProperties.put("AUTO_SAVE_CODES", String.valueOf(autoSaveCodeListCheckBox.isSelected()));
 			simpleProperties.put("MEMORY_VIEWER_ADDRESS", memoryViewerAddressField.getText());
 			simpleProperties.put("IP_ADDRESS", ipAddressField.getText());
-			simpleProperties.put("WATCH_LIST_UPDATE_DELAY", watchListUpdateDelaySpinner.getValue().toString());
+			simpleProperties.put("WATCH_LIST_UPDATE_DELAY_SECONDS", watchListUpdateDelaySpinner.getValue().toString());
 			simpleProperties.put("DUMPING_START_ADDRESS", dumpStartingAddressField.getText());
 			simpleProperties.put("DUMPING_END_ADDRESS", dumpEndingAddressField.getText());
 			simpleProperties.put("DUMPING_FILE_PATH", dumpFilePathField.getText());
@@ -495,7 +565,7 @@ public class JGeckoUGUI extends JFrame
 			}
 		}
 
-		String autoDetectString = simpleProperties.get("AUTO_DETECT");
+		String autoDetectString = simpleProperties.get("IP_ADDRESS_AUTO_DETECT");
 		if (autoDetectString != null)
 		{
 			boolean autoDetect = Boolean.parseBoolean(autoDetectString);
@@ -521,7 +591,7 @@ public class JGeckoUGUI extends JFrame
 			memoryViewerAddressField.setText(memoryViewerAddress);
 		}
 
-		String updateDelay = simpleProperties.get("WATCH_LIST_UPDATE_DELAY");
+		String updateDelay = simpleProperties.get("WATCH_LIST_UPDATE_DELAY_SECONDS");
 		if (updateDelay != null)
 		{
 			watchListUpdateDelaySpinner.setValue(Integer.parseInt(updateDelay));
@@ -550,7 +620,7 @@ public class JGeckoUGUI extends JFrame
 	{
 		powerPCAssemblyCompilerButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/PowerPC-Assembly-Compiler/blob/master/PowerPC-Assembly-Compiler.jar?raw=true", actionEvent));
 		pointerSearchApplicationButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/Universal-Pointer-Searcher/blob/master/Universal-Pointer-Searcher.jar?raw=true", actionEvent));
-		hexEditorButton.setEnabled(SystemUtils.IS_OS_WINDOWS); // So far Windows only
+		hexEditorButton.setVisible(SystemUtils.IS_OS_WINDOWS); // So far Windows only
 		hexEditorButton.addActionListener(actionEvent -> downloadAndExecuteHexEditor());
 	}
 
@@ -1306,11 +1376,10 @@ public class JGeckoUGUI extends JFrame
 		autoDetectCheckBox.addActionListener(actionEvent -> setConnectionButtonsAvailability());
 		reconnectButton.addActionListener(actionEvent -> reconnect());
 		disconnectButton.addActionListener(actionEvent -> disconnect());
-		updateGameTitlesButton.addActionListener(actionEvent -> updateGameTitles());
 		connectionHelpButton.addActionListener(actionEvent -> displayConnectionHelperMessage());
-		addFirmwareVersionButtonListener();
 		codesListManager = new CodesListManager(codesListBoxes, rootPane);
 		codesListManager.addCodeListEntryClickedListener();
+
 		setConnectionButtonsAvailability();
 	}
 
@@ -2157,6 +2226,9 @@ public class JGeckoUGUI extends JFrame
 		addAddressExpressionsButton.setEnabled(connected);
 		exportWatchListButton.setEnabled(connected);
 		saveWatchListButton.setEnabled(connected);
+		remoteProcedureCallButton.setEnabled(connected);
+		convertEffectiveToPhysicalButton.setEnabled(connected);
+
 		setMemoryViewerSearchButtonAvailability();
 
 		if (isAutoDetect)

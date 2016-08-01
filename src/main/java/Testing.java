@@ -1,13 +1,24 @@
-import wiiudev.gecko.client.titles.Title;
-import wiiudev.gecko.client.titles.TitleDatabaseManager;
+import wiiudev.gecko.client.connector.Connector;
+import wiiudev.gecko.client.connector.MemoryReader;
 
 public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
-		TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
+		Connector.getInstance().connect("192.168.178.35");
+		MemoryReader memoryReader = new MemoryReader();
+		int physical = memoryReader.getEffectiveToPhysical(0x10000000);
+		System.out.println(physical);
+		Connector.getInstance().closeConnection();
+		/*String rplName = "coreinit.rpl";
+		int length = 8 + rplName.length() + 1;
+		byte[] lengthBytes = ByteBuffer.allocate(4).putInt(length).array();
+		System.out.println(length);
+		System.out.println(Arrays.toString(lengthBytes));*/
+
+		/*TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
 		Title title = titleDatabaseManager.getTitle("00050000-10102000");
-		System.out.println(title.getGameId());
+		System.out.println(title.getGameId());*/
 
 		/*Connector.getInstance().connect("192.168.178.35");
 		MemoryWriter memoryWriter = new MemoryWriter();

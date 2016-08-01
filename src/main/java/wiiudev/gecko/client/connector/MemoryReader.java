@@ -1,6 +1,7 @@
 package wiiudev.gecko.client.connector;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import wiiudev.gecko.client.connector.utilities.AddressRange;
 import wiiudev.gecko.client.connector.utilities.DataConversions;
 import wiiudev.gecko.client.connector.utilities.Hexadecimal;
@@ -11,18 +12,24 @@ import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A class for reading data from the memory based on the {@link Connector} class
  */
 public class MemoryReader extends SocketCommunication
 {
+	private static int SMALL_RPC_PARAMETERS_COUNT = 8;
+	private static String coreInitRPL = "coreinit.rpl";
+
 	/**
 	 * Reads an 8-bit value from the memory at the given <code>address</code>
 	 *
 	 * @param address The address to read from
 	 * @return The read byte
-	 * @throws IOException
 	 */
 	public byte read(int address) throws IOException
 	{
@@ -43,7 +50,6 @@ public class MemoryReader extends SocketCommunication
 	 *
 	 * @param address The address to read from
 	 * @return The read short
-	 * @throws IOException
 	 */
 	public short readShort(int address) throws IOException
 	{
@@ -64,7 +70,6 @@ public class MemoryReader extends SocketCommunication
 	 *
 	 * @param address The address to read from
 	 * @return The read value
-	 * @throws IOException
 	 */
 	public int readInt(int address) throws IOException
 	{
@@ -85,7 +90,6 @@ public class MemoryReader extends SocketCommunication
 	 *
 	 * @param address The address to read from
 	 * @return The read float
-	 * @throws IOException
 	 */
 	public float readFloat(int address) throws IOException
 	{
@@ -106,7 +110,6 @@ public class MemoryReader extends SocketCommunication
 	 *
 	 * @param address The address the String starts at
 	 * @return The retrieved String
-	 * @throws IOException
 	 */
 	public String readString(int address) throws IOException
 	{
@@ -147,7 +150,6 @@ public class MemoryReader extends SocketCommunication
 	 *
 	 * @param address The address to start reading from
 	 * @return The read boolean
-	 * @throws IOException
 	 */
 	public boolean readBoolean(int address) throws IOException
 	{
@@ -191,10 +193,10 @@ public class MemoryReader extends SocketCommunication
 				bytesCount -= MAXIMUM_MEMORY_CHUNK_SIZE;
 				address += MAXIMUM_MEMORY_CHUNK_SIZE;
 				bytesDumped += MAXIMUM_MEMORY_CHUNK_SIZE;
-				System.out.println("Dumped: " + (double) bytesDumped/startingBytesCount);
+				System.out.println("Dumped: " + (double) bytesDumped / startingBytesCount);
 			}
 
-			if(bytesCount <= MAXIMUM_MEMORY_CHUNK_SIZE)
+			if (bytesCount <= MAXIMUM_MEMORY_CHUNK_SIZE)
 			{
 				byte[] retrievedBytes = readBytes(address, bytesCount);
 				FileUtils.writeByteArrayToFile(targetFile, retrievedBytes, true);
@@ -235,7 +237,7 @@ public class MemoryReader extends SocketCommunication
 
 		try
 		{
-			AddressRange.isValidAccess(address, 4, MemoryAccessLevel.READ);
+			AddressRange.assertValidAccess(address, 4, MemoryAccessLevel.READ);
 
 			sendCommand(Commands.MEMORY_SEARCH_32);
 			dataSender.write(address);
@@ -307,20 +309,19 @@ public class MemoryReader extends SocketCommunication
 		try
 		{
 			int currentValue = -1;
-			MemoryReader memoryReader = new MemoryReader();
 
 			switch (valueSize)
 			{
 				case EIGHT_BIT:
-					currentValue = memoryReader.read(targetAddress);
+					currentValue = read(targetAddress);
 					break;
 
 				case SIXTEEN_BIT:
-					currentValue = memoryReader.readShort(targetAddress);
+					currentValue = readShort(targetAddress);
 					break;
 
 				case THIRTY_TWO_BIT:
-					currentValue = memoryReader.readInt(targetAddress);
+					currentValue = readInt(targetAddress);
 					break;
 			}
 
@@ -341,14 +342,14 @@ public class MemoryReader extends SocketCommunication
 
 			switch (valueSize)
 			{
-				case eight_bit:
+				case EIGHT_BIT:
 					readValue = read(address);
 					break;
-				case sixteen_bit:
+				case SIXTEEN_BIT:
 					readValue = readShort(address);
 					break;
 
-				case thirty_two_bit:
+				case THIRTY_TWO_BIT:
 					readValue = readInt(address);
 					break;
 			}
@@ -358,5 +359,179 @@ public class MemoryReader extends SocketCommunication
 		{
 			reentrantLock.unlock();
 		}
+	}
+
+	public ExportedSymbol getSymbol(String rplName, String symbolName) throws IOException
+	{
+		return getSymbol(rplName, symbolName, false, false);
+	}
+
+	private ExportedSymbol getSymbol(String rplName, String symbolName, boolean isPointer, boolean isData) throws IOException
+	{
+		sendCommand(Commands.GET_SYMBOL);
+
+		ByteArrayOutputStream symbolRequest = getSymbolRequest(rplName, symbolName);
+
+		dataSender.writeByte(symbolRequest.size());
+		dataSender.write(symbolRequest.toByteArray());
+		dataSender.writeByte(isData ? 1 : 0);
+		dataSender.flush();
+
+		int address = dataReceiver.readInt();
+
+		if (isPointer)
+		{
+			// Dereference pointer if we need to
+			address = readInt(address);
+		}
+
+		return new ExportedSymbol(address, rplName, symbolName);
+	}
+
+	private ByteArrayOutputStream getSymbolRequest(String rplName, String symbolName) throws IOException
+	{
+		// We need to buffer the strings to get the length
+		ByteArrayOutputStream request = new ByteArrayOutputStream();
+
+		// This length is static at least
+		request.write(toByteArray(8));
+
+		int length = 8 + rplName.length() + 1;
+		byte[] lengthBytes = toByteArray(length);
+		request.write(lengthBytes);
+
+		// Write the UTF-8 encoded null-terminated names
+		request.write(rplName.getBytes(StandardCharsets.UTF_8));
+		request.write(0);
+		request.write(symbolName.getBytes(StandardCharsets.UTF_8));
+		request.write(0);
+
+		return request;
+	}
+
+	private byte[] toByteArray(int integer)
+	{
+		return ByteBuffer.allocate(4).putInt(integer).array();
+	}
+
+	public long call(String rplName, String symbolName, int... parameters) throws IOException
+	{
+		ExportedSymbol exportedSymbol = getSymbol(rplName, symbolName, false, false);
+		return exportedSymbol.call(parameters);
+	}
+
+	/**
+	 * Calls a remote method.
+	 *
+	 * @param exportedSymbol The symbol that defines the method
+	 * @param parameters     The parameters for the method
+	 * @throws IllegalArgumentException If there are to many parameters
+	 */
+	public long call(ExportedSymbol exportedSymbol, int... parameters) throws IOException
+	{
+		int paddingIntegersCount = getPaddingIntegersCount(parameters);
+
+		List<Integer> parametersList = Arrays.stream(parameters).boxed().collect(Collectors.toList());
+		for (int paddingCountIndex = 0; paddingCountIndex < paddingIntegersCount; paddingCountIndex++)
+		{
+			// Pad for the parameters count for the small or big RPC calls respectively
+			parametersList.add(0);
+		}
+
+		Commands command = parametersList.size() == SMALL_RPC_PARAMETERS_COUNT
+				? Commands.RPC : Commands.RPC_BIG;
+		sendCommand(command);
+		int functionAddress = exportedSymbol.getAddress();
+		dataSender.writeInt(functionAddress);
+
+		for (int parameter : parametersList)
+		{
+			dataSender.writeInt(parameter);
+		}
+
+		dataSender.flush();
+
+		return dataReceiver.readLong();
+	}
+
+	private int getPaddingIntegersCount(int... parameters)
+	{
+		int parametersCount = parameters.length;
+
+		if (parametersCount <= SMALL_RPC_PARAMETERS_COUNT)
+		{
+			return SMALL_RPC_PARAMETERS_COUNT - parametersCount;
+		}
+
+		int BIG_RPC_PARAMETERS_COUNT = 16;
+		if (parametersCount <= BIG_RPC_PARAMETERS_COUNT)
+		{
+			return BIG_RPC_PARAMETERS_COUNT - parametersCount;
+		}
+
+		throw new IllegalArgumentException("Invalid parameters count: " + parametersCount);
+	}
+
+	/**
+	 * Allocates <code>size</code> bytes of memory
+ 	 * @param size The amount of memory to allocate
+	 * @return The starting address of the allocated memory
+	 */
+	public int allocateMemory(int size, boolean align) throws IOException
+	{
+		ExportedSymbol exportedSymbol = getSymbol(coreInitRPL, "OSAllocFromSystem");
+		return (int) exportedSymbol.call(size, align ? 1 : 0);
+	}
+
+	public boolean isMapped(int address) throws IOException
+	{
+		ExportedSymbol exportedSymbol = getSymbol(coreInitRPL, "OSEffectiveToPhysical");
+		return exportedSymbol.call(address) != 0;
+	}
+
+	/**
+	 * Frees memory previous allocated
+	 * @param address The <code>address</code> to free memory from
+	 */
+	public void freeMemory(int address) throws IOException
+	{
+		ExportedSymbol exportedSymbol = getSymbol(coreInitRPL, "OSFreeToSystem");
+		exportedSymbol.call(address);
+	}
+
+	/**
+	 * Allocates a String in the memory
+	 * @param string The String to allocate
+	 * @return The starting address of the String
+	 */
+	private int allocateString(String string) throws IOException
+	{
+		int length = string.length();
+		int address = allocateMemory(length + 1, true);
+		MemoryWriter memoryWriter = new MemoryWriter();
+		memoryWriter.writeString(address, string);
+
+		return address;
+	}
+
+	/**
+	 * Print the message <code>message</code> to the screen then halts the system
+	 * @param message The message to print
+	 */
+	public void displayFatalErrorMessage(String message) throws IOException
+	{
+		ExportedSymbol exportedSymbol = getSymbol(coreInitRPL, "OSFatal");
+		int allocatedString = allocateString(message);
+		exportedSymbol.call(allocatedString);
+	}
+
+	public int getEffectiveToPhysical(int address) throws IOException
+	{
+		ExportedSymbol exportedSymbol = getSymbol("coreinit.rpl", "OSEffectiveToPhysical");
+		long physical = exportedSymbol.call(address);
+		ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+		buffer.putLong(physical);
+
+		return buffer.getInt(0);
 	}
 }
