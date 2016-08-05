@@ -228,4 +228,12 @@ public class TitleDatabaseManager
 		xMLStreamWriter.writeEndDocument();
 		XMLHelper.writeFile(stringWriter, titleDatabaseFilePath);
 	}
+
+	public static boolean isPlaying(String titleName) throws Exception
+	{
+		TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
+		Title title = titleDatabaseManager.getTitle();
+
+		return titleName.equals(title.getGameName());
+	}
 }

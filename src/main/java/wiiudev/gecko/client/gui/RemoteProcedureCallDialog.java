@@ -1,8 +1,8 @@
 package wiiudev.gecko.client.gui;
 
-import wiiudev.gecko.client.connector.MemoryReader;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
+import wiiudev.gecko.client.tcpgecko.rpl.RemoteProcedureCall;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -75,8 +75,8 @@ public class RemoteProcedureCallDialog extends JDialog
 	{
 		try
 		{
-			MemoryReader memoryReader = new MemoryReader();
-			long returnValue = memoryReader.call(rplName, symbolName, parameters);
+			RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+			long returnValue = remoteProcedureCall.call(rplName, symbolName, parameters);
 			resultTextField.setText(Long.toHexString(returnValue).toUpperCase());
 		} catch (Exception exception)
 		{

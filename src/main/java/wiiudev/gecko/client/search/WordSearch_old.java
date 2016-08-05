@@ -1,6 +1,6 @@
 package wiiudev.gecko.client.search;
 
-import wiiudev.gecko.client.connector.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

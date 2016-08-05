@@ -1,8 +1,5 @@
 package wiiudev.gecko.client.gui.code_list.code_wizard;
 
-import wiiudev.gecko.client.connector.MemoryReader;
-import wiiudev.gecko.client.connector.SocketCommunication;
-import wiiudev.gecko.client.connector.utilities.AddressRange;
 import wiiudev.gecko.client.conversion.Conversions;
 import wiiudev.gecko.client.conversion.SystemClipboard;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
@@ -14,6 +11,9 @@ import wiiudev.gecko.client.gui.code_list.code_wizard.selections.ValueSize;
 import wiiudev.gecko.client.gui.inputFilter.HexadecimalInputFilter;
 import wiiudev.gecko.client.gui.inputFilter.InputLengthFilter;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
+import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
@@ -196,7 +196,7 @@ public class CodeWizardDialog extends JDialog
 		long baseAddress = memoryPointerExpression.getBaseAddress();
 		AddressRounding addressRounding = new AddressRounding(0.007);
 
-		if (SocketCommunication.isConnected())
+		if (TCPGecko.isConnected())
 		{
 			long destinationValue = new MemoryReader().readInt((int) baseAddress);
 
@@ -219,7 +219,7 @@ public class CodeWizardDialog extends JDialog
 
 		if (offsets.length == 2)
 		{
-			if (SocketCommunication.isConnected())
+			if (TCPGecko.isConnected())
 			{
 				long destinationAddress = new MemoryPointerExpression(baseAddress, new int[]{offsets[0]}).getDestinationAddress();
 

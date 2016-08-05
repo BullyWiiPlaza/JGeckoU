@@ -1,11 +1,11 @@
 package wiiudev.gecko.client.memoryViewer;
 
-import wiiudev.gecko.client.connector.MemoryWriter;
 import wiiudev.gecko.client.conversion.Conversions;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.utilities.DefaultContextMenu;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
+import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;

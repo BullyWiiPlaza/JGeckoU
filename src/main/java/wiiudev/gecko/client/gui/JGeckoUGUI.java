@@ -4,10 +4,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.SystemUtils;
 import wiiudev.gecko.client.ValueOperations;
 import wiiudev.gecko.client.codes.*;
-import wiiudev.gecko.client.connector.*;
-import wiiudev.gecko.client.connector.utilities.AddressRange;
-import wiiudev.gecko.client.connector.utilities.Hexadecimal;
-import wiiudev.gecko.client.connector.utilities.MemoryAccessLevel;
 import wiiudev.gecko.client.conversion.ConversionType;
 import wiiudev.gecko.client.conversion.Conversions;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
@@ -25,6 +21,14 @@ import wiiudev.gecko.client.memoryViewer.MemoryViews;
 import wiiudev.gecko.client.pointer_search.DownloadingUtilities;
 import wiiudev.gecko.client.pointer_search.ZipUtils;
 import wiiudev.gecko.client.scanner.WiiUFinder;
+import wiiudev.gecko.client.tcpgecko.main.Connector;
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
+import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
+import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
+import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
+import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
+import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
 import wiiudev.gecko.client.titles.FirmwareNotImplementedException;
 import wiiudev.gecko.client.titles.Title;
 import wiiudev.gecko.client.titles.TitleDatabaseManager;
@@ -123,8 +127,13 @@ public class JGeckoUGUI extends JFrame
 	private JPanel searchTab;
 	private JCheckBox memoryAddressProtectionCheckBox;
 	private JButton convertEffectiveToPhysicalButton;
-	private JButton displayFatalErrorMessageButton;
+	private JButton displayMessageButton;
 	private JButton remoteProcedureCallButton;
+	private JButton coreInitDocumentationButton;
+	private JTree tree1;
+	private JButton readFileSystemButton;
+	private JTextArea textArea1;
+	private JPanel fileSystemTab;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -153,28 +162,39 @@ public class JGeckoUGUI extends JFrame
 		configureConversionsTab();
 		configureWatchListTab();
 		configureMemoryDumpingTab();
-		removeSearchTab();
+		removeUnfinishedTab();
 		configureMiscellaneousTab();
+		configureRPCTab();
 		configureAboutTab();
 
 		restorePersistentSettings();
 		addSettingsBackupShutdownHook();
+		monitorGeckoServerHealth();
+	}
 
-		// disconnectWhenServerDied();
+	public static void setVisible(JDialog dialog, JRootPane rootPane, ActionEvent actionEvent)
+	{
+		dialog.setLocationRelativeTo(rootPane);
+		JButton button = (JButton) actionEvent.getSource();
+		dialog.setTitle(button.getText());
+		dialog.setVisible(true);
+	}
 
-		displayFatalErrorMessageButton.addActionListener(actionEvent ->
+	private void configureRPCTab()
+	{
+		displayMessageButton.addActionListener(actionEvent ->
 		{
-			String suppliedInput = JOptionPane.showInputDialog(this,
-					"Please enter the message to display on-screen:",
-					"OSFatal",
-					JOptionPane.INFORMATION_MESSAGE);
+			MessageTextDialog textDialog = new MessageTextDialog();
+			setVisible(textDialog, rootPane, actionEvent);
 
-			if (suppliedInput != null)
+			if (textDialog.isConfirmed())
 			{
+				boolean isFatal = textDialog.shouldHaltSystem();
+				String message = textDialog.getMessageText();
+
 				try
 				{
-					MemoryReader memoryReader = new MemoryReader();
-					memoryReader.displayFatalErrorMessage(suppliedInput);
+					CoreInit.displayMessage(message, isFatal);
 				} catch (Exception exception)
 				{
 					StackTraceUtils.handleException(rootPane, exception);
@@ -182,12 +202,13 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		displayFatalErrorMessageButton.setVisible(false);
+		// Not functional yet...
+		displayMessageButton.setVisible(false);
 
 		convertEffectiveToPhysicalButton.addActionListener(actionEvent ->
 		{
 			String suppliedInput = JOptionPane.showInputDialog(this,
-					"Please enter the effective address to convert:",
+					"Please enter the effective hexadecimal address to convert:",
 					"OSEffectiveToPhysical",
 					JOptionPane.INFORMATION_MESSAGE);
 
@@ -196,12 +217,11 @@ public class JGeckoUGUI extends JFrame
 				try
 				{
 					int address = Integer.parseInt(suppliedInput, 16);
-					MemoryReader memoryReader = new MemoryReader();
-					int physical = memoryReader.getEffectiveToPhysical(address);
+					int physical = CoreInit.getEffectiveToPhysical(address);
 
 					JOptionPane.showMessageDialog(this,
 							"0x" + new Hexadecimal(physical, 8),
-							"Procedure Call Result",
+							"OSEffectiveToPhysical",
 							JOptionPane.INFORMATION_MESSAGE);
 				} catch (Exception exception)
 				{
@@ -211,11 +231,17 @@ public class JGeckoUGUI extends JFrame
 		});
 
 		remoteProcedureCallButton.addActionListener(actionEvent ->
+				setVisible(new RemoteProcedureCallDialog(), rootPane, actionEvent));
+
+		coreInitDocumentationButton.addActionListener(actionEvent ->
 		{
-			RemoteProcedureCallDialog remoteProcedureCallDialog = new RemoteProcedureCallDialog();
-			remoteProcedureCallDialog.setTitle(remoteProcedureCallButton.getText());
-			remoteProcedureCallDialog.setLocationRelativeTo(rootPane);
-			remoteProcedureCallDialog.setVisible(true);
+			try
+			{
+				Desktop.getDesktop().browse(new URI("http://wiiubrew.org/wiki/Coreinit.rpl"));
+			} catch (Exception exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
 		});
 	}
 
@@ -225,46 +251,44 @@ public class JGeckoUGUI extends JFrame
 		updateGameTitlesButton.addActionListener(actionEvent -> updateGameTitles());
 
 		memoryAddressProtectionCheckBox.addChangeListener(changeEvent ->
-				SocketCommunication.enforceMemoryAccessProtection = memoryAddressProtectionCheckBox.isSelected());
+				TCPGecko.enforceMemoryAccessProtection = memoryAddressProtectionCheckBox.isSelected());
 	}
 
-	private void removeSearchTab()
+	private void removeUnfinishedTab()
 	{
 		tabs.remove(searchTab);
+		tabs.remove(fileSystemTab);
 	}
 
-	/*private void disconnectWhenServerDied()
+	private void monitorGeckoServerHealth()
 	{
-		new Thread(() ->
+		Thread monitor = new Thread(() ->
 		{
 			while (true)
 			{
-				if (connected)
+				try
 				{
-					try
+					if (connected)
 					{
-						boolean isRunning = new MemoryReader().isRunning();
+						MemoryReader memoryReader = new MemoryReader();
+						boolean isRunning = memoryReader.isRunning();
 
 						if (!isRunning)
 						{
 							disconnect();
 						}
-					} catch (IOException exception)
-					{
-						disconnect();
 					}
-				}
 
-				try
+					Thread.sleep(500);
+				} catch (Exception exception)
 				{
-					Thread.sleep(1000);
-				} catch (InterruptedException exception)
-				{
-					exception.printStackTrace();
+					disconnect();
 				}
 			}
-		}).start();
-	}*/
+		});
+
+		monitor.start();
+	}
 
 	public void selectDumpingTab()
 	{

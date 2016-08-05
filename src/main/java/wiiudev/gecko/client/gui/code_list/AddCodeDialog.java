@@ -106,12 +106,12 @@ public class AddCodeDialog extends JDialog
 			new CheatCode(code);
 			codeArea.setBackground(Color.GREEN);
 			saveCodeButton.setEnabled(true);
-			statusLabel.setText("Status: OK!");
+			statusLabel.setText("FileSystemStatus: OK!");
 		} catch (InvalidCheatCodeException invalidCheatCodeException)
 		{
 			codeArea.setBackground(Color.RED);
 			saveCodeButton.setEnabled(false);
-			statusLabel.setText("Status: " + invalidCheatCodeException.getMessage());
+			statusLabel.setText("FileSystemStatus: " + invalidCheatCodeException.getMessage());
 		}
 	}
 

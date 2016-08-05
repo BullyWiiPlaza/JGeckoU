@@ -1,9 +1,9 @@
 package wiiudev.gecko.client.gui;
 
 import org.apache.commons.io.FileUtils;
-import wiiudev.gecko.client.connector.MemoryReader;
-import wiiudev.gecko.client.connector.SocketCommunication;
 import wiiudev.gecko.client.gui.utilities.Benchmark;
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,20 +64,21 @@ public class GraphicalMemoryDumper
 				FileUtils.deleteQuietly(targetFile);
 
 				// Read in chunks
-				while (bytesCount > SocketCommunication.MAXIMUM_MEMORY_CHUNK_SIZE)
+				while (bytesCount > TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
 				{
-					byte[] retrievedBytes = memoryReader.readBytes(address, SocketCommunication.MAXIMUM_MEMORY_CHUNK_SIZE);
+					byte[] retrievedBytes = memoryReader.readBytes(address, TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
 					FileUtils.writeByteArrayToFile(targetFile, retrievedBytes, true);
 
-					bytesCount -= SocketCommunication.MAXIMUM_MEMORY_CHUNK_SIZE;
-					address += SocketCommunication.MAXIMUM_MEMORY_CHUNK_SIZE;
-					bytesDumped += SocketCommunication.MAXIMUM_MEMORY_CHUNK_SIZE;
+					bytesCount -= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
+					address += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
+					bytesDumped += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
+
 					long progress = bytesDumped * 100 / startingBytesCount;
 					setProgress((int) progress);
 					publish(bytesDumped);
 				}
 
-				if (bytesCount <= SocketCommunication.MAXIMUM_MEMORY_CHUNK_SIZE)
+				if (bytesCount <= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
 				{
 					byte[] retrievedBytes = memoryReader.readBytes(address, bytesCount);
 					FileUtils.writeByteArrayToFile(targetFile, retrievedBytes, true);

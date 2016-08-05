@@ -1,6 +1,6 @@
 package wiiudev.gecko.client.codes;
 
-import wiiudev.gecko.client.connector.MemoryWriter;
+import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 
 import java.io.IOException;
 import java.util.List;

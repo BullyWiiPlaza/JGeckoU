@@ -1,10 +1,10 @@
 package wiiudev.gecko.client.memoryViewer;
 
-import wiiudev.gecko.client.connector.MemoryReader;
 import wiiudev.gecko.client.conversion.Conversions;
 import wiiudev.gecko.client.conversion.SystemClipboard;
 import wiiudev.gecko.client.gui.JTableUtilities;
 import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -47,8 +47,9 @@ public class MemoryViewerTableManager
 		tableModel.setColumnCount(columnHeaders.length);
 		tableModel.setColumnIdentifiers(columnHeaders);
 
-		// This is chosen to be below multiplies of 0x400 since that is the request limit
-		tableModel.setNumRows(MemoryReader.MAXIMUM_MEMORY_CHUNK_SIZE / getRowBytes());
+		// This is chosen as multiples of the request limit
+		tableModel.setNumRows(MemoryReader.MAXIMUM_MEMORY_CHUNK_SIZE * 5 / getRowBytes());
+
 		table.setModel(tableModel);
 		JTableHeader tableHeader = table.getTableHeader();
 		tableHeader.setReorderingAllowed(false);

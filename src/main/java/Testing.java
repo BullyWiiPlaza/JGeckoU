@@ -1,15 +1,12 @@
-import wiiudev.gecko.client.connector.Connector;
-import wiiudev.gecko.client.connector.MemoryReader;
-
 public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
-		Connector.getInstance().connect("192.168.178.35");
+		/*Connector.getInstance().connect("192.168.178.35");
 		MemoryReader memoryReader = new MemoryReader();
 		int physical = memoryReader.getEffectiveToPhysical(0x10000000);
 		System.out.println(physical);
-		Connector.getInstance().closeConnection();
+		Connector.getInstance().closeConnection();*/
 		/*String rplName = "coreinit.rpl";
 		int length = 8 + rplName.length() + 1;
 		byte[] lengthBytes = ByteBuffer.allocate(4).putInt(length).array();

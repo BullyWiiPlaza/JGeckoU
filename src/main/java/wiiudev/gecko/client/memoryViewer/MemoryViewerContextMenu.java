@@ -1,10 +1,10 @@
 package wiiudev.gecko.client.memoryViewer;
 
-import wiiudev.gecko.client.connector.MemoryWriter;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.code_list.code_wizard.CodeWizardDialog;
 import wiiudev.gecko.client.gui.utilities.JFileChooserUtilities;
+import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;

@@ -1,8 +1,8 @@
 package wiiudev.gecko.client.gui.watch_list;
 
-import wiiudev.gecko.client.connector.MemoryReader;
 import wiiudev.gecko.client.gui.MemoryPointerExpression;
 import wiiudev.gecko.client.gui.code_list.code_wizard.selections.ValueSize;
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 
 import java.io.IOException;
 import java.util.Vector;

@@ -1,7 +1,7 @@
 package wiiudev.gecko.client.gui;
 
-import wiiudev.gecko.client.connector.MemoryReader;
 import wiiudev.gecko.client.conversion.Conversions;
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 
 import java.io.IOException;
 

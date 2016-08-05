@@ -1,6 +1,6 @@
 package wiiudev.gecko.client.gui.code_list.code_wizard.selections;
 
-import wiiudev.gecko.client.connector.utilities.Hexadecimal;
+import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 
 public enum ValueSize
 {

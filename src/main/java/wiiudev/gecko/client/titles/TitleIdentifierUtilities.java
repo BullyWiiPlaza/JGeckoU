@@ -1,7 +1,7 @@
 package wiiudev.gecko.client.titles;
 
 import org.apache.commons.codec.binary.Hex;
-import wiiudev.gecko.client.connector.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 
 import java.io.IOException;
 

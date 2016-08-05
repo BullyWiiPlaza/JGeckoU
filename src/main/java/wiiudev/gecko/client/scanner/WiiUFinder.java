@@ -1,7 +1,7 @@
 package wiiudev.gecko.client.scanner;
 
-import wiiudev.gecko.client.connector.Connector;
-import wiiudev.gecko.client.connector.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.main.Connector;
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
