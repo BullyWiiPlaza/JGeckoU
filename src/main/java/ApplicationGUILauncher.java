@@ -31,9 +31,8 @@ public class ApplicationGUILauncher
 		}
 	*/
 	// TODO Watch list ASSIGN [0xADDRESS] = 0xVALUE for the retrieved value
-	// TODO Finish code wizard fix input availability for new code types fully
+	// TODO Finish code wizard fix input availability for new code types fully (IMPORTANT)
 	// TODO Only toggle cheat code checkbox when clicked on that checkbox
-	// TODO Keep checking if the server is still alive and disconnect if not (GCFAIL?)
 	// TODO Combine connect and disconnect button into one
 	public static void main(String[] arguments) throws Exception
 	{

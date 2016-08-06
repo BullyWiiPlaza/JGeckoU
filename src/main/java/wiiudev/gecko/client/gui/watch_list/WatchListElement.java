@@ -53,7 +53,8 @@ public class WatchListElement
 		}
 		else
 		{
-			return new MemoryReader().readValue((int) destinationAddress, valueSize);
+			MemoryReader memoryReader = new MemoryReader();
+			return memoryReader.readValue((int) destinationAddress, valueSize);
 		}
 	}
 }

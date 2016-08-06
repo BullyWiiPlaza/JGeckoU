@@ -5,6 +5,7 @@ import wiiudev.gecko.client.gui.code_list.code_wizard.selections.ValueSize;
 import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Commands;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Status;
+import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.DataConversions;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
@@ -12,6 +13,8 @@ import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A class for reading data from the memory based on the {@link Connector} class
@@ -66,16 +69,8 @@ public class MemoryReader extends TCPGecko
 	 */
 	public int readInt(int address) throws IOException
 	{
-		reentrantLock.lock();
-
-		try
-		{
-			byte[] readBytes = readBytes(address, 4);
-			return ByteBuffer.wrap(readBytes).getInt();
-		} finally
-		{
-			reentrantLock.unlock();
-		}
+		byte[] readBytes = readBytes(address, 4);
+		return ByteBuffer.wrap(readBytes).getInt();
 	}
 
 	/**
@@ -162,39 +157,58 @@ public class MemoryReader extends TCPGecko
 	/**
 	 * Reads a block of memory with length <code>bytes</code> starting at <code>address</code>
 	 *
-	 * @param address    The address to start dumping memory at
-	 * @param length The amount of bytes to dump
+	 * @param address The address to start dumping memory at
+	 * @param length  The amount of bytes to dump
 	 */
 	public byte[] readBytes(int address, int length) throws IOException
 	{
-		reentrantLock.lock();
+		ByteArrayOutputStream dumpedBytes = new ByteArrayOutputStream();
 
-		try
+		while (length > 0)
 		{
-			ByteArrayOutputStream dumpedBytes = new ByteArrayOutputStream();
+			int requestSize = length;
 
-			while (length > 0)
+			if (requestSize > MAXIMUM_MEMORY_CHUNK_SIZE)
 			{
-				int requestSize = length;
-
-				if(requestSize > MAXIMUM_MEMORY_CHUNK_SIZE)
-				{
-					// Read in chunks
-					requestSize = MAXIMUM_MEMORY_CHUNK_SIZE;
-				}
-
-				byte[] retrievedBytes = readBytesSmall(address, requestSize);
-				dumpedBytes.write(retrievedBytes);
-
-				length -= requestSize;
-				address += requestSize;
+				// Read in chunks
+				requestSize = MAXIMUM_MEMORY_CHUNK_SIZE;
 			}
 
-			return dumpedBytes.toByteArray();
-		} finally
-		{
-			reentrantLock.unlock();
+			byte[] retrievedBytes = readBytesSmall(address, requestSize);
+			dumpedBytes.write(retrievedBytes);
+
+			length -= requestSize;
+			address += requestSize;
 		}
+
+		return dumpedBytes.toByteArray();
+	}
+
+	public List<OSThread> readThreads() throws IOException
+	{
+		List<OSThread> osThreads = new ArrayList<>();
+
+		MemoryReader memoryReader = new MemoryReader();
+		int threadAddress = memoryReader.readInt(0xFFFFFFE0);
+		int temporaryThreadAddress;
+
+		while ((temporaryThreadAddress = memoryReader.readInt(threadAddress + 0x390)) != 0)
+		{
+			threadAddress = temporaryThreadAddress;
+		}
+
+		while ((temporaryThreadAddress = memoryReader.readInt(threadAddress + 0x38C)) != 0)
+		{
+			OSThread osThread = new OSThread(threadAddress);
+			osThreads.add(osThread);
+			threadAddress = temporaryThreadAddress;
+		}
+
+		// The above while would skip the last thread
+		OSThread osThread = new OSThread(threadAddress);
+		osThreads.add(osThread);
+
+		return osThreads;
 	}
 
 	public int readFirmwareVersion() throws IOException
@@ -256,6 +270,7 @@ public class MemoryReader extends TCPGecko
 		try
 		{
 			AddressRange.assertValidAccess(address, length, MemoryAccessLevel.READ);
+
 			byte[] received = new byte[length];
 
 			sendCommand(Commands.MEMORY_READ);
@@ -324,31 +339,23 @@ public class MemoryReader extends TCPGecko
 
 	public String readValue(int address, ValueSize valueSize) throws IOException
 	{
-		reentrantLock.lock();
+		long readValue = -1;
 
-		try
+		switch (valueSize)
 		{
-			long readValue = -1;
+			case EIGHT_BIT:
+				readValue = read(address);
+				break;
+			case SIXTEEN_BIT:
+				readValue = readShort(address);
+				break;
 
-			switch (valueSize)
-			{
-				case EIGHT_BIT:
-					readValue = read(address);
-					break;
-				case SIXTEEN_BIT:
-					readValue = readShort(address);
-					break;
-
-				case THIRTY_TWO_BIT:
-					readValue = readInt(address);
-					break;
-			}
-
-			return new Hexadecimal((int) readValue, 8).toString();
-		} finally
-		{
-			reentrantLock.unlock();
+			case THIRTY_TWO_BIT:
+				readValue = readInt(address);
+				break;
 		}
+
+		return new Hexadecimal((int) readValue, 8).toString();
 	}
 
 	public boolean isRunning() throws IOException

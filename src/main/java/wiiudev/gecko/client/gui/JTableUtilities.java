@@ -40,4 +40,43 @@ public class JTableUtilities
 			model.removeRow(rows[rowIndex] - rowIndex);
 		}
 	}
+
+	public static void deleteAllRows(JTable table)
+	{
+		DefaultTableModel defaultTableModel = (DefaultTableModel) table.getModel();
+		int rowCount = defaultTableModel.getRowCount();
+
+		// Remove rows one by one from the end of the table
+		for (int rowIndex = rowCount - 1; rowIndex >= 0; rowIndex--)
+		{
+			defaultTableModel.removeRow(rowIndex);
+		}
+	}
+
+	public static void configureTable(JTable table, String[] columnHeaderNames)
+	{
+		DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
+		tableModel.setColumnCount(columnHeaderNames.length);
+		tableModel.setColumnIdentifiers(columnHeaderNames);
+		setHeaderAlignment(table);
+
+		table.setModel(tableModel);
+		JTableHeader tableHeader = table.getTableHeader();
+		tableHeader.setReorderingAllowed(false);
+		tableHeader.setResizingAllowed(false);
+		tableHeader.setVisible(true);
+		setCellsAlignment(table, SwingConstants.CENTER);
+	}
+
+	public static DefaultTableModel getDefaultTableModel()
+	{
+		return new DefaultTableModel()
+		{
+			@Override
+			public boolean isCellEditable(int row, int column)
+			{
+				return false;
+			}
+		};
+	}
 }

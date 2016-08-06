@@ -4,7 +4,6 @@ import wiiudev.gecko.client.gui.JTableUtilities;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -16,31 +15,15 @@ public class WatchListManager
 
 	public WatchListManager(JTable table)
 	{
-		tableModel = new DefaultTableModel()
-		{
-			@Override
-			public boolean isCellEditable(int row, int column)
-			{
-				return false;
-			}
-		};
-
+		tableModel = JTableUtilities.getDefaultTableModel();
+		table.setModel(tableModel);
 		this.table = table;
 	}
 
-	public void configure(JTable table)
+	public void configure()
 	{
-		Object[] columnHeaders = new Object[]{"Name", "Address Expression", "Value Size", "Value"};
-		tableModel.setColumnCount(columnHeaders.length);
-		tableModel.setColumnIdentifiers(columnHeaders);
-		JTableUtilities.setHeaderAlignment(table);
-
-		table.setModel(tableModel);
-		JTableHeader tableHeader = table.getTableHeader();
-		tableHeader.setReorderingAllowed(false);
-		tableHeader.setResizingAllowed(false);
-		tableHeader.setVisible(true);
-		JTableUtilities.setCellsAlignment(table, SwingConstants.CENTER);
+		String[] columnHeaderNames = new String[]{"Name", "Address Expression", "Value Size", "Value"};
+		JTableUtilities.configureTable(table, columnHeaderNames);
 	}
 
 	public void addRow(WatchListElement watchListElement)
@@ -85,25 +68,13 @@ public class WatchListManager
 		return new WatchListElement(watchListRow);
 	}
 
-	public void deleteAllRows()
-	{
-		DefaultTableModel defaultTableModel = (DefaultTableModel) table.getModel();
-		int rowCount = defaultTableModel.getRowCount();
-
-		// Remove rows one by one from the end of the table
-		for (int rowIndex = rowCount - 1; rowIndex >= 0; rowIndex--)
-		{
-			defaultTableModel.removeRow(rowIndex);
-		}
-	}
-
 	public List<WatchListElement> getWatchListElements()
 	{
 		List<WatchListElement> watchListElements = new ArrayList<>();
 
-		for (int i = 0; i < table.getRowCount(); i++)
+		for (int rowIndex = 0; rowIndex < table.getRowCount(); rowIndex++)
 		{
-			Vector watchListRow = (Vector) tableModel.getDataVector().elementAt(i);
+			Vector watchListRow = (Vector) tableModel.getDataVector().elementAt(rowIndex);
 			WatchListElement watchListElement = new WatchListElement(watchListRow);
 			watchListElements.add(watchListElement);
 		}
@@ -113,7 +84,7 @@ public class WatchListManager
 
 	public void setRows(List<WatchListElement> watchListElements)
 	{
-		deleteAllRows();
+		JTableUtilities.deleteAllRows(table);
 		watchListElements.forEach(this::addRow);
 	}
 }

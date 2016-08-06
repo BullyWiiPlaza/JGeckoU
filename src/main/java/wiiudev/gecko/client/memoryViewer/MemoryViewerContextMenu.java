@@ -5,6 +5,7 @@ import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.code_list.code_wizard.CodeWizardDialog;
 import wiiudev.gecko.client.gui.utilities.JFileChooserUtilities;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
+import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -20,7 +21,6 @@ public class MemoryViewerContextMenu extends JPopupMenu
 {
 	private JMenuItem writeStringOption;
 	private JMenuItem uploadFileOption;
-	private JMenuItem dumpFileOption;
 
 	public MemoryViewerContextMenu()
 	{
@@ -49,7 +49,7 @@ public class MemoryViewerContextMenu extends JPopupMenu
 		uploadFileOption.addActionListener(actionEvent -> uploadFile());
 		add(uploadFileOption);
 
-		dumpFileOption = new JMenuItem("Dump File");
+		JMenuItem dumpFileOption = new JMenuItem("Dump File");
 		dumpFileOption.setAccelerator(KeyStroke.getKeyStroke("control D"));
 		dumpFileOption.addActionListener(actionEvent -> switchToDumpingTab());
 		add(dumpFileOption);
@@ -114,7 +114,7 @@ public class MemoryViewerContextMenu extends JPopupMenu
 			@Override
 			public void mouseReleased(MouseEvent releasedEvent)
 			{
-				if (JGeckoUGUI.getInstance().isConnected())
+				if (TCPGecko.isConnected())
 				{
 					if (releasedEvent.getButton() == MouseEvent.BUTTON3)
 					{
@@ -132,7 +132,7 @@ public class MemoryViewerContextMenu extends JPopupMenu
 			@Override
 			public void keyPressed(KeyEvent pressedEvent)
 			{
-				if (JGeckoUGUI.getInstance().isConnected())
+				if (TCPGecko.isConnected())
 				{
 					if (keyEventPressed(pressedEvent, KeyEvent.VK_G))
 					{

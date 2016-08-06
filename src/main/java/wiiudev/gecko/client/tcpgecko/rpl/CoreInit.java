@@ -2,6 +2,8 @@ package wiiudev.gecko.client.tcpgecko.rpl;
 
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
+import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
+import wiiudev.gecko.client.tcpgecko.main.threads.OSThreadState;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -12,6 +14,16 @@ public class CoreInit
 	{
 		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 		return remoteProcedureCall.call("coreinit.rpl", symbolName, parameters);
+	}
+
+	public static void setThreadState(OSThread thread, OSThreadState state) throws IOException
+	{
+		MemoryWriter memoryWriter = new MemoryWriter();
+		int threadAddress = thread.getAddress();
+		int threadStateAddress = thread.getStateAddress();
+		memoryWriter.writeBoolean(threadStateAddress, state == OSThreadState.PAUSED);
+		String symbolName = (state == OSThreadState.PAUSED) ? "OSSuspendThread" : "OSResumeThread";
+		call(symbolName, threadAddress);
 	}
 
 	public static int allocateDefaultHeapMemory(int size, int alignment) throws IOException

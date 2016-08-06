@@ -8,7 +8,7 @@ public class AddressRange
 	{
 		if (!isValidAccess(address, length, memoryAccessLevel))
 		{
-			throw new IllegalArgumentException("The request for address " + Integer.toHexString(address).toUpperCase() + " with length " + length + " and memoryAccessLevel level " + memoryAccessLevel.toString() + " is invalid!");
+			throw new IllegalArgumentException("The request for address " + Integer.toHexString(address).toUpperCase() + " with length " + length + " and memory access level " + memoryAccessLevel.toString() + " is invalid!");
 		}
 	}
 

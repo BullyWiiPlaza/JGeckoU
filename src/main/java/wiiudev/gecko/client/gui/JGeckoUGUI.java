@@ -12,6 +12,7 @@ import wiiudev.gecko.client.gui.code_list.CodesListManager;
 import wiiudev.gecko.client.gui.inputFilter.HexadecimalInputFilter;
 import wiiudev.gecko.client.gui.inputFilter.InputLengthFilter;
 import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
+import wiiudev.gecko.client.gui.threads.ThreadsTableManager;
 import wiiudev.gecko.client.gui.utilities.DefaultContextMenu;
 import wiiudev.gecko.client.gui.utilities.JFileChooserUtilities;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
@@ -134,10 +135,13 @@ public class JGeckoUGUI extends JFrame
 	private JButton readFileSystemButton;
 	private JTextArea textArea1;
 	private JPanel fileSystemTab;
+	private JTable threadsTable;
+	private JButton readThreadsButton;
+	private JCheckBox updateWatchlistCheckBox;
+	private JPanel memoryViewerTab;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
-	private boolean connected;
 	private boolean connecting;
 	private String connectButtonText;
 	private String connectedIPAddress;
@@ -149,6 +153,7 @@ public class JGeckoUGUI extends JFrame
 	private CodeListStorage codesStorage;
 	private SimpleProperties simpleProperties;
 	private WatchListManager watchListManager;
+	private boolean readingThreads;
 	private static JGeckoUGUI instance;
 
 	private JGeckoUGUI()
@@ -157,6 +162,7 @@ public class JGeckoUGUI extends JFrame
 		setFrameProperties();
 		configureConnectionTab();
 		configureCodesTab();
+		configureThreadsTab();
 		configureExternalToolsTab();
 		configureMemoryViewerTab();
 		configureConversionsTab();
@@ -170,6 +176,40 @@ public class JGeckoUGUI extends JFrame
 		restorePersistentSettings();
 		addSettingsBackupShutdownHook();
 		monitorGeckoServerHealth();
+	}
+
+	private void configureThreadsTab()
+	{
+		ThreadsTableManager threadsTableManager = new ThreadsTableManager(threadsTable);
+		threadsTableManager.configure();
+
+		readThreadsButton.addActionListener(actionEvent ->
+				new SwingWorker<String, String>()
+				{
+					@Override
+					protected String doInBackground() throws Exception
+					{
+						String buttonText = readThreadsButton.getText();
+						readingThreads = true;
+						setConnectionButtonsAvailability();
+						readThreadsButton.setText("Retrieving...");
+
+						try
+						{
+							threadsTableManager.updateRows();
+						} catch (Exception exception)
+						{
+							StackTraceUtils.handleException(rootPane, exception);
+						} finally
+						{
+							readThreadsButton.setText(buttonText);
+							readingThreads = false;
+							setConnectionButtonsAvailability();
+						}
+
+						return null;
+					}
+				}.execute());
 	}
 
 	public static void setVisible(JDialog dialog, JRootPane rootPane, ActionEvent actionEvent)
@@ -268,26 +308,36 @@ public class JGeckoUGUI extends JFrame
 			{
 				try
 				{
-					if (connected)
+					if (TCPGecko.isConnected())
 					{
 						MemoryReader memoryReader = new MemoryReader();
 						boolean isRunning = memoryReader.isRunning();
 
 						if (!isRunning)
 						{
-							disconnect();
+							connectionReset();
 						}
 					}
 
 					Thread.sleep(500);
 				} catch (Exception exception)
 				{
-					disconnect();
+					connectionReset();
 				}
 			}
 		});
 
 		monitor.start();
+	}
+
+	private void connectionReset()
+	{
+		disconnect();
+
+		JOptionPane.showMessageDialog(rootPane,
+				"Please reconnect manually when ready.",
+				"Connection Reset",
+				JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	public void selectDumpingTab()
@@ -307,7 +357,7 @@ public class JGeckoUGUI extends JFrame
 		((SpinnerNumberModel) watchListUpdateDelaySpinner.getModel()).setMinimum(updateDelayMinimum);
 		watchListManager = new WatchListManager(watchListTable);
 		addWatchListDeleteRowsDeleteKey();
-		watchListManager.configure(watchListTable);
+		watchListManager.configure();
 		addWatchListTableListener();
 		addWatchButton.addActionListener(actionEvent -> displayAddWatchDialog(false, addWatchButton.getText()));
 		deleteWatchButton.addActionListener(actionEvent -> deleteSelectedWatchListRows());
@@ -482,7 +532,7 @@ public class JGeckoUGUI extends JFrame
 
 			if (selectedAnswer == JOptionPane.YES_OPTION)
 			{
-				watchListManager.deleteAllRows();
+				JTableUtilities.deleteAllRows(watchListTable);
 			}
 
 			setWatchButtonsAvailability();
@@ -500,7 +550,7 @@ public class JGeckoUGUI extends JFrame
 				{
 					try
 					{
-						if (watchListTable.isShowing() && connected)
+						if (watchListTable.isShowing() && TCPGecko.isConnected() && updateWatchlistCheckBox.isSelected())
 						{
 							watchListManager.updateValues();
 						}
@@ -513,11 +563,9 @@ public class JGeckoUGUI extends JFrame
 					} catch (Exception exception)
 					{
 						StackTraceUtils.handleException(rootPane, exception);
-						break;
+						updateWatchlistCheckBox.setSelected(false);
 					}
 				}
-
-				return null;
 			}
 		}.execute();
 	}
@@ -569,6 +617,7 @@ public class JGeckoUGUI extends JFrame
 			simpleProperties.put("WATCH_LIST_UPDATE_DELAY_SECONDS", watchListUpdateDelaySpinner.getValue().toString());
 			simpleProperties.put("DUMPING_START_ADDRESS", dumpStartingAddressField.getText());
 			simpleProperties.put("DUMPING_END_ADDRESS", dumpEndingAddressField.getText());
+			simpleProperties.put("UPDATE_WATCH_LIST", String.valueOf(updateWatchlistCheckBox.isSelected()));
 			simpleProperties.put("DUMPING_FILE_PATH", dumpFilePathField.getText());
 			simpleProperties.writeToFile();
 		}));
@@ -637,6 +686,13 @@ public class JGeckoUGUI extends JFrame
 		if (dumpFilePath != null)
 		{
 			dumpFilePathField.setText(dumpFilePath);
+		}
+
+		String updateWatchList = simpleProperties.get("UPDATE_WATCH_LIST");
+		if(updateWatchList != null)
+		{
+			boolean selected = Boolean.parseBoolean(updateWatchList);
+			updateWatchlistCheckBox.setSelected(selected);
 		}
 	}
 
@@ -864,47 +920,10 @@ public class JGeckoUGUI extends JFrame
 			if (selectedAnswer == JOptionPane.YES_OPTION)
 			{
 				String targetFilePath = dumpFilePathField.getText();
-				String dumpText = dumpMemoryButton.getText();
 				File targetFile = new File(targetFilePath);
 
 				GraphicalMemoryDumper graphicalMemoryDumper = new GraphicalMemoryDumper(startingAddress, length, targetFile, memoryDumpingProgressBar, dumpMemoryButton);
 				graphicalMemoryDumper.dumpMemory();
-
-				/*new SwingWorker<String, String>()
-				{
-					@Override
-					protected String doInBackground() throws Exception
-					{
-						String dumpText = dumpMemoryButton.getText();
-						String targetFilePath = dumpFilePathField.getText();
-						dumpMemoryButton.setText("Dumping...");
-						dumpMemoryButton.setEnabled(false);
-
-						try
-						{
-							File targetFile = new File(targetFilePath);
-							MemoryReader memoryReader = new MemoryReader();
-							Benchmark benchmark = new Benchmark();
-							benchmark.start();
-							memoryReader.dump(startingAddress, length, targetFile);
-							double elapsedSeconds = benchmark.getElapsedTime();
-							Toolkit.getDefaultToolkit().beep();
-							JOptionPane.showMessageDialog(rootPane,
-									"Dumped " + length + " bytes after " + elapsedSeconds + " second(s)",
-									"Success",
-									JOptionPane.INFORMATION_MESSAGE);
-						} catch (Exception exception)
-						{
-							StackTraceUtils.handleException(rootPane, exception);
-						} finally
-						{
-							dumpMemoryButton.setText(dumpText);
-							dumpMemoryButton.setEnabled(true);
-						}
-
-						return null;
-					}
-				}.execute();*/
 			}
 		});
 
@@ -962,7 +981,7 @@ public class JGeckoUGUI extends JFrame
 		boolean validEndingAddress = isAddressInputValid(dumpEndingAddressField.getText());
 		dumpStartingAddressField.setBackground(validStartingAddress ? Color.GREEN : Color.RED);
 		dumpEndingAddressField.setBackground(validEndingAddress ? Color.GREEN : Color.RED);
-		dumpMemoryButton.setEnabled(connected && validMemoryAddresses && validStartingAddress && validEndingAddress && validTargetFile);
+		dumpMemoryButton.setEnabled(TCPGecko.isConnected() && validMemoryAddresses && validStartingAddress && validEndingAddress && validTargetFile);
 	}
 
 	private void followPointer()
@@ -1048,6 +1067,30 @@ public class JGeckoUGUI extends JFrame
 		memoryViewerAutoUpdateCheckBox.addActionListener(actionEvent -> tryRunningMemoryViewerUpdater());
 
 		memoryViewerAddressField.setText(Conversions.toHexadecimal(MemoryViewerTableManager.STARTING_ADDRESS));
+
+		memoryViewerAddressField.addKeyListener(new KeyAdapter()
+		{
+			public void keyReleased(KeyEvent keyEvent)
+			{
+				if (keyEvent.getKeyCode() == KeyEvent.VK_ENTER
+						&& updateMemoryViewerButton.isEnabled())
+				{
+					int cursorPosition = memoryViewerAddressField.getCaretPosition();
+					updateMemoryViewer();
+					memoryViewerAddressField.requestFocus();
+					memoryViewerAddressField.setCaretPosition(cursorPosition);
+				}
+			}
+
+			public void keyTyped(KeyEvent keyEvent)
+			{
+			}
+
+			public void keyPressed(KeyEvent keyEvent)
+			{
+			}
+		});
+
 		memoryViewerValueField.setDocument(new InputLengthFilter(ValueSizes.THIRTY_TWO_BIT.getSize()));
 		new DefaultContextMenu().addTo(memoryViewerValueField);
 
@@ -1160,7 +1203,7 @@ public class JGeckoUGUI extends JFrame
 	{
 		boolean validLength = hasValidSearchLength();
 		boolean searchValueValid = isValidSearchValue();
-		searchMemoryViewerButton.setEnabled(validLength && searchValueValid && connected);
+		searchMemoryViewerButton.setEnabled(validLength && searchValueValid && TCPGecko.isConnected());
 	}
 
 	private boolean isValidSearchValue()
@@ -1461,7 +1504,7 @@ public class JGeckoUGUI extends JFrame
 		{
 			updateValueAndAddressField();
 
-			if (connected)
+			if (TCPGecko.isConnected())
 			{
 				String memoryAddress = Conversions.toHexadecimal(memoryViewerTableManager.getSelectedAddress());
 				memoryViewerAddressField.setText(memoryAddress);
@@ -1633,7 +1676,7 @@ public class JGeckoUGUI extends JFrame
 	private void setSendCodesButtonAvailability()
 	{
 		boolean codesSelected = areCodesSelected();
-		sendCodesButton.setEnabled(connected && codesSelected);
+		sendCodesButton.setEnabled(TCPGecko.isConnected() && codesSelected);
 	}
 
 	private boolean areCodesSelected()
@@ -1654,7 +1697,7 @@ public class JGeckoUGUI extends JFrame
 				@Override
 				protected String doInBackground() throws Exception
 				{
-					while (memoryViewerAutoUpdateCheckBox.isSelected() && connected)
+					while (memoryViewerAutoUpdateCheckBox.isSelected() && TCPGecko.isConnected())
 					{
 						// Only update when the user is viewing the memory viewer table
 						if (memoryViewerTable.isShowing())
@@ -1719,7 +1762,7 @@ public class JGeckoUGUI extends JFrame
 		if (memoryViewerTableManager != null)
 		{
 			boolean isValid = isMemoryViewerAddressValid();
-			boolean shouldEnable = isValid && connected && !memoryViewerAutoUpdateCheckBox.isSelected();
+			boolean shouldEnable = isValid && TCPGecko.isConnected() && !memoryViewerAutoUpdateCheckBox.isSelected();
 			updateMemoryViewerButton.setEnabled(shouldEnable);
 			memoryViewerAddressField.setBackground(isValid ? Color.GREEN : Color.RED);
 		}
@@ -2009,7 +2052,6 @@ public class JGeckoUGUI extends JFrame
 		try
 		{
 			Connector.getInstance().closeConnection();
-			connected = false;
 			connectButton.setText(connectButtonText);
 			setTitle(programName);
 			setConnectionButtonsAvailability();
@@ -2095,7 +2137,6 @@ public class JGeckoUGUI extends JFrame
 			Connector.getInstance().connect(ipAddress);
 		}
 
-		connected = true;
 		connectButton.setText(connectButtonText + "ed [" + ipAddress + "]");
 		connectedIPAddress = ipAddress;
 
@@ -2228,6 +2269,7 @@ public class JGeckoUGUI extends JFrame
 	 */
 	private void setConnectionButtonsAvailability()
 	{
+		boolean connected = TCPGecko.isConnected();
 		String inputtedIPAddress = ipAddressField.getText();
 		boolean isValidIPAddress = IPAddressValidator.validateIPv4Address(inputtedIPAddress);
 		boolean isAutoDetect = autoDetectCheckBox.isSelected();
@@ -2235,6 +2277,7 @@ public class JGeckoUGUI extends JFrame
 		boolean shouldEnableConnectButton = !connected && mayConnect && !connecting && titlesInitialized;
 		connectButton.setEnabled(shouldEnableConnectButton);
 		disconnectButton.setEnabled(connected);
+		readThreadsButton.setEnabled(connected && !readingThreads);
 		reconnectButton.setEnabled(!connectButton.isEnabled() && disconnectButton.isEnabled());
 		ipAddressField.setEnabled(!isAutoDetect);
 		setSendCodesButtonAvailability();
@@ -2292,11 +2335,6 @@ public class JGeckoUGUI extends JFrame
 		WindowUtilities.setIconImage(this);
 	}
 
-	public boolean isConnected()
-	{
-		return connected;
-	}
-
 	public void copyMemoryViewerCells()
 	{
 		memoryViewerTableManager.copyCells();
@@ -2315,5 +2353,23 @@ public class JGeckoUGUI extends JFrame
 	public void updateMemoryViewer()
 	{
 		updateMemoryViewer(true, true);
+	}
+
+	private void setMemoryViewerAddress(int address)
+	{
+		memoryViewerAddressField.setText(new Hexadecimal(address, 8).toString());
+	}
+
+	private void switchToMemoryViewer()
+	{
+		tabs.setSelectedComponent(memoryViewerTab);
+	}
+
+	public static void selectInMemoryViewer(int address)
+	{
+		JGeckoUGUI geckoUGUI = getInstance();
+		geckoUGUI.setMemoryViewerAddress(address);
+		geckoUGUI.updateMemoryViewer();
+		geckoUGUI.switchToMemoryViewer();
 	}
 }

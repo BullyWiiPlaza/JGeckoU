@@ -156,7 +156,7 @@
               </scrollpane>
             </children>
           </grid>
-          <grid id="879b4" layout-manager="GridLayoutManager" row-count="19" column-count="8" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="879b4" binding="memoryViewerTab" layout-manager="GridLayoutManager" row-count="19" column-count="8" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <tabbedpane title="Memory Viewer"/>
@@ -351,6 +351,37 @@
               </component>
             </children>
           </grid>
+          <grid id="9edcb" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
+            <constraints>
+              <tabbedpane title="Threads"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="3589c" class="javax.swing.JButton" binding="readThreadsButton" default-binding="true">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Retrieve Threads"/>
+                </properties>
+              </component>
+              <scrollpane id="36d04">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="c131e" class="javax.swing.JTable" binding="threadsTable">
+                    <constraints/>
+                    <properties/>
+                  </component>
+                </children>
+              </scrollpane>
+            </children>
+          </grid>
           <grid id="acde7" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
@@ -443,6 +474,15 @@
                     <properties>
                       <text value="Save Watch List"/>
                       <toolTipText value="Saves the watch list to be reloaded by this software"/>
+                    </properties>
+                  </component>
+                  <component id="2ff12" class="javax.swing.JCheckBox" binding="updateWatchlistCheckBox" default-binding="true">
+                    <constraints>
+                      <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <selected value="true"/>
+                      <text value="Update Watchlist"/>
                     </properties>
                   </component>
                 </children>

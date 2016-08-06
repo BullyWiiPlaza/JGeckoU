@@ -29,8 +29,10 @@ public abstract class TCPGecko
 
 	public static boolean isConnected()
 	{
-		return Connector.getInstance().getDataSender() != null
-				&& Connector.getInstance().getDataReceiver() != null;
+		Connector connector = Connector.getInstance();
+
+		return connector.getClientSocket() != null
+				&& !connector.getClientSocket().isClosed();
 	}
 
 	protected Status readStatus() throws IOException

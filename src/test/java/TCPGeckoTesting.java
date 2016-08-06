@@ -2,7 +2,8 @@ import org.junit.*;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
-import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
+import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
+import wiiudev.gecko.client.tcpgecko.main.threads.OSThreadState;
 import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.RemoteFileSystem;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.ErrorHandling;
@@ -18,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 public class TCPGeckoTesting
@@ -33,18 +35,18 @@ public class TCPGeckoTesting
 	@Test
 	public void testRemoteProcedureCalls() throws Exception
 	{
-		/*int physical = CoreInit.getEffectiveToPhysical(0x10000000);
+		int physical = CoreInit.getEffectiveToPhysical(0x10000000);
 		Assert.assertEquals(0x50000000, physical);
 
 		long processID = CoreInit.getProcessPFID();
 		Assert.assertEquals(processID, 0xF00000000L);
 
-		testFileSystem(new String[]{"content"});*/
+		/*testFileSystem(new String[]{"content"});*/
 
-		int allocated = CoreInit.allocateDefaultHeapMemory(0x50, 0x20);
+		/*int allocated = CoreInit.allocateDefaultHeapMemory(0x50, 0x20);
 		System.out.println("Allocated: " + new Hexadecimal(allocated));
 		CoreInit.freeDefaultHeapMemory(0);
-		System.out.println("De-allocated!");
+		System.out.println("De-allocated!");*/
 
 		/*if(TitleDatabaseManager.isPlaying("Call of Duty: Black Ops II"))
 		{
@@ -62,6 +64,36 @@ public class TCPGeckoTesting
 		/*int stringAddress = CoreInit.allocateString("This is my String");
 		System.out.println(stringAddress);
 		CoreInit.freeSystemMemory(stringAddress);*/
+	}
+
+	@Test
+	public void testThreads() throws IOException, InterruptedException
+	{
+		MemoryReader memoryReader = new MemoryReader();
+		List<OSThread> osThreads = memoryReader.readThreads();
+
+		OSThread osThread = osThreads.get(0);
+		testThreadState(osThread);
+	}
+
+	private void testThreadState(OSThread osThread) throws IOException
+	{
+		OSThreadState state = osThread.getState();
+
+		switch(state)
+		{
+			case PAUSED:
+				osThread.setState(OSThreadState.RUNNING);
+				Assert.assertTrue(osThread.getState() == OSThreadState.RUNNING);
+				osThread.setState(state);
+				break;
+
+			case RUNNING:
+				osThread.setState(OSThreadState.PAUSED);
+				Assert.assertTrue(osThread.getState() == OSThreadState.PAUSED);
+				osThread.setState(state);
+				break;
+		}
 	}
 
 	private void testFileSystem(String[] folders) throws IOException
