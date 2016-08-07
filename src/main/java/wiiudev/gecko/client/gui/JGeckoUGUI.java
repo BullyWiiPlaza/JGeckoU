@@ -38,6 +38,7 @@ import wiiudev.gecko.client.titles.TitleNotFoundException;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
@@ -139,6 +140,8 @@ public class JGeckoUGUI extends JFrame
 	private JButton readThreadsButton;
 	private JCheckBox updateWatchlistCheckBox;
 	private JPanel memoryViewerTab;
+	private JTextArea registersArea;
+	private JCheckBox autoUpdateRegistersCheckBox;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -183,6 +186,38 @@ public class JGeckoUGUI extends JFrame
 		ThreadsTableManager threadsTableManager = new ThreadsTableManager(threadsTable);
 		threadsTableManager.configure();
 
+		DefaultCaret caret = (DefaultCaret) registersArea.getCaret();
+		caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE); // Do not scroll when setting text
+
+		autoUpdateRegistersCheckBox.addItemListener(itemEvent ->
+				new SwingWorker<String, String>()
+				{
+					@Override
+					protected String doInBackground() throws Exception
+					{
+						while (autoUpdateRegistersCheckBox.isSelected())
+						{
+							if (registersArea.isShowing() && TCPGecko.isConnected())
+							{
+								updateRegisters(threadsTableManager);
+
+								try
+								{
+									Thread.sleep(100);
+								} catch (InterruptedException exception)
+								{
+									exception.printStackTrace();
+								}
+							}
+						}
+
+						return null;
+					}
+				}.execute());
+
+		threadsTable.getSelectionModel().addListSelectionListener(event ->
+				updateRegisters(threadsTableManager));
+
 		readThreadsButton.addActionListener(actionEvent ->
 				new SwingWorker<String, String>()
 				{
@@ -210,6 +245,18 @@ public class JGeckoUGUI extends JFrame
 						return null;
 					}
 				}.execute());
+	}
+
+	private void updateRegisters(ThreadsTableManager threadsTableManager)
+	{
+		try
+		{
+			String registers = threadsTableManager.getSelectedThreadRegisters();
+			registersArea.setText(registers);
+		} catch (IOException exception)
+		{
+			StackTraceUtils.handleException(rootPane, exception);
+		}
 	}
 
 	public static void setVisible(JDialog dialog, JRootPane rootPane, ActionEvent actionEvent)
@@ -689,7 +736,7 @@ public class JGeckoUGUI extends JFrame
 		}
 
 		String updateWatchList = simpleProperties.get("UPDATE_WATCH_LIST");
-		if(updateWatchList != null)
+		if (updateWatchList != null)
 		{
 			boolean selected = Boolean.parseBoolean(updateWatchList);
 			updateWatchlistCheckBox.setSelected(selected);
@@ -1762,7 +1809,8 @@ public class JGeckoUGUI extends JFrame
 		if (memoryViewerTableManager != null)
 		{
 			boolean isValid = isMemoryViewerAddressValid();
-			boolean shouldEnable = isValid && TCPGecko.isConnected() && !memoryViewerAutoUpdateCheckBox.isSelected();
+			boolean shouldEnable = isValid && TCPGecko.isConnected()
+					&& !memoryViewerAutoUpdateCheckBox.isSelected();
 			updateMemoryViewerButton.setEnabled(shouldEnable);
 			memoryViewerAddressField.setBackground(isValid ? Color.GREEN : Color.RED);
 		}

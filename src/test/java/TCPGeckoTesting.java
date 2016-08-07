@@ -2,6 +2,7 @@ import org.junit.*;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
+import wiiudev.gecko.client.tcpgecko.main.threads.OSContext;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThreadState;
 import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
@@ -32,7 +33,7 @@ public class TCPGeckoTesting
 		connector.connect("192.168.178.35");
 	}
 
-	@Test
+	@Ignore
 	public void testRemoteProcedureCalls() throws Exception
 	{
 		int physical = CoreInit.getEffectiveToPhysical(0x10000000);
@@ -73,6 +74,8 @@ public class TCPGeckoTesting
 		List<OSThread> osThreads = memoryReader.readThreads();
 
 		OSThread osThread = osThreads.get(0);
+		OSContext osContext = new OSContext(osThread.getAddress());
+		System.out.println(osContext);
 		testThreadState(osThread);
 	}
 
@@ -171,7 +174,7 @@ public class TCPGeckoTesting
 		client.free();
 	}
 
-	@Test
+	@Ignore
 	public void testMemoryReading() throws IOException, URISyntaxException
 	{
 		MemoryReader memoryReader = new MemoryReader();
@@ -213,7 +216,7 @@ public class TCPGeckoTesting
 		Assert.assertTrue(Arrays.equals(largeBytes, savedBytes));
 	}
 
-	public Path getDumpFile() throws URISyntaxException
+	private Path getDumpFile() throws URISyntaxException
 	{
 		return Paths.get(ClassLoader.getSystemResource("dump.bin").toURI());
 	}

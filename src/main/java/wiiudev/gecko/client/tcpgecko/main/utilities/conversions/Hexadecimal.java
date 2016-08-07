@@ -9,9 +9,9 @@ public class Hexadecimal
 		hexadecimal = Integer.toHexString(number).toUpperCase();
 	}
 
-	public Hexadecimal(int number, int length)
+	public Hexadecimal(long number, int length)
 	{
-		hexadecimal = Integer.toHexString(number).toUpperCase();
+		hexadecimal = Long.toHexString(number).toUpperCase();
 
 		while (hexadecimal.length() < length)
 		{

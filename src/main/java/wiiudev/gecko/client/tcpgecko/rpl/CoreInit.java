@@ -20,7 +20,7 @@ public class CoreInit
 	{
 		MemoryWriter memoryWriter = new MemoryWriter();
 		int threadAddress = thread.getAddress();
-		int threadStateAddress = thread.getStateAddress();
+		int threadStateAddress = thread.getSuspendedAddress();
 		memoryWriter.writeBoolean(threadStateAddress, state == OSThreadState.PAUSED);
 		String symbolName = (state == OSThreadState.PAUSED) ? "OSSuspendThread" : "OSResumeThread";
 		call(symbolName, threadAddress);

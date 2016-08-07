@@ -64,17 +64,6 @@ public class ThreadsTableManager
 		}
 	}
 
-	private void selectRow(int rowIndex)
-	{
-		if (rowIndex >= 0 && rowIndex < table.getRowCount())
-		{
-			table.setRowSelectionInterval(rowIndex, rowIndex);
-		} else
-		{
-			table.clearSelection();
-		}
-	}
-
 	public int[] getSelectedRows()
 	{
 		return table.getSelectedRows();
@@ -90,7 +79,7 @@ public class ThreadsTableManager
 			throw new IllegalStateException("Nothing selected!");
 		} else
 		{
-			for(int selectedRowIndex : selectedRows)
+			for (int selectedRowIndex : selectedRows)
 			{
 				OSThread osThread = osThreads.get(selectedRowIndex);
 				selectedThreads.add(osThread);
@@ -125,5 +114,20 @@ public class ThreadsTableManager
 	public void setSelectedItems(int[] selectedRows)
 	{
 		table.setRowSelectionInterval(selectedRows[0], selectedRows[selectedRows.length - 1]);
+	}
+
+	public String getSelectedThreadRegisters() throws IOException
+	{
+		// The first one only
+		List<OSThread> selectedItems = getSelectedItems();
+
+		if (selectedItems.size() > 0)
+		{
+			OSThread osThread = selectedItems.get(0);
+
+			return osThread.readRegisters();
+		}
+
+		return "";
 	}
 }

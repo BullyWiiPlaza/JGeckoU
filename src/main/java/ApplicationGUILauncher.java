@@ -8,30 +8,10 @@ public class ApplicationGUILauncher
 	// TODO Search tab
 	// TODO Move up and down buttons for codes and watch list
 	// TODO When code or watch modified, put it back at its original spot
-	// TODO Copy buttons for add and modify code to reduce redundancy
+	// TODO Copy buttons for add and modify code
 	// TODO Watch list "random" deadlock when updating?
-	/*
-		// Process returned data
-		FileSystemStatus status = readStatus();
-		switch (status)
-		{
-			// The memory is not all 0, read the data
-			case OK:
-				readData(buffer, 0, readLength);
-				output.write(buffer, 0, readLength);
-				break;
-			// The memory was all 0, no nead to read the data
-			case OK_EMPTY:
-				clearBuffer(buffer);
-				output.write(buffer, 0, readLength);
-				break;
-			// Something went wrong
-			default:
-				throw new WiiUException("Got an unknown status while reading memory!");
-		}
-	*/
-	// TODO Watch list ASSIGN [0xADDRESS] = 0xVALUE for the retrieved value
-	// TODO Finish code wizard fix input availability for new code types fully (IMPORTANT)
+	// TODO Watch list use [0xADDRESS] = 0xVALUE for the retrieved value
+	// TODO Finish code wizard fix input availability for new/changed code types
 	// TODO Only toggle cheat code checkbox when clicked on that checkbox
 	// TODO Combine connect and disconnect button into one
 	public static void main(String[] arguments) throws Exception

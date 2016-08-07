@@ -6,6 +6,7 @@ import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Commands;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Status;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
+import wiiudev.gecko.client.tcpgecko.main.threads.OSThreadStruct;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.DataConversions;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
@@ -197,7 +198,7 @@ public class MemoryReader extends TCPGecko
 			threadAddress = temporaryThreadAddress;
 		}
 
-		while ((temporaryThreadAddress = memoryReader.readInt(threadAddress + 0x38C)) != 0)
+		while ((temporaryThreadAddress = memoryReader.readInt(threadAddress + OSThreadStruct.LINK_ACTIVE.getOffset())) != 0)
 		{
 			OSThread osThread = new OSThread(threadAddress);
 			osThreads.add(osThread);

@@ -9,7 +9,7 @@ import java.io.IOException;
 public class OSThread
 {
 	private int address;
-	private int stateAddress;
+	private int suspendedAddress;
 	private int nameLocationPointer;
 	private String name;
 	private OSThreadState state;
@@ -19,8 +19,8 @@ public class OSThread
 	public OSThread(int address) throws IOException
 	{
 		this.address = address;
-		stateAddress = address + 0x328;
-		nameLocationPointer = address + 0x5C0;
+		suspendedAddress = address + OSThreadStruct.SUSPEND.getOffset();
+		nameLocationPointer = address + OSThreadStruct.NAME.getOffset();
 		memoryReader = new MemoryReader();
 
 		setFields();
@@ -34,11 +34,10 @@ public class OSThread
 
 	public void toggleState() throws IOException
 	{
-		if(state == OSThreadState.RUNNING)
+		if (state == OSThreadState.RUNNING)
 		{
 			setState(OSThreadState.PAUSED);
-		}
-		else
+		} else
 		{
 			setState(OSThreadState.RUNNING);
 		}
@@ -52,8 +51,7 @@ public class OSThread
 		{
 			// No name, we're using the address instead
 			name = new Hexadecimal(address, 8).toString();
-		}
-		else
+		} else
 		{
 			// Read the name
 			name = memoryReader.readString(nameLocation);
@@ -64,7 +62,7 @@ public class OSThread
 
 	private void setInternalState() throws IOException
 	{
-		int threadState = memoryReader.readInt(stateAddress);
+		int threadState = memoryReader.readInt(suspendedAddress);
 		state = OSThreadState.parse(threadState);
 	}
 
@@ -78,14 +76,20 @@ public class OSThread
 		return state;
 	}
 
-	public int getStateAddress()
+	public int getSuspendedAddress()
 	{
-		return stateAddress;
+		return suspendedAddress;
 	}
 
 	public String geName()
 	{
 		return name;
+	}
+
+	public String readRegisters() throws IOException
+	{
+		OSContext osContext = new OSContext(address);
+		return osContext.toString();
 	}
 
 	@Override
