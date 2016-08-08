@@ -5,8 +5,6 @@ import wiiudev.gecko.client.gui.code_list.code_wizard.selections.ValueSize;
 import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Commands;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Status;
-import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
-import wiiudev.gecko.client.tcpgecko.main.threads.OSThreadStruct;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.DataConversions;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
@@ -14,8 +12,6 @@ import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A class for reading data from the memory based on the {@link Connector} class
@@ -183,33 +179,6 @@ public class MemoryReader extends TCPGecko
 		}
 
 		return dumpedBytes.toByteArray();
-	}
-
-	public List<OSThread> readThreads() throws IOException
-	{
-		List<OSThread> osThreads = new ArrayList<>();
-
-		MemoryReader memoryReader = new MemoryReader();
-		int threadAddress = memoryReader.readInt(0xFFFFFFE0);
-		int temporaryThreadAddress;
-
-		while ((temporaryThreadAddress = memoryReader.readInt(threadAddress + 0x390)) != 0)
-		{
-			threadAddress = temporaryThreadAddress;
-		}
-
-		while ((temporaryThreadAddress = memoryReader.readInt(threadAddress + OSThreadStruct.LINK_ACTIVE.getOffset())) != 0)
-		{
-			OSThread osThread = new OSThread(threadAddress);
-			osThreads.add(osThread);
-			threadAddress = temporaryThreadAddress;
-		}
-
-		// The above while would skip the last thread
-		OSThread osThread = new OSThread(threadAddress);
-		osThreads.add(osThread);
-
-		return osThreads;
 	}
 
 	public int readFirmwareVersion() throws IOException

@@ -5,6 +5,8 @@ import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OSThread
 {
@@ -24,6 +26,33 @@ public class OSThread
 		memoryReader = new MemoryReader();
 
 		setFields();
+	}
+
+	public static List<OSThread> readThreads() throws IOException
+	{
+		List<OSThread> osThreads = new ArrayList<>();
+
+		MemoryReader memoryReader = new MemoryReader();
+		int threadAddress = memoryReader.readInt(0xFFFFFFE0);
+		int temporaryThreadAddress;
+
+		while ((temporaryThreadAddress = memoryReader.readInt(threadAddress + 0x390)) != 0)
+		{
+			threadAddress = temporaryThreadAddress;
+		}
+
+		while ((temporaryThreadAddress = memoryReader.readInt(threadAddress + OSThreadStruct.LINK_ACTIVE.getOffset())) != 0)
+		{
+			OSThread osThread = new OSThread(threadAddress);
+			osThreads.add(osThread);
+			threadAddress = temporaryThreadAddress;
+		}
+
+		// The previous while would skip the last thread
+		OSThread osThread = new OSThread(threadAddress);
+		osThreads.add(osThread);
+
+		return osThreads;
 	}
 
 	public void setState(OSThreadState state) throws IOException

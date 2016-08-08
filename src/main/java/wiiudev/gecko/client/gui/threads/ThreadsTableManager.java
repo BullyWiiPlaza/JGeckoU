@@ -1,7 +1,6 @@
 package wiiudev.gecko.client.gui.threads;
 
 import wiiudev.gecko.client.gui.JTableUtilities;
-import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
@@ -100,8 +99,7 @@ public class ThreadsTableManager
 
 	public void updateRows() throws IOException
 	{
-		MemoryReader memoryReader = new MemoryReader();
-		osThreads = memoryReader.readThreads();
+		osThreads = OSThread.readThreads();
 		populateRows();
 	}
 

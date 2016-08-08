@@ -9,6 +9,11 @@ import wiiudev.gecko.client.conversion.Conversions;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.code_list.AddCodeDialog;
 import wiiudev.gecko.client.gui.code_list.CodesListManager;
+import wiiudev.gecko.client.gui.disassembler.DisassembledInstruction;
+import wiiudev.gecko.client.gui.disassembler.DisassemblerTableManager;
+import wiiudev.gecko.client.gui.disassembler.assembler.Assembler;
+import wiiudev.gecko.client.gui.disassembler.assembler.AssemblerException;
+import wiiudev.gecko.client.gui.disassembler.assembler.AssemblerFilesException;
 import wiiudev.gecko.client.gui.inputFilter.HexadecimalInputFilter;
 import wiiudev.gecko.client.gui.inputFilter.InputLengthFilter;
 import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
@@ -107,7 +112,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton chooseFilePathButton;
 	private JButton downloadCodeDatabaseButton;
 	private JButton followPointerButton;
-	private JTabbedPane tabs;
+	private JTabbedPane programTabs;
 	private JButton pointerSearchApplicationButton;
 	private JTextPane aboutTextPane;
 	private JButton powerPCAssemblyCompilerButton;
@@ -142,6 +147,13 @@ public class JGeckoUGUI extends JFrame
 	private JPanel memoryViewerTab;
 	private JTextArea registersArea;
 	private JCheckBox autoUpdateRegistersCheckBox;
+	private JTable disassemblerTable;
+	private JTextField disassemblerAddressField;
+	private JButton updateDisassemblerButton;
+	private JPanel disassemblerTab;
+	private JPanel watchListTab;
+	private JTextField disassemblerInstructionField;
+	private JButton assembleInstructionButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -157,15 +169,19 @@ public class JGeckoUGUI extends JFrame
 	private SimpleProperties simpleProperties;
 	private WatchListManager watchListManager;
 	private boolean readingThreads;
+	private DisassemblerTableManager disassemblerTableManager;
 	private static JGeckoUGUI instance;
 
 	private JGeckoUGUI()
 	{
 		addFormDesignerPanel();
 		setFrameProperties();
+		addTabsChangedListener();
+
 		configureConnectionTab();
 		configureCodesTab();
 		configureThreadsTab();
+		configureDisassemblerTab();
 		configureExternalToolsTab();
 		configureMemoryViewerTab();
 		configureConversionsTab();
@@ -179,6 +195,189 @@ public class JGeckoUGUI extends JFrame
 		restorePersistentSettings();
 		addSettingsBackupShutdownHook();
 		monitorGeckoServerHealth();
+	}
+
+	private void addTabsChangedListener()
+	{
+		programTabs.addChangeListener(changeEvent ->
+				considerUpdatingTabs());
+	}
+
+	private void configureDisassemblerTab()
+	{
+		disassemblerTableManager = new DisassemblerTableManager(disassemblerTable);
+		disassemblerTableManager.configure();
+
+		assembleInstructionButton.addActionListener(actionEvent ->
+				assembleInstruction());
+
+		disassemblerTable.getSelectionModel().addListSelectionListener(event ->
+		{
+			DisassembledInstruction disassembledInstruction = disassemblerTableManager.getSelectedInstruction();
+
+			if (disassembledInstruction != null)
+			{
+				String instruction = disassembledInstruction.getInstruction();
+				disassemblerInstructionField.setText(instruction);
+			}
+		});
+
+		disassemblerInstructionField.addKeyListener(new KeyAdapter()
+		{
+			public void keyReleased(KeyEvent keyEvent)
+			{
+			}
+
+			public void keyTyped(KeyEvent keyEvent)
+			{
+			}
+
+			public void keyPressed(KeyEvent keyEvent)
+			{
+				if (keyEvent.getKeyCode() == KeyEvent.VK_ENTER
+						&& assembleInstructionButton.isEnabled())
+				{
+					int cursorPosition = disassemblerInstructionField.getCaretPosition();
+					assembleInstruction();
+					disassemblerInstructionField.requestFocus();
+
+					// This can happen if the assembled instruction is shorter than the input
+					if (cursorPosition < disassemblerInstructionField.getText().length())
+					{
+						disassemblerInstructionField.setCaretPosition(cursorPosition);
+					}
+				}
+			}
+		});
+
+		disassemblerAddressField.addKeyListener(new KeyAdapter()
+		{
+			public void keyReleased(KeyEvent keyEvent)
+			{
+			}
+
+			public void keyTyped(KeyEvent keyEvent)
+			{
+			}
+
+			public void keyPressed(KeyEvent keyEvent)
+			{
+				if (keyEvent.getKeyCode() == KeyEvent.VK_ENTER
+						&& updateDisassemblerButton.isEnabled())
+				{
+					int cursorPosition = disassemblerAddressField.getCaretPosition();
+					updateDisassembler();
+					disassemblerAddressField.requestFocus();
+					disassemblerAddressField.setCaretPosition(cursorPosition);
+				}
+			}
+		});
+
+		configureDisassemblerAddressField();
+	}
+
+	private void assembleInstruction()
+	{
+		String instruction = disassemblerInstructionField.getText();
+
+		try
+		{
+			String assembled = Assembler.assemble(instruction);
+			DisassembledInstruction disassembledInstruction = disassemblerTableManager.getSelectedInstruction();
+			MemoryWriter memoryWriter = new MemoryWriter();
+			memoryWriter.writeInt(disassembledInstruction.getAddress(), Integer.parseUnsignedInt(assembled, 16));
+
+			updateDisassembler();
+		} catch (AssemblerFilesException | AssemblerException exception)
+		{
+			JOptionPane.showMessageDialog(this,
+					exception.getMessage(),
+					"Assembler Error",
+					JOptionPane.ERROR_MESSAGE);
+		} catch (Exception exception)
+		{
+			StackTraceUtils.handleException(rootPane, exception);
+		}
+	}
+
+	private void configureDisassemblerAddressField()
+	{
+		updateDisassemblerButton.addActionListener(actionEvent ->
+				updateDisassembler());
+
+		HexadecimalInputFilter.addHexadecimalInputFilter(disassemblerAddressField);
+
+		disassemblerAddressField.getDocument().addDocumentListener(new DocumentListener()
+		{
+			@Override
+			public void insertUpdate(DocumentEvent documentEvent)
+			{
+				setDisassemblerUpdateButtonAvailability();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent documentEvent)
+			{
+				setDisassemblerUpdateButtonAvailability();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent documentEvent)
+			{
+				setDisassemblerUpdateButtonAvailability();
+			}
+		});
+
+		disassemblerAddressField.setText("01000000");
+		setDisassemblerUpdateButtonAvailability();
+	}
+
+	private void updateDisassembler()
+	{
+		if (isDisassemblerAddressValid())
+		{
+			int address = Integer.parseInt(disassemblerAddressField.getText(), 16);
+
+			try
+			{
+				disassemblerTableManager.updateRows(address);
+			} catch(AssemblerFilesException filesException)
+			{
+				JOptionPane.showMessageDialog(this,
+						filesException.getMessage(),
+						"Disassembler Error",
+						JOptionPane.ERROR_MESSAGE);
+			}
+			catch (Exception exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		}
+	}
+
+	private void setDisassemblerUpdateButtonAvailability()
+	{
+		boolean valid = isDisassemblerAddressValid();
+		disassemblerAddressField.setBackground(valid ? Color.GREEN : Color.RED);
+	}
+
+	private boolean isDisassemblerAddressValid()
+	{
+		String address = disassemblerAddressField.getText();
+		int length = disassemblerTableManager.getDumpLength();
+		boolean rangeValid = isAddressInputValid(address, length);
+
+		boolean is32Bit = false;
+
+		try
+		{
+			is32Bit = Integer.parseInt(address, 16) % 4 == 0;
+		} catch (NumberFormatException ignored)
+		{
+
+		}
+
+		return rangeValid && is32Bit;
 	}
 
 	private void configureThreadsTab()
@@ -343,8 +542,8 @@ public class JGeckoUGUI extends JFrame
 
 	private void removeUnfinishedTab()
 	{
-		tabs.remove(searchTab);
-		tabs.remove(fileSystemTab);
+		programTabs.remove(searchTab);
+		programTabs.remove(fileSystemTab);
 	}
 
 	private void monitorGeckoServerHealth()
@@ -393,7 +592,7 @@ public class JGeckoUGUI extends JFrame
 		dumpStartingAddressField.setText(Long.toHexString(selectedAddress).toUpperCase());
 		dumpEndingAddressField.setText(Long.toHexString(selectedAddress + 0x1000).toUpperCase());
 		dumpFilePathField.setText("dumped.bin");
-		tabs.setSelectedComponent(dumpingTab);
+		programTabs.setSelectedComponent(dumpingTab);
 		handleDumpMemoryButtonAvailability();
 	}
 
@@ -415,6 +614,7 @@ public class JGeckoUGUI extends JFrame
 		setWatchButtonsAvailability();
 		saveWatchListButton.addActionListener(actionEvent -> storeWatchList());
 		exportWatchListButton.addActionListener(actionEvent -> exportWatchList());
+		updateWatchlistCheckBox.addItemListener(itemEvent -> keepUpdatingWatchList());
 	}
 
 	private void addWatchListDeleteRowsDeleteKey()
@@ -593,28 +793,34 @@ public class JGeckoUGUI extends JFrame
 			@Override
 			protected String doInBackground() throws Exception
 			{
-				while (true)
+				while (updateWatchlistCheckBox.isSelected())
 				{
-					try
+					if (watchListTable.isShowing()
+							&& TCPGecko.isConnected())
 					{
-						if (watchListTable.isShowing() && TCPGecko.isConnected() && updateWatchlistCheckBox.isSelected())
-						{
-							watchListManager.updateValues();
-						}
-
-						int updateDelay = Integer.parseInt(watchListUpdateDelaySpinner.getValue().toString());
-						Thread.sleep(updateDelay);
-					} catch (ArrayIndexOutOfBoundsException ignored)
-					{
-
-					} catch (Exception exception)
-					{
-						StackTraceUtils.handleException(rootPane, exception);
-						updateWatchlistCheckBox.setSelected(false);
+						updateWatchList();
 					}
+
+					String stringUpdateDelay = watchListUpdateDelaySpinner.getValue().toString();
+					int updateDelay = Integer.parseInt(stringUpdateDelay);
+					Thread.sleep(updateDelay);
 				}
+
+				return null;
 			}
 		}.execute();
+	}
+
+	private void updateWatchList()
+	{
+		try
+		{
+			watchListManager.updateValues();
+		} catch (Exception exception)
+		{
+			StackTraceUtils.handleException(rootPane, exception);
+			updateWatchlistCheckBox.setSelected(false);
+		}
 	}
 
 	private void displayAddWatchDialog(boolean modify, String title)
@@ -656,7 +862,7 @@ public class JGeckoUGUI extends JFrame
 	{
 		Runtime.getRuntime().addShutdownHook(new Thread(() ->
 		{
-			simpleProperties.put("SELECTED_TAB_INDEX", tabs.getSelectedIndex() + "");
+			simpleProperties.put("SELECTED_TAB_INDEX", programTabs.getSelectedIndex() + "");
 			simpleProperties.put("IP_ADDRESS_AUTO_DETECT", String.valueOf(autoDetectCheckBox.isSelected()));
 			simpleProperties.put("AUTO_SAVE_CODES", String.valueOf(autoSaveCodeListCheckBox.isSelected()));
 			simpleProperties.put("MEMORY_VIEWER_ADDRESS", memoryViewerAddressField.getText());
@@ -666,6 +872,7 @@ public class JGeckoUGUI extends JFrame
 			simpleProperties.put("DUMPING_END_ADDRESS", dumpEndingAddressField.getText());
 			simpleProperties.put("UPDATE_WATCH_LIST", String.valueOf(updateWatchlistCheckBox.isSelected()));
 			simpleProperties.put("DUMPING_FILE_PATH", dumpFilePathField.getText());
+			simpleProperties.put("DISASSEMBLER_ADDRESS", disassemblerAddressField.getText());
 			simpleProperties.writeToFile();
 		}));
 	}
@@ -679,9 +886,9 @@ public class JGeckoUGUI extends JFrame
 		if (tab != null)
 		{
 			int tabIndex = Integer.parseInt(tab);
-			if (tabIndex > 0 && tabIndex < tabs.getComponents().length)
+			if (tabIndex > 0 && tabIndex < programTabs.getComponents().length)
 			{
-				tabs.setSelectedIndex(tabIndex);
+				programTabs.setSelectedIndex(tabIndex);
 			}
 		}
 
@@ -740,6 +947,12 @@ public class JGeckoUGUI extends JFrame
 		{
 			boolean selected = Boolean.parseBoolean(updateWatchList);
 			updateWatchlistCheckBox.setSelected(selected);
+		}
+
+		String disassemblerAddress = simpleProperties.get("DISASSEMBLER_ADDRESS");
+		if (disassemblerAddress != null)
+		{
+			disassemblerAddressField.setText(disassemblerAddress);
 		}
 	}
 
@@ -1119,14 +1332,6 @@ public class JGeckoUGUI extends JFrame
 		{
 			public void keyReleased(KeyEvent keyEvent)
 			{
-				if (keyEvent.getKeyCode() == KeyEvent.VK_ENTER
-						&& updateMemoryViewerButton.isEnabled())
-				{
-					int cursorPosition = memoryViewerAddressField.getCaretPosition();
-					updateMemoryViewer();
-					memoryViewerAddressField.requestFocus();
-					memoryViewerAddressField.setCaretPosition(cursorPosition);
-				}
 			}
 
 			public void keyTyped(KeyEvent keyEvent)
@@ -1135,6 +1340,14 @@ public class JGeckoUGUI extends JFrame
 
 			public void keyPressed(KeyEvent keyEvent)
 			{
+				if (keyEvent.getKeyCode() == KeyEvent.VK_ENTER
+						&& updateMemoryViewerButton.isEnabled())
+				{
+					int cursorPosition = memoryViewerAddressField.getCaretPosition();
+					updateMemoryViewer();
+					memoryViewerAddressField.requestFocus();
+					memoryViewerAddressField.setCaretPosition(cursorPosition);
+				}
 			}
 		});
 
@@ -2120,7 +2333,7 @@ public class JGeckoUGUI extends JFrame
 			@Override
 			protected String doInBackground() throws Exception
 			{
-				tabs.setEnabled(false);
+				programTabs.setEnabled(false);
 				connectButton.setText("Connecting...");
 				connecting = true;
 				setConnectionButtonsAvailability();
@@ -2149,14 +2362,14 @@ public class JGeckoUGUI extends JFrame
 						connect(detectedIPAddress, false);
 					}
 
-					updateMemoryViewer(true, false);
+					considerUpdatingTabs();
 				} catch (Exception exception)
 				{
 					connectButton.setText(connectButtonText);
 					StackTraceUtils.handleException(rootPane, exception);
 				} finally
 				{
-					tabs.setEnabled(true);
+					programTabs.setEnabled(true);
 					connecting = false;
 					setConnectionButtonsAvailability();
 				}
@@ -2170,6 +2383,27 @@ public class JGeckoUGUI extends JFrame
 				tryRunningMemoryViewerUpdater();
 			}
 		}.execute();
+	}
+
+	private void considerUpdatingTabs()
+	{
+		if (TCPGecko.isConnected())
+		{
+			if (memoryViewerTab.isShowing())
+			{
+				updateMemoryViewer(true, false);
+			}
+
+			if (disassemblerTab.isShowing())
+			{
+				updateDisassembler();
+			}
+
+			if (watchListTab.isShowing())
+			{
+				updateWatchList();
+			}
+		}
 	}
 
 	/**
@@ -2322,12 +2556,16 @@ public class JGeckoUGUI extends JFrame
 		boolean isValidIPAddress = IPAddressValidator.validateIPv4Address(inputtedIPAddress);
 		boolean isAutoDetect = autoDetectCheckBox.isSelected();
 		boolean mayConnect = (isValidIPAddress || isAutoDetect);
-		boolean shouldEnableConnectButton = !connected && mayConnect && !connecting && titlesInitialized;
+		boolean shouldEnableConnectButton = !connected
+				&& mayConnect && !connecting && titlesInitialized;
 		connectButton.setEnabled(shouldEnableConnectButton);
 		disconnectButton.setEnabled(connected);
+		assembleInstructionButton.setEnabled(connected);
 		readThreadsButton.setEnabled(connected && !readingThreads);
-		reconnectButton.setEnabled(!connectButton.isEnabled() && disconnectButton.isEnabled());
+		reconnectButton.setEnabled(!connectButton.isEnabled()
+				&& disconnectButton.isEnabled());
 		ipAddressField.setEnabled(!isAutoDetect);
+		updateDisassemblerButton.setEnabled(connected);
 		setSendCodesButtonAvailability();
 		disableCodesButton.setEnabled(connected);
 		ipAddressField.setBackground(isValidIPAddress ? Color.GREEN : Color.RED);
@@ -2357,7 +2595,8 @@ public class JGeckoUGUI extends JFrame
 
 	private void setCodeListButtonsAvailability()
 	{
-		storeCodeListButton.setEnabled(codesStorage != null && !autoSaveCodeListCheckBox.isSelected());
+		storeCodeListButton.setEnabled(codesStorage != null &&
+				!autoSaveCodeListCheckBox.isSelected());
 		exportCodeListButton.setEnabled(codesStorage != null);
 	}
 
@@ -2367,7 +2606,7 @@ public class JGeckoUGUI extends JFrame
 		selectedAddress += offset;
 		String destinationAddressHexadecimal = Long.toHexString(selectedAddress).toUpperCase();
 		memoryViewerAddressField.setText(destinationAddressHexadecimal);
-		updateMemoryViewer(true, true);
+		updateMemoryViewer();
 	}
 
 	/**
@@ -2410,7 +2649,7 @@ public class JGeckoUGUI extends JFrame
 
 	private void switchToMemoryViewer()
 	{
-		tabs.setSelectedComponent(memoryViewerTab);
+		programTabs.setSelectedComponent(memoryViewerTab);
 	}
 
 	public static void selectInMemoryViewer(int address)

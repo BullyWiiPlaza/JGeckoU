@@ -1,4 +1,7 @@
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
@@ -67,11 +70,10 @@ public class TCPGeckoTesting
 		CoreInit.freeSystemMemory(stringAddress);*/
 	}
 
-	@Test
+	@Ignore
 	public void testThreads() throws IOException, InterruptedException
 	{
-		MemoryReader memoryReader = new MemoryReader();
-		List<OSThread> osThreads = memoryReader.readThreads();
+		List<OSThread> osThreads = OSThread.readThreads();
 
 		OSThread osThread = osThreads.get(0);
 		OSContext osContext = new OSContext(osThread.getAddress());
