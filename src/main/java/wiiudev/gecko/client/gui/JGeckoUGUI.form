@@ -414,7 +414,7 @@
               </component>
             </children>
           </grid>
-          <grid id="fa72c" binding="disassemblerTab" layout-manager="GridLayoutManager" row-count="5" column-count="13" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="fa72c" binding="disassemblerTab" layout-manager="GridLayoutManager" row-count="6" column-count="13" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <tabbedpane title="Disassembler"/>
@@ -424,7 +424,7 @@
             <children>
               <scrollpane id="688d5">
                 <constraints>
-                  <grid row="1" column="0" row-span="4" col-span="13" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="2" column="0" row-span="4" col-span="13" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
@@ -493,6 +493,14 @@
                   </component>
                 </children>
               </grid>
+              <component id="1ab14" class="javax.swing.JButton" binding="powerPCAssemblyDocumentationButton" default-binding="true">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="13" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="PowerPC Assembly Documentation"/>
+                </properties>
+              </component>
             </children>
           </grid>
           <grid id="acde7" binding="watchListTab" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -1074,6 +1082,7 @@
                     </constraints>
                     <properties>
                       <text value="Coreinit Documentation"/>
+                      <toolTipText value="Opens the Coreinit.rpl documentation in the default browser"/>
                     </properties>
                   </component>
                   <component id="2678e" class="javax.swing.JButton" binding="displayMessageButton" default-binding="true">

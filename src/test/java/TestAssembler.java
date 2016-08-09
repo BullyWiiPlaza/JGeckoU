@@ -1,10 +1,10 @@
 import org.junit.Assert;
 import org.junit.Test;
-import wiiudev.gecko.client.gui.disassembler.DisassembledInstruction;
-import wiiudev.gecko.client.gui.disassembler.assembler.Assembler;
-import wiiudev.gecko.client.gui.disassembler.assembler.AssemblerException;
-import wiiudev.gecko.client.gui.disassembler.assembler.AssemblerFilesException;
-import wiiudev.gecko.client.gui.disassembler.assembler.Disassembler;
+import wiiudev.gecko.client.gui.tabs.disassembler.DisassembledInstruction;
+import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Assembler;
+import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerException;
+import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerFilesException;
+import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Disassembler;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,12 +30,12 @@ public class TestAssembler
 		DisassembledInstruction firstInstruction = disassembledInstructions.get(0);
 		Assert.assertEquals(firstInstruction.getAddress(), 0x10000000);
 		Assert.assertEquals(firstInstruction.getValue(), 0x80FD0018);
-		Assert.assertEquals(firstInstruction.getInstruction(), "lwz\tr7,24(r29)");
+		Assert.assertEquals(firstInstruction.getInstruction(), "lwz r7,24(r29)");
 
 		DisassembledInstruction secondInstruction = disassembledInstructions.get(1);
 		Assert.assertEquals(secondInstruction.getAddress(), 0x10000004);
 		Assert.assertEquals(secondInstruction.getValue(), 0x81FD1018);
-		Assert.assertEquals(secondInstruction.getInstruction(), "lwz\tr15,4120(r29)");
+		Assert.assertEquals(secondInstruction.getInstruction(), "lwz r15,4120(r29)");
 	}
 
 	@Test

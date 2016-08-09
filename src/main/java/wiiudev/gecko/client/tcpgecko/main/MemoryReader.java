@@ -1,8 +1,8 @@
 package wiiudev.gecko.client.tcpgecko.main;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import wiiudev.gecko.client.gui.code_list.code_wizard.selections.ValueSize;
 import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.ValueSize;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Commands;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Status;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.DataConversions;

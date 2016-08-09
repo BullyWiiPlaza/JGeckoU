@@ -120,12 +120,4 @@ public class OSThread
 		OSContext osContext = new OSContext(address);
 		return osContext.toString();
 	}
-
-	@Override
-	public String toString()
-	{
-		return "Name: " + name + System.lineSeparator()
-				+ "Address: " + new Hexadecimal(address, 8) + System.lineSeparator()
-				+ "State: " + state;
-	}
 }

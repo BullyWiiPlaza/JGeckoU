@@ -7,25 +7,27 @@ import wiiudev.gecko.client.codes.*;
 import wiiudev.gecko.client.conversion.ConversionType;
 import wiiudev.gecko.client.conversion.Conversions;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
-import wiiudev.gecko.client.gui.code_list.AddCodeDialog;
-import wiiudev.gecko.client.gui.code_list.CodesListManager;
-import wiiudev.gecko.client.gui.disassembler.DisassembledInstruction;
-import wiiudev.gecko.client.gui.disassembler.DisassemblerTableManager;
-import wiiudev.gecko.client.gui.disassembler.assembler.Assembler;
-import wiiudev.gecko.client.gui.disassembler.assembler.AssemblerException;
-import wiiudev.gecko.client.gui.disassembler.assembler.AssemblerFilesException;
 import wiiudev.gecko.client.gui.inputFilter.HexadecimalInputFilter;
 import wiiudev.gecko.client.gui.inputFilter.InputLengthFilter;
 import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
-import wiiudev.gecko.client.gui.threads.ThreadsTableManager;
+import wiiudev.gecko.client.gui.tabs.GraphicalMemoryDumper;
+import wiiudev.gecko.client.gui.tabs.code_list.AddCodeDialog;
+import wiiudev.gecko.client.gui.tabs.code_list.CodesListManager;
+import wiiudev.gecko.client.gui.tabs.disassembler.DisassembledInstruction;
+import wiiudev.gecko.client.gui.tabs.disassembler.DisassemblerTableManager;
+import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Assembler;
+import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerException;
+import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerFilesException;
+import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViewerTableManager;
+import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViews;
+import wiiudev.gecko.client.gui.tabs.pointer_search.DownloadingUtilities;
+import wiiudev.gecko.client.gui.tabs.pointer_search.ZipUtils;
+import wiiudev.gecko.client.gui.tabs.threads.ThreadsTableManager;
+import wiiudev.gecko.client.gui.tabs.watch_list.*;
 import wiiudev.gecko.client.gui.utilities.DefaultContextMenu;
 import wiiudev.gecko.client.gui.utilities.JFileChooserUtilities;
+import wiiudev.gecko.client.gui.utilities.JTableUtilities;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
-import wiiudev.gecko.client.gui.watch_list.*;
-import wiiudev.gecko.client.memoryViewer.MemoryViewerTableManager;
-import wiiudev.gecko.client.memoryViewer.MemoryViews;
-import wiiudev.gecko.client.pointer_search.DownloadingUtilities;
-import wiiudev.gecko.client.pointer_search.ZipUtils;
 import wiiudev.gecko.client.scanner.WiiUFinder;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
@@ -154,6 +156,7 @@ public class JGeckoUGUI extends JFrame
 	private JPanel watchListTab;
 	private JTextField disassemblerInstructionField;
 	private JButton assembleInstructionButton;
+	private JButton powerPCAssemblyDocumentationButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -170,6 +173,8 @@ public class JGeckoUGUI extends JFrame
 	private WatchListManager watchListManager;
 	private boolean readingThreads;
 	private DisassemblerTableManager disassemblerTableManager;
+	private ThreadsTableManager threadsTableManager;
+	private boolean assembling;
 	private static JGeckoUGUI instance;
 
 	private JGeckoUGUI()
@@ -210,6 +215,9 @@ public class JGeckoUGUI extends JFrame
 
 		assembleInstructionButton.addActionListener(actionEvent ->
 				assembleInstruction());
+
+		powerPCAssemblyDocumentationButton.addActionListener(actionEvent ->
+				openURL("http://www.ds.ewi.tudelft.nl/vakken/in1006/instruction-set/"));
 
 		disassemblerTable.getSelectionModel().addListSelectionListener(event ->
 		{
@@ -278,26 +286,47 @@ public class JGeckoUGUI extends JFrame
 
 	private void assembleInstruction()
 	{
-		String instruction = disassemblerInstructionField.getText();
+		new SwingWorker<String, String>()
+		{
+			@Override
+			protected String doInBackground() throws Exception
+			{
+				String buttonText = assembleInstructionButton.getText();
+				assembleInstructionButton.setText("Assembling...");
+				assembling = true;
+				setConnectionButtonsAvailability();
 
-		try
-		{
-			String assembled = Assembler.assemble(instruction);
-			DisassembledInstruction disassembledInstruction = disassemblerTableManager.getSelectedInstruction();
-			MemoryWriter memoryWriter = new MemoryWriter();
-			memoryWriter.writeInt(disassembledInstruction.getAddress(), Integer.parseUnsignedInt(assembled, 16));
+				String instruction = disassemblerInstructionField.getText();
 
-			updateDisassembler();
-		} catch (AssemblerFilesException | AssemblerException exception)
-		{
-			JOptionPane.showMessageDialog(this,
-					exception.getMessage(),
-					"Assembler Error",
-					JOptionPane.ERROR_MESSAGE);
-		} catch (Exception exception)
-		{
-			StackTraceUtils.handleException(rootPane, exception);
-		}
+				try
+				{
+					String assembled = Assembler.assemble(instruction);
+					DisassembledInstruction disassembledInstruction = disassemblerTableManager.getSelectedInstruction();
+					MemoryWriter memoryWriter = new MemoryWriter();
+					int address = disassembledInstruction.getAddress();
+					int value = Integer.parseUnsignedInt(assembled, 16);
+					memoryWriter.writeInt(address, value);
+
+					updateDisassembler();
+				} catch (AssemblerFilesException | AssemblerException exception)
+				{
+					JOptionPane.showMessageDialog(JGeckoUGUI.this,
+							exception.getMessage(),
+							"Assembler Error",
+							JOptionPane.ERROR_MESSAGE);
+				} catch (Exception exception)
+				{
+					StackTraceUtils.handleException(rootPane, exception);
+				} finally
+				{
+					assembling = false;
+					assembleInstructionButton.setText(buttonText);
+					setConnectionButtonsAvailability();
+				}
+
+				return null;
+			}
+		}.execute();
 	}
 
 	private void configureDisassemblerAddressField()
@@ -341,14 +370,13 @@ public class JGeckoUGUI extends JFrame
 			try
 			{
 				disassemblerTableManager.updateRows(address);
-			} catch(AssemblerFilesException filesException)
+			} catch (AssemblerFilesException filesException)
 			{
 				JOptionPane.showMessageDialog(this,
 						filesException.getMessage(),
 						"Disassembler Error",
 						JOptionPane.ERROR_MESSAGE);
-			}
-			catch (Exception exception)
+			} catch (Exception exception)
 			{
 				StackTraceUtils.handleException(rootPane, exception);
 			}
@@ -382,7 +410,7 @@ public class JGeckoUGUI extends JFrame
 
 	private void configureThreadsTab()
 	{
-		ThreadsTableManager threadsTableManager = new ThreadsTableManager(threadsTable);
+		threadsTableManager = new ThreadsTableManager(threadsTable);
 		threadsTableManager.configure();
 
 		DefaultCaret caret = (DefaultCaret) registersArea.getCaret();
@@ -396,17 +424,14 @@ public class JGeckoUGUI extends JFrame
 					{
 						while (autoUpdateRegistersCheckBox.isSelected())
 						{
-							if (registersArea.isShowing() && TCPGecko.isConnected())
-							{
-								updateRegisters(threadsTableManager);
+							considerUpdatingRegisters();
 
-								try
-								{
-									Thread.sleep(100);
-								} catch (InterruptedException exception)
-								{
-									exception.printStackTrace();
-								}
+							try
+							{
+								Thread.sleep(100);
+							} catch (InterruptedException exception)
+							{
+								exception.printStackTrace();
 							}
 						}
 
@@ -415,7 +440,7 @@ public class JGeckoUGUI extends JFrame
 				}.execute());
 
 		threadsTable.getSelectionModel().addListSelectionListener(event ->
-				updateRegisters(threadsTableManager));
+				considerUpdatingRegisters());
 
 		readThreadsButton.addActionListener(actionEvent ->
 				new SwingWorker<String, String>()
@@ -446,11 +471,19 @@ public class JGeckoUGUI extends JFrame
 				}.execute());
 	}
 
-	private void updateRegisters(ThreadsTableManager threadsTableManager)
+	private void considerUpdatingRegisters()
+	{
+		if (registersArea.isShowing() && TCPGecko.isConnected())
+		{
+			updateRegisters();
+		}
+	}
+
+	private void updateRegisters()
 	{
 		try
 		{
-			String registers = threadsTableManager.getSelectedThreadRegisters();
+			String registers = threadsTableManager.readSelectedThreadRegisters();
 			registersArea.setText(registers);
 		} catch (IOException exception)
 		{
@@ -520,15 +553,7 @@ public class JGeckoUGUI extends JFrame
 				setVisible(new RemoteProcedureCallDialog(), rootPane, actionEvent));
 
 		coreInitDocumentationButton.addActionListener(actionEvent ->
-		{
-			try
-			{
-				Desktop.getDesktop().browse(new URI("http://wiiubrew.org/wiki/Coreinit.rpl"));
-			} catch (Exception exception)
-			{
-				StackTraceUtils.handleException(rootPane, exception);
-			}
-		});
+				openURL("http://wiiubrew.org/wiki/Coreinit.rpl"));
 	}
 
 	private void configureMiscellaneousTab()
@@ -2209,14 +2234,26 @@ public class JGeckoUGUI extends JFrame
 
 		if (selectedAnswer == JOptionPane.YES_OPTION)
 		{
-			try
+			openURL("http://cosmocortney.ddns.net/enzy/cafe_code_types_en.php");
+		}
+	}
+
+	private void openURL(String link)
+	{
+		try
+		{
+			if (Desktop.isDesktopSupported())
 			{
-				URI link = new URI("http://cosmocortney.ddns.net/enzy/cafe_code_types_en.php");
-				Desktop.getDesktop().browse(link);
-			} catch (Exception exception)
+				Desktop desktop = Desktop.getDesktop();
+				desktop.browse(new URI(link));
+			} else
 			{
-				StackTraceUtils.handleException(rootPane, exception);
+				Runtime runtime = Runtime.getRuntime();
+				runtime.exec("xdg-open " + link);
 			}
+		} catch (Exception exception)
+		{
+			StackTraceUtils.handleException(rootPane, exception);
 		}
 	}
 
@@ -2404,6 +2441,8 @@ public class JGeckoUGUI extends JFrame
 				updateWatchList();
 			}
 		}
+
+		considerUpdatingRegisters();
 	}
 
 	/**
@@ -2560,7 +2599,7 @@ public class JGeckoUGUI extends JFrame
 				&& mayConnect && !connecting && titlesInitialized;
 		connectButton.setEnabled(shouldEnableConnectButton);
 		disconnectButton.setEnabled(connected);
-		assembleInstructionButton.setEnabled(connected);
+		assembleInstructionButton.setEnabled(connected && !assembling);
 		readThreadsButton.setEnabled(connected && !readingThreads);
 		reconnectButton.setEnabled(!connectButton.isEnabled()
 				&& disconnectButton.isEnabled());
@@ -2658,5 +2697,18 @@ public class JGeckoUGUI extends JFrame
 		geckoUGUI.setMemoryViewerAddress(address);
 		geckoUGUI.updateMemoryViewer();
 		geckoUGUI.switchToMemoryViewer();
+	}
+
+	public void selectDisassemblerTab()
+	{
+		String address = memoryViewerAddressField.getText();
+		disassemblerAddressField.setText(address);
+		programTabs.setSelectedComponent(disassemblerTab);
+	}
+
+	public void updateDisassembler(int address)
+	{
+		disassemblerAddressField.setText(Conversions.toHexadecimal(address, 8));
+		updateDisassembler();
 	}
 }

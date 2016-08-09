@@ -3,7 +3,7 @@ package wiiudev.gecko.client.codes;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-import wiiudev.gecko.client.gui.code_list.code_wizard.CodeWizardDialog;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CodeWizardDialog;
 import wiiudev.gecko.client.titles.Title;
 
 import javax.swing.text.MutableAttributeSet;
