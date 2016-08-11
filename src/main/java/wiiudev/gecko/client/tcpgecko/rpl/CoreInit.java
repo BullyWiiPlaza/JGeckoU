@@ -6,11 +6,10 @@ import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThreadState;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 public class CoreInit
 {
-	public static long call(String symbolName, int... parameters) throws IOException
+	public static int call(String symbolName, int... parameters) throws IOException
 	{
 		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 		return remoteProcedureCall.call("coreinit.rpl", symbolName, parameters);
@@ -32,7 +31,7 @@ public class CoreInit
 		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl",
 				"MEMAllocFromDefaultHeapEx", true, true);
 
-		return (int) exportedSymbol.call(size, alignment);
+		return exportedSymbol.call(size, alignment);
 	}
 
 	public static void freeDefaultHeapMemory(int address) throws IOException
@@ -46,7 +45,7 @@ public class CoreInit
 
 	public static int allocateSystemMemory(int size, int alignment) throws IOException
 	{
-		return (int) call("OSAllocFromSystem", size, alignment);
+		return call("OSAllocFromSystem", size, alignment);
 	}
 
 	public static void freeSystemMemory(int address) throws IOException
@@ -58,6 +57,7 @@ public class CoreInit
 
 	/**
 	 * Allocates a String in the memory. The address is determined by the allocator
+	 *
 	 * @param string The String to allocate
 	 * @return The address pointing to the beginning of the allocated String
 	 */
@@ -91,6 +91,7 @@ public class CoreInit
 
 	/**
 	 * Print the message <code>message</code> to the screen.
+	 *
 	 * @param message The message to print
 	 * @param isFatal Whether to halt the system or not
 	 */
@@ -110,16 +111,7 @@ public class CoreInit
 
 	public static int getEffectiveToPhysical(int address) throws IOException
 	{
-		long physical = call("OSEffectiveToPhysical", address);
-		return getFirstInteger(physical);
-	}
-
-	private static int getFirstInteger(long value)
-	{
-		ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-		buffer.putLong(value);
-
-		return buffer.getInt(0);
+		return call("OSEffectiveToPhysical", address);
 	}
 
 	/* // Crashes the console
@@ -128,7 +120,7 @@ public class CoreInit
 		call("_Exit", 0);
 	}*/
 
-	public static long getProcessPFID() throws IOException
+	public static int getProcessPFID() throws IOException
 	{
 		return call("OSGetPFID");
 	}

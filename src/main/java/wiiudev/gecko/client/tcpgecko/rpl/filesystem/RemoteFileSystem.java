@@ -13,23 +13,20 @@ import java.io.IOException;
 
 public class RemoteFileSystem extends TCPGecko implements Closeable
 {
-	public RemoteFileSystem() throws IOException
-	{
-		initialize();
-	}
-
 	/**
 	 * Initializes the file system
 	 */
-	private void initialize() throws IOException
+	public FileSystemStatus initialize() throws IOException
 	{
-		CoreInit.call("FSInit");
+		int status = CoreInit.call("FSInit");
+
+		return FileSystemStatus.getStatus(status);
 	}
 
 	/**
 	 * Shuts down the file system
 	 */
-	public void shutdown() throws IOException
+	private void shutdown() throws IOException
 	{
 		CoreInit.call("FSShutdown");
 	}
@@ -62,12 +59,12 @@ public class RemoteFileSystem extends TCPGecko implements Closeable
 	                                        ErrorHandling errorHandling,
 	                                        boolean register) throws IOException
 	{
-		int address = client.getAddress();
+		int clientAddress = client.getAddress();
 		String symbolName = register ? "FSAddClient" : "FSDelClient";
-		long status = CoreInit.call(symbolName, address, errorHandling.getValue());
+		int status = CoreInit.call(symbolName, clientAddress, errorHandling.getValue());
 		client.setRegistered(register);
 
-		return FileSystemStatus.getStatus((int) status);
+		return FileSystemStatus.getStatus(status);
 	}
 
 	public void registerCommandBlock(FileSystemCommandBlock commandBlock) throws IOException
@@ -90,10 +87,10 @@ public class RemoteFileSystem extends TCPGecko implements Closeable
 	                                      FileSystemDirectoryHandle directoryHandle,
 	                                      ErrorHandling errorHandling) throws IOException
 	{
-		long status = CoreInit.call("FSOpenDir", client.getAddress(),
+		int status = CoreInit.call("FSOpenDir", client.getAddress(),
 				commandBlock.getAddress(), path.getAddress(),
 				directoryHandle.getAddress(), errorHandling.getValue());
-		FileSystemStatus fileSystemFileSystemStatus = FileSystemStatus.getStatus((int) status);
+		FileSystemStatus fileSystemFileSystemStatus = FileSystemStatus.getStatus(status);
 		System.out.println("File system status: " + fileSystemFileSystemStatus);
 		MemoryReader memoryReader = new MemoryReader();
 		int directoryHandleValue = memoryReader.readInt(directoryHandle.getAddress());
@@ -104,13 +101,7 @@ public class RemoteFileSystem extends TCPGecko implements Closeable
 
 	public int getRegisteredClientsCount() throws IOException
 	{
-		return (int) CoreInit.call("FSGetClientNum");
-	}
-
-	@Override
-	public void close() throws IOException
-	{
-		shutdown();
+		return CoreInit.call("FSGetClientNum");
 	}
 
 	public void initializeCommandBlock(FileSystemCommandBlock commandBlock) throws IOException
@@ -121,18 +112,18 @@ public class RemoteFileSystem extends TCPGecko implements Closeable
 
 	public FileSystemStatus readDirectory(FileSystemClient client,
 	                                      FileSystemCommandBlock commandBlock,
-	                                      FileSystemDirectoryHandle fileSystemHandle,
+	                                      FileSystemDirectoryHandle directoryHandle,
 	                                      FileSystemBuffer buffer,
 	                                      ErrorHandling errorHandling) throws IOException
 	{
-		long status = CoreInit.call("FSReadDir",
+		int status = CoreInit.call("FSReadDir",
 				client.getAddress(),
 				commandBlock.getAddress(),
-				fileSystemHandle.dereference(),
+				directoryHandle.dereference(),
 				buffer.getAddress(),
 				errorHandling.getValue());
 
-		return FileSystemStatus.getStatus((int) status);
+		return FileSystemStatus.getStatus(status);
 	}
 
 	public FileSystemStatus closeDirectory(FileSystemClient client,
@@ -140,11 +131,17 @@ public class RemoteFileSystem extends TCPGecko implements Closeable
 	                                       FileSystemDirectoryHandle directoryHandle,
 	                                       ErrorHandling errorHandling) throws IOException
 	{
-		long status = CoreInit.call("FSCloseDir", client.getAddress(),
+		int status = CoreInit.call("FSCloseDir", client.getAddress(),
 				commandBlock.getAddress(),
 				directoryHandle.dereference(),
 				errorHandling.getValue());
 
-		return FileSystemStatus.getStatus((int) status);
+		return FileSystemStatus.getStatus(status);
+	}
+
+	@Override
+	public void close() throws IOException
+	{
+		shutdown();
 	}
 }

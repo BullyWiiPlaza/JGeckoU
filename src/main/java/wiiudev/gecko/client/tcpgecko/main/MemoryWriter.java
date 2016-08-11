@@ -6,6 +6,7 @@ import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -26,13 +27,13 @@ public class MemoryWriter extends TCPGecko
 	 */
 	private void sendWriteCommand(int address, int value, Commands command) throws IOException
 	{
+		int integerLength = 4;
+		AddressRange.assertValidAccess(address, integerLength, MemoryAccessLevel.WRITE);
+
 		reentrantLock.lock();
 
 		try
 		{
-			int integerLength = 4;
-			AddressRange.assertValidAccess(address, integerLength, MemoryAccessLevel.WRITE);
-
 			sendCommand(command);
 			dataSender.writeInt(address);
 			dataSender.writeInt(value);
@@ -51,15 +52,7 @@ public class MemoryWriter extends TCPGecko
 	 */
 	public void write(int address, byte value) throws IOException
 	{
-		reentrantLock.lock();
-
-		try
-		{
-			sendWriteCommand(address, value, Commands.MEMORY_POKE_8);
-		} finally
-		{
-			reentrantLock.unlock();
-		}
+		sendWriteCommand(address, value, Commands.MEMORY_POKE_8);
 	}
 
 	/**
@@ -70,15 +63,7 @@ public class MemoryWriter extends TCPGecko
 	 */
 	public void writeShort(int address, short value) throws IOException
 	{
-		reentrantLock.lock();
-
-		try
-		{
-			sendWriteCommand(address, value, Commands.MEMORY_POKE_16);
-		} finally
-		{
-			reentrantLock.unlock();
-		}
+		sendWriteCommand(address, value, Commands.MEMORY_POKE_16);
 	}
 
 	/**
@@ -89,15 +74,7 @@ public class MemoryWriter extends TCPGecko
 	 */
 	public void writeInt(int address, int value) throws IOException
 	{
-		reentrantLock.lock();
-
-		try
-		{
-			sendWriteCommand(address, value, Commands.MEMORY_POKE_32);
-		} finally
-		{
-			reentrantLock.unlock();
-		}
+		sendWriteCommand(address, value, Commands.MEMORY_POKE_32);
 	}
 
 	/**
@@ -108,16 +85,8 @@ public class MemoryWriter extends TCPGecko
 	 */
 	public void writeBoolean(int address, boolean value) throws IOException
 	{
-		reentrantLock.lock();
-
-		try
-		{
-			byte booleanValue = (byte) (value ? 1 : 0);
-			write(address, booleanValue);
-		} finally
-		{
-			reentrantLock.unlock();
-		}
+		byte booleanValue = (byte) (value ? 1 : 0);
+		write(address, booleanValue);
 	}
 
 	/**
@@ -128,41 +97,32 @@ public class MemoryWriter extends TCPGecko
 	 */
 	public void writeFloat(int address, float value) throws IOException
 	{
-		reentrantLock.lock();
-
-		try
-		{
-			int floatValue = DataConversions.toInteger(value);
-			writeInt(address, floatValue);
-		} finally
-		{
-			reentrantLock.unlock();
-		}
+		int floatValue = DataConversions.toInteger(value);
+		writeInt(address, floatValue);
 	}
 
 	/**
 	 * Writes a null-terminated String <code>value</code> to the memory starting at <code>address</code>
 	 *
 	 * @param address The address to write to
-	 * @param value   The value to write
+	 * @param text   The value to write
 	 */
-	public void writeString(int address, String value) throws IOException
+	public void writeString(int address, String text) throws IOException
 	{
-		reentrantLock.lock();
+		byte[] textBytes = getNullTerminatedBytes(text);
 
-		try
-		{
-			byte[] valueBytes = value.getBytes();
-			byte[] valueBytesNullTerminated = new byte[valueBytes.length + 1];
+		writeBytes(address, textBytes);
+	}
 
-			System.arraycopy(valueBytes, 0, valueBytesNullTerminated, 0, valueBytes.length);
-			valueBytesNullTerminated[valueBytesNullTerminated.length - 1] = 0;
+	private byte[] getNullTerminatedBytes(String text)
+	{
+		byte[] textBytes = text.getBytes(StandardCharsets.UTF_8);
+		byte[] nullTerminatedTextBytes = new byte[textBytes.length + 1];
 
-			writeBytes(address, valueBytesNullTerminated);
-		} finally
-		{
-			reentrantLock.unlock();
-		}
+		System.arraycopy(textBytes, 0, nullTerminatedTextBytes, 0, textBytes.length);
+		nullTerminatedTextBytes[nullTerminatedTextBytes.length - 1] = 0; // TODO Needed?
+
+		return nullTerminatedTextBytes;
 	}
 
 	/**
@@ -205,28 +165,29 @@ public class MemoryWriter extends TCPGecko
 		}
 	}
 
-	private int uploadBytes(int start, byte[] bytes) throws IOException
+	private int uploadBytes(int address, byte[] bytes) throws IOException
 	{
+		AddressRange.assertValidAccess(address, bytes.length, MemoryAccessLevel.WRITE);
+		int endAddress = address + bytes.length;
+
 		reentrantLock.lock();
 
 		try
 		{
-			AddressRange.assertValidAccess(start, bytes.length, MemoryAccessLevel.WRITE);
-			int end = start + bytes.length;
 			sendCommand(Commands.MEMORY_UPLOAD);
-			dataSender.writeInt(start);
-			dataSender.writeInt(end);
+			dataSender.writeInt(address);
+			dataSender.writeInt(endAddress);
 			dataSender.write(bytes);
 			dataSender.flush();
 
-			// No need to check the status,but we need to read it at least
+			// No need to check the status but we need to read it at least
 			readStatus();
-
-			return end;
 		} finally
 		{
 			reentrantLock.unlock();
 		}
+
+		return endAddress;
 	}
 
 	/**

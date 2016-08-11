@@ -4,7 +4,8 @@ import javax.swing.*;
 
 public class ApplicationGUILauncher
 {
-	// TODO File system access (extract and replace)
+	// TODO Free'ing default heap memory crashes on sending (flushing) the request?
+	// TODO File system access (extract and replace files)
 	// TODO Search tab
 	// TODO Move up and down buttons for codes and watch list
 	// TODO When code or watch modified, put it back at its original spot

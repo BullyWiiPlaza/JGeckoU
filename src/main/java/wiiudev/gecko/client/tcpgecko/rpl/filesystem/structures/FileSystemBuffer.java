@@ -6,6 +6,6 @@ public class FileSystemBuffer extends FileSystemObject
 {
 	public FileSystemBuffer() throws IOException
 	{
-		super(200, 20);
+		super(0x200, 0x20);
 	}
 }

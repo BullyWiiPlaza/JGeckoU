@@ -24,7 +24,7 @@ public class ExportedSymbol
 	 * Calls this symbol with the provided parameters
 	 * @param parameters The parameters to pass
 	 */
-	public long call(int... parameters) throws IOException
+	public int call(int... parameters) throws IOException
 	{
 		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 		return remoteProcedureCall.call(this, parameters);
@@ -41,5 +41,15 @@ public class ExportedSymbol
 	public void setAddress(int address)
 	{
 		this.address = address;
+	}
+
+	public String getSymbolName()
+	{
+		return symbolName;
+	}
+
+	public String getRplName()
+	{
+		return rplName;
 	}
 }

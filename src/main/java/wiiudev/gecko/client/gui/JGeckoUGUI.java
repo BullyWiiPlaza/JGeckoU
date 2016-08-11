@@ -75,7 +75,6 @@ public class JGeckoUGUI extends JFrame
 	private JButton connectionHelpButton;
 	private JTextField ipAddressField;
 	private JCheckBox autoDetectCheckBox;
-	private JPanel codesPanel;
 	private JButton addCodeButton;
 	private JButton deleteCodeButton;
 	private JButton sendCodesButton;
@@ -199,7 +198,6 @@ public class JGeckoUGUI extends JFrame
 
 		restorePersistentSettings();
 		addSettingsBackupShutdownHook();
-		monitorGeckoServerHealth();
 	}
 
 	private void addTabsChangedListener()
@@ -575,19 +573,16 @@ public class JGeckoUGUI extends JFrame
 	{
 		Thread monitor = new Thread(() ->
 		{
-			while (true)
+			while (TCPGecko.isConnected())
 			{
 				try
 				{
-					if (TCPGecko.isConnected())
-					{
-						MemoryReader memoryReader = new MemoryReader();
-						boolean isRunning = memoryReader.isRunning();
+					MemoryReader memoryReader = new MemoryReader();
+					boolean isRunning = memoryReader.isRunning();
 
-						if (!isRunning)
-						{
-							connectionReset();
-						}
+					if (!isRunning)
+					{
+						connectionReset();
 					}
 
 					Thread.sleep(500);
@@ -1276,7 +1271,7 @@ public class JGeckoUGUI extends JFrame
 			@Override
 			protected String doInBackground() throws Exception
 			{
-				String input = JOptionPane.showInputDialog(rootPane, "Please enter the pointer notation:", followPointerButton.getText(), JOptionPane.INFORMATION_MESSAGE);
+				String input = JOptionPane.showInputDialog(rootPane, "Please enter the POINTER notation:", followPointerButton.getText(), JOptionPane.INFORMATION_MESSAGE);
 
 				if (input != null)
 				{
@@ -1300,7 +1295,7 @@ public class JGeckoUGUI extends JFrame
 					} catch (StringIndexOutOfBoundsException invalidInput)
 					{
 						JOptionPane.showMessageDialog(rootPane,
-								"Invalid pointer expression!",
+								"Invalid POINTER expression!",
 								"Error",
 								JOptionPane.ERROR_MESSAGE);
 					} catch (Exception exception)
@@ -2458,6 +2453,7 @@ public class JGeckoUGUI extends JFrame
 			Connector.getInstance().connect(ipAddress);
 		}
 
+		monitorGeckoServerHealth();
 		connectButton.setText(connectButtonText + "ed [" + ipAddress + "]");
 		connectedIPAddress = ipAddress;
 

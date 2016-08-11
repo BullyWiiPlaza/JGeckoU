@@ -161,9 +161,9 @@ public class MemoryPointerExpression
 	}
 
 	/**
-	 * Gets the destination address the given pointer is pointing to
+	 * Gets the destination address the given POINTER is pointing to
 	 *
-	 * @return The destination address the given pointer is pointing to OR {@value #INVALID_POINTER} if not
+	 * @return The destination address the given POINTER is pointing to OR {@value #INVALID_POINTER} if not
 	 * possibles
 	 * @throws IOException
 	 */

@@ -5,43 +5,18 @@ import java.util.List;
 
 public class FileStructure
 {
-	private String PName;
-	private int PTag;
-	private FileStructure PParent;
-	List<FileStructure> subFolders;
-	List<SubFile> subFiles;
-
-
-	public String Path()
-	{
-		return parent() == null ? "" : parent().Path() + "/" + PName;
-	}
-
-	public int tag()
-	{
-		return PTag;
-	}
-
-	public FileStructure parent()
-	{
-		return PParent;
-	}
-
-	public List<FileStructure> GetFolders()
-	{
-		return subFolders;
-	}
-
-	public List<SubFile> GetFiles()
-	{
-		return subFiles;
-	}
+	private String name;
+	private int tag;
+	private FileStructure parent;
+	private List<FileStructure> subFolders;
+	private List<SubFile> subFiles;
 
 	private FileStructure(String name, int tag, FileStructure parent)
 	{
-		PName = name;
-		PTag = tag;
-		PParent = parent;
+		this.name = name;
+		this.tag = tag;
+		this.parent = parent;
+
 		subFiles = new ArrayList<>();
 		subFolders = new ArrayList<>();
 	}
@@ -51,32 +26,60 @@ public class FileStructure
 		this(name, tag, null);
 	}
 
+	public String getPath()
+	{
+		FileStructure parent = getParent();
+		String parentPath = parent == null ? "" : parent.getPath();
+
+		return parentPath + "/" + name;
+	}
+
+	public int tag()
+	{
+		return tag;
+	}
+
+	public FileStructure getParent()
+	{
+		return parent;
+	}
+
+	public List<FileStructure> getFolders()
+	{
+		return subFolders;
+	}
+
+	public List<SubFile> getFiles()
+	{
+		return subFiles;
+	}
+
 	public FileStructure addSubFolder(String name, int tag)
 	{
-		FileStructure nFS = new FileStructure(name, tag, this);
-		subFolders.add(nFS);
+		FileStructure subFolder = new FileStructure(name, tag, this);
+		subFolders.add(subFolder);
 
-		return nFS;
+		return subFolder;
 	}
 
 	public void addFile(String name, int tag, long length)
 	{
-		SubFile nSF = new SubFile(name, tag, length, this);
-		subFiles.add(nSF);
+		SubFile file = new SubFile(name, tag, length, this);
+		subFiles.add(file);
 	}
 
-	public int CompareTo(FileStructure other)
+	public int compareTo(Object other)
 	{
-		return PName.compareTo(other.PName);
+		return name.compareTo(((FileStructure) other).name);
 	}
 
-	public String getPName()
+	public String getName()
 	{
-		return PName;
+		return name;
 	}
 
-	public void setPName(String PName)
+	public void setName(String name)
 	{
-		this.PName = PName;
+		this.name = name;
 	}
 }

@@ -4,7 +4,7 @@ import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 
 public enum Pointer
 {
-	no_pointer(0x00, "No Pointer"), pointer(0x01, "Pointer"), pointer_in_pointer(0x02, "Pointer in Pointer");
+	NO_POINTER(0x00, "No Pointer"), POINTER(0x01, "Pointer"), POINTER_IN_POINTER(0x02, "Pointer in Pointer");
 
 	private short value;
 	private String text;
