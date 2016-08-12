@@ -3,6 +3,7 @@ package wiiudev.gecko.client.gui.tabs.disassembler.assembler;
 import org.apache.commons.io.IOUtils;
 
 import javax.xml.bind.DatatypeConverter;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -14,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-public class Assembler
+public class Assembler implements Closeable
 {
 	private Path compiler;
 	private Path linker;
@@ -23,11 +24,19 @@ public class Assembler
 	private Path objectCodeFile;
 	private Path binaryFile;
 
-	private Assembler(Path sourceFile) throws FileNotFoundException
+	private Assembler(String instruction) throws IOException
 	{
+		String assemblyFileName = UUID.randomUUID().toString();
+		Path sourceFile = Paths.get(AssemblerFiles.getLibrariesDirectory()
+				+ File.separator + assemblyFileName + ".s");
+
 		this.sourceFile = sourceFile;
 
 		initializeLibraries();
+
+		byte[] instructionBytes = instruction.getBytes(StandardCharsets.UTF_8);
+		Files.write(sourceFile, instructionBytes);
+
 		setUtilityPaths();
 	}
 
@@ -56,16 +65,10 @@ public class Assembler
 
 	private byte[] getAssembledBytes() throws Exception
 	{
-		try
-		{
-			compile();
-			link();
+		compile();
+		link();
 
-			return Files.readAllBytes(binaryFile);
-		} finally
-		{
-			cleanAuxiliaryFiles();
-		}
+		return Files.readAllBytes(binaryFile);
 	}
 
 	private void compile() throws Exception
@@ -87,7 +90,7 @@ public class Assembler
 		Process process = processBuilder.start();
 		String errorMessage = IOUtils.toString(process.getErrorStream(), "UTF-8");
 
-		if (errorMessage.contains("Error"))
+		if (errorMessage.toLowerCase().contains("error"))
 		{
 			throw new AssemblerException(errorMessage);
 		}
@@ -95,29 +98,21 @@ public class Assembler
 		process.waitFor();
 	}
 
-	private void cleanAuxiliaryFiles() throws IOException
-	{
-		Files.deleteIfExists(objectCodeFile);
-		Files.deleteIfExists(binaryFile);
-	}
-
 	public static String assemble(String instruction) throws Exception
 	{
-		String assemblyFileName = UUID.randomUUID().toString();
-		Path assemblySourceFile = Paths.get(AssemblerFiles.getLibrariesDirectory()
-				+ File.separator + assemblyFileName + ".s");
-
-		try
+		try (Assembler assembler = new Assembler(instruction))
 		{
-			byte[] instructionBytes = instruction.getBytes(StandardCharsets.UTF_8);
-			Files.write(assemblySourceFile, instructionBytes);
-			Assembler assembler = new Assembler(assemblySourceFile);
 			byte[] bytes = assembler.getAssembledBytes();
 
 			return DatatypeConverter.printHexBinary(bytes);
-		} finally
-		{
-			Files.deleteIfExists(assemblySourceFile);
 		}
+	}
+
+	@Override
+	public void close() throws IOException
+	{
+		Files.deleteIfExists(sourceFile);
+		Files.deleteIfExists(objectCodeFile);
+		Files.deleteIfExists(binaryFile);
 	}
 }

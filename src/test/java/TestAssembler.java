@@ -4,8 +4,10 @@ import wiiudev.gecko.client.gui.tabs.disassembler.DisassembledInstruction;
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.*;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 public class TestAssembler
@@ -15,6 +17,7 @@ public class TestAssembler
 	{
 		String assembled = Assembler.assemble("nop");
 		Assert.assertTrue(assembled.equals("60000000"));
+		assertCleanDirectory();
 	}
 
 	@Test
@@ -32,6 +35,8 @@ public class TestAssembler
 		Assert.assertEquals(secondInstruction.getAddress(), 0x10000004);
 		Assert.assertEquals(secondInstruction.getValue(), 0x81FD1018);
 		Assert.assertEquals(secondInstruction.getInstruction(), "lwz r15,4120(r29)");
+
+		assertCleanDirectory();
 	}
 
 	@Test
@@ -44,6 +49,9 @@ public class TestAssembler
 		} catch (AssemblerException ignored)
 		{
 
+		} finally
+		{
+			assertCleanDirectory();
 		}
 	}
 
@@ -64,11 +72,38 @@ public class TestAssembler
 		} finally
 		{
 			rename(renamed, compiler.getFileName().toString());
+			assertCleanDirectory();
 		}
 	}
 
 	private Path rename(Path oldName, String newNameString) throws IOException
 	{
 		return Files.move(oldName, oldName.resolveSibling(newNameString));
+	}
+
+	private void assertCleanDirectory() throws IOException
+	{
+		Path directory = AssemblerFiles.getLibrariesDirectory();
+		List<Path> files = listFiles(directory);
+
+		files.stream().filter(file -> file.toString().endsWith(".s")
+				|| file.toString().endsWith(".bin")
+				|| file.toString().endsWith(".o")
+				|| file.toString().endsWith(".out")).forEach(file ->
+				Assert.fail("Directory not clean: " + file.getFileName()));
+	}
+
+	private List<Path> listFiles(Path directory) throws IOException
+	{
+		List<Path> fileNames = new ArrayList<>();
+		try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directory))
+		{
+			for (Path path : directoryStream)
+			{
+				fileNames.add(path);
+			}
+		}
+
+		return fileNames;
 	}
 }
