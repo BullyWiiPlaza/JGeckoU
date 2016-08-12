@@ -37,6 +37,7 @@ import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
 import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
+import wiiudev.gecko.client.tcpgecko.rpl.RemoteDisassembler;
 import wiiudev.gecko.client.titles.FirmwareNotImplementedException;
 import wiiudev.gecko.client.titles.Title;
 import wiiudev.gecko.client.titles.TitleDatabaseManager;
@@ -156,6 +157,9 @@ public class JGeckoUGUI extends JFrame
 	private JTextField disassemblerInstructionField;
 	private JButton assembleInstructionButton;
 	private JButton powerPCAssemblyDocumentationButton;
+	private JButton osTimeButton;
+	private JButton processPFIDButton;
+	private JButton remoteDisassemblerButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -193,7 +197,7 @@ public class JGeckoUGUI extends JFrame
 		configureMemoryDumpingTab();
 		removeUnfinishedTab();
 		configureMiscellaneousTab();
-		configureRPCTab();
+		configureRemoteProcedureCallTab();
 		configureAboutTab();
 
 		restorePersistentSettings();
@@ -497,7 +501,7 @@ public class JGeckoUGUI extends JFrame
 		dialog.setVisible(true);
 	}
 
-	private void configureRPCTab()
+	private void configureRemoteProcedureCallTab()
 	{
 		displayMessageButton.addActionListener(actionEvent ->
 		{
@@ -506,27 +510,49 @@ public class JGeckoUGUI extends JFrame
 
 			if (textDialog.isConfirmed())
 			{
-				boolean isFatal = textDialog.shouldHaltSystem();
+				boolean shouldHaltSystem = textDialog.shouldHaltSystem();
 				String message = textDialog.getMessageText();
 
 				try
 				{
-					CoreInit.displayMessage(message, isFatal);
-				} catch (Exception exception)
+					CoreInit.displayMessage(message, shouldHaltSystem);
+				} catch (IOException ignored)
+				{
+					// This crash is to be expected so no handling it
+				}
+			}
+		});
+
+		remoteDisassemblerButton.addActionListener(e ->
+		{
+			RemoteDisassemblerDialog remoteDisassemblerDialog = new RemoteDisassemblerDialog();
+			remoteDisassemblerDialog.setTitle(remoteDisassemblerButton.getText());
+			remoteDisassemblerDialog.setLocationRelativeTo(this);
+			remoteDisassemblerDialog.setVisible(true);
+
+			if(remoteDisassemblerDialog.isConfirmed())
+			{
+				int value = remoteDisassemblerDialog.getEnteredValue();
+
+				try
+				{
+					String disassembled = RemoteDisassembler.disassembleValue(value);
+					JOptionPane.showMessageDialog(JGeckoUGUI.this,
+							disassembled,
+							remoteDisassemblerButton.getText(),
+							JOptionPane.INFORMATION_MESSAGE);
+				} catch (IOException exception)
 				{
 					StackTraceUtils.handleException(rootPane, exception);
 				}
 			}
 		});
 
-		// Not functional yet...
-		displayMessageButton.setVisible(false);
-
 		convertEffectiveToPhysicalButton.addActionListener(actionEvent ->
 		{
 			String suppliedInput = JOptionPane.showInputDialog(this,
 					"Please enter the effective hexadecimal address to convert:",
-					"OSEffectiveToPhysical",
+					convertEffectiveToPhysicalButton.getText(),
 					JOptionPane.INFORMATION_MESSAGE);
 
 			if (suppliedInput != null)
@@ -537,13 +563,43 @@ public class JGeckoUGUI extends JFrame
 					int physical = CoreInit.getEffectiveToPhysical(address);
 
 					JOptionPane.showMessageDialog(this,
-							"0x" + new Hexadecimal(physical, 8),
-							"OSEffectiveToPhysical",
+							new Hexadecimal(physical, 8),
+							convertEffectiveToPhysicalButton.getText(),
 							JOptionPane.INFORMATION_MESSAGE);
 				} catch (Exception exception)
 				{
 					StackTraceUtils.handleException(rootPane, exception);
 				}
+			}
+		});
+
+		osTimeButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				long osTime = CoreInit.getOSTime();
+				JOptionPane.showMessageDialog(this,
+						Long.toHexString(osTime).toUpperCase(),
+						osTimeButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		processPFIDButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				long osTime = CoreInit.getProcessPFID();
+				JOptionPane.showMessageDialog(this,
+						Long.toHexString(osTime).toUpperCase(),
+						processPFIDButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
 			}
 		});
 
@@ -2237,15 +2293,8 @@ public class JGeckoUGUI extends JFrame
 	{
 		try
 		{
-			if (Desktop.isDesktopSupported())
-			{
-				Desktop desktop = Desktop.getDesktop();
-				desktop.browse(new URI(link));
-			} else
-			{
-				Runtime runtime = Runtime.getRuntime();
-				runtime.exec("xdg-open " + link);
-			}
+			Desktop desktop = Desktop.getDesktop();
+			desktop.browse(new URI(link));
 		} catch (Exception exception)
 		{
 			StackTraceUtils.handleException(rootPane, exception);
@@ -2594,7 +2643,11 @@ public class JGeckoUGUI extends JFrame
 		boolean shouldEnableConnectButton = !connected
 				&& mayConnect && !connecting && titlesInitialized;
 		connectButton.setEnabled(shouldEnableConnectButton);
+		processPFIDButton.setEnabled(connected);
+		remoteDisassemblerButton.setEnabled(connected);
+		displayMessageButton.setEnabled(connected);
 		disconnectButton.setEnabled(connected);
+		osTimeButton.setEnabled(connected);
 		assembleInstructionButton.setEnabled(connected && !assembling);
 		readThreadsButton.setEnabled(connected && !readingThreads);
 		reconnectButton.setEnabled(!connectButton.isEnabled()

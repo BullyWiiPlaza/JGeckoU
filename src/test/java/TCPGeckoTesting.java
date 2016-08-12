@@ -1,4 +1,7 @@
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
@@ -7,6 +10,7 @@ import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThreadState;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
+import wiiudev.gecko.client.tcpgecko.rpl.RemoteDisassembler;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.RemoteFileSystem;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.ErrorHandling;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.FileSystemStatus;
@@ -38,35 +42,36 @@ public class TCPGeckoTesting
 	@Test
 	public void testRemoteProcedureCalls() throws Exception
 	{
-		// testMemoryAllocation();
+		CoreInit.getOSTime(); // Can't check this but just run it
 
-		testFileSystem(new String[]{"content"});
-
-		/*int physical = CoreInit.getEffectiveToPhysical(0x10000000);
+		int physical = CoreInit.getEffectiveToPhysical(0x10000000);
 		Assert.assertEquals(0x50000000, physical);
 
 		long processID = CoreInit.getProcessPFID();
-		Assert.assertEquals(processID, 0xF00000000L);*/
+		Assert.assertEquals(processID, 0xF00000000L);
 
 		/*if(TitleDatabaseManager.isPlaying("Call of Duty: Black Ops II"))
 		{
 			RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 			ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("t6mp_cafef_rpl.rpl", "Com_SessionMode_IsPublicOnlineGame");
 			System.out.println(new Hexadecimal(exportedSymbol.getAddress()));
-			// long result = exportedSymbol.call();
+			// long result = exportedSymbol.call32();
 			// System.out.println(result);
 		}*/
-
-		/*int heap = CoreInit.allocateDefaultHeapMemory(0x50, 0x20);
-		CoreInit.freeDefaultHeapMemory(heap);
-		System.out.println(heap);*/
-
-		/*int stringAddress = CoreInit.allocateString("This is my String");
-		System.out.println(stringAddress);
-		CoreInit.freeSystemMemory(stringAddress);*/
 	}
 
-	private void testMemoryAllocation() throws IOException
+	@Test
+	public void testRemoteDisassembler() throws IOException
+	{
+		String disassembled = RemoteDisassembler.disassembleValue(0x60000000);
+		Assert.assertEquals(disassembled, "ori r0, r0, 0");
+
+		disassembled = RemoteDisassembler.disassembleAddress(0x01087BC0);
+		Assert.assertEquals(disassembled, "addi r11, r11, 4");
+	}
+
+	@Test
+	public void testMemoryAllocation() throws IOException
 	{
 		int allocated = CoreInit.allocateDefaultHeapMemory(0x50, 0x20);
 		CoreInit.freeDefaultHeapMemory(allocated);
@@ -77,14 +82,13 @@ public class TCPGeckoTesting
 		Assert.assertEquals(allocated, allocated2);
 	}
 
-	@Ignore
-	public void testThreads() throws IOException, InterruptedException
+	@Test
+	public void testThreads() throws Exception
 	{
 		List<OSThread> osThreads = OSThread.readThreads();
 
 		OSThread osThread = osThreads.get(0);
 		OSContext osContext = new OSContext(osThread.getAddress());
-		System.out.println(osContext);
 		testThreadState(osThread);
 	}
 
@@ -110,26 +114,26 @@ public class TCPGeckoTesting
 
 	private void testFileSystem(String[] folders) throws IOException
 	{
-		try (RemoteFileSystem remoteFileSystem = new RemoteFileSystem())
+		try (RemoteFileSystem remoteFileSystem = new RemoteFileSystem();
+		     FileSystemClient client = new FileSystemClient();
+		     FileSystemCommandBlock commandBlock = new FileSystemCommandBlock();
+		     FileSystemDirectoryHandle directoryHandle = new FileSystemDirectoryHandle();
+		     FileSystemPath path = new FileSystemPath();
+		     FileSystemBuffer buffer = new FileSystemBuffer())
 		{
 			FileSystemStatus status;
 
 			remoteFileSystem.initialize();
 
-			FileSystemClient client = new FileSystemClient();
 			System.out.println("Client Address: " + new Hexadecimal(client.getAddress()));
-			FileSystemCommandBlock commandBlock = new FileSystemCommandBlock();
 			System.out.println("Command Block Address: " + new Hexadecimal(commandBlock.getAddress()));
 			status = remoteFileSystem.addClient(client, ErrorHandling.NONE);
 			// System.out.println("Add Client Status: " + new Hexadecimal(status2.value));
 			remoteFileSystem.initializeCommandBlock(commandBlock);
 			// System.out.println("Initialize Command Block Status: " + new Hexadecimal(status2.value));
 
-			FileSystemDirectoryHandle directoryHandle = new FileSystemDirectoryHandle();
 			System.out.println("Directory Handle Address: " + new Hexadecimal(directoryHandle.getAddress()));
-			FileSystemPath path = new FileSystemPath();
 			System.out.println("getPath Address: " + new Hexadecimal(path.getAddress()));
-			FileSystemBuffer buffer = new FileSystemBuffer();
 			System.out.println("Buffer Address: " + new Hexadecimal(buffer.getAddress()));
 
 			FileStructure rootFolder = new FileStructure("vol", -1);
@@ -192,17 +196,11 @@ public class TCPGeckoTesting
 				remoteFileSystem.closeDirectory(client, commandBlock, directoryHandle, ErrorHandling.NONE);
 			}
 
-			// Free all allocated memory again
-			buffer.free();
-			path.free();
-			directoryHandle.free();
 			remoteFileSystem.unregisterClient(client, ErrorHandling.NONE);
-			commandBlock.free();
-			client.free();
 		}
 	}
 
-	@Ignore
+	@Test
 	public void testMemoryReading() throws IOException, URISyntaxException
 	{
 		MemoryReader memoryReader = new MemoryReader();
@@ -249,7 +247,7 @@ public class TCPGeckoTesting
 		return Paths.get(ClassLoader.getSystemResource("dump.bin").toURI());
 	}
 
-	@Ignore
+	@Test
 	public void testMemoryWriting() throws IOException
 	{
 		MemoryWriter memoryWriter = new MemoryWriter();

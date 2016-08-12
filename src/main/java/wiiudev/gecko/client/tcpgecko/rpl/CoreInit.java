@@ -1,18 +1,21 @@
 package wiiudev.gecko.client.tcpgecko.rpl;
 
-import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThreadState;
+import wiiudev.gecko.client.tcpgecko.rpl.structures.OSSystemInfo;
+import wiiudev.gecko.client.tcpgecko.rpl.structures.RemoteString;
 
 import java.io.IOException;
 
 public class CoreInit
 {
-	public static int call(String symbolName, int... parameters) throws IOException
+	public static long getOSTime() throws IOException
 	{
 		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-		return remoteProcedureCall.call("coreinit.rpl", symbolName, parameters);
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSGetSystemTime");
+
+		return remoteProcedureCall.call64(exportedSymbol);
 	}
 
 	public static void setThreadState(OSThread thread, OSThreadState state) throws IOException
@@ -21,8 +24,11 @@ public class CoreInit
 		int threadAddress = thread.getAddress();
 		int threadStateAddress = thread.getSuspendedAddress();
 		memoryWriter.writeBoolean(threadStateAddress, state == OSThreadState.PAUSED);
+
 		String symbolName = (state == OSThreadState.PAUSED) ? "OSSuspendThread" : "OSResumeThread";
-		call(symbolName, threadAddress);
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", symbolName);
+		remoteProcedureCall.call(exportedSymbol, threadAddress);
 	}
 
 	public static int allocateDefaultHeapMemory(int size, int alignment) throws IOException
@@ -31,7 +37,7 @@ public class CoreInit
 		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl",
 				"MEMAllocFromDefaultHeapEx", true, true);
 
-		return exportedSymbol.call(size, alignment);
+		return remoteProcedureCall.call32(exportedSymbol, size, alignment);
 	}
 
 	public static void freeDefaultHeapMemory(int address) throws IOException
@@ -40,53 +46,33 @@ public class CoreInit
 		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl",
 				"MEMFreeToDefaultHeap", true, true);
 
-		exportedSymbol.call(address);
+		remoteProcedureCall.call(exportedSymbol, address);
 	}
 
 	public static int allocateSystemMemory(int size, int alignment) throws IOException
 	{
-		return call("OSAllocFromSystem", size, alignment);
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSAllocFromSystem");
+
+		return remoteProcedureCall.call32(exportedSymbol, size, alignment);
 	}
 
 	public static void freeSystemMemory(int address) throws IOException
 	{
-		call("OSFreeToSystem", address);
-		byte[] bytes = new MemoryReader().readBytes(address, 0x40);
-		System.out.println(new String(bytes));
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl",
+				"OSFreeToSystem");
+
+		remoteProcedureCall.call(exportedSymbol, address);
 	}
 
-	/**
-	 * Allocates a String in the memory. The address is determined by the allocator
-	 *
-	 * @param string The String to allocate
-	 * @return The address pointing to the beginning of the allocated String
-	 */
-	public static int allocateString(String string) throws IOException
+	public static void setMemory(int address, int value, int size) throws IOException
 	{
-		int stringLength = string.length();
-		int address = CoreInit.allocateSystemMemory(stringLength, 0x20);
-		int size = getDataSize(stringLength);
-		byte[] bytes = new MemoryReader().readBytes(address, stringLength + 5);
-		System.out.println(new String(bytes));
-		setMemory(address, 0x00, size);
-		bytes = new MemoryReader().readBytes(address, stringLength + 5);
-		System.out.println(new String(bytes));
-		MemoryWriter memoryWriter = new MemoryWriter();
-		memoryWriter.writeString(address, string);
-		bytes = new MemoryReader().readBytes(address, stringLength + 5);
-		System.out.println(new String(bytes));
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "memset");
 
-		return address;
-	}
-
-	private static int getDataSize(int length)
-	{
-		return length + (32 - (length % 32));
-	}
-
-	private static void setMemory(int address, int value, int size) throws IOException
-	{
-		call("memset", address, value, size); // void memset(void * dest, uint32_t value, uint32_t bytes)
+		// void memset(void * dest, uint32_t value, uint32_t bytes)
+		remoteProcedureCall.call(exportedSymbol, address, value, size);
 	}
 
 	/**
@@ -97,32 +83,72 @@ public class CoreInit
 	 */
 	public static void displayMessage(String message, boolean isFatal) throws IOException
 	{
-		int address = allocateString(message);
+		try (RemoteString remoteString = new RemoteString(message))
+		{
+			RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 
-		if (isFatal)
-		{
-			call("OSFatal", address); // void OSFatal(const char *msg)
-		} else
-		{
-			call("OSScreenPutFontEx", 1, 0, 0, address); // void OSScreenPutFontEx(int bufferNum, uint32_t posX, uint32_t posY, const char *str)
-			call("OSScreenFlipBuffersEx", 1); // void OSScreenFlipBuffersEx(int bufferNum)
+			if (isFatal)
+			{
+				// void OSFatal(const char *msg)
+				ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSFatal");
+				remoteProcedureCall.call(exportedSymbol, remoteString.getAddress());
+			} else
+			{
+				// void OSScreenPutFontEx(int bufferNum, uint32_t posX, uint32_t posY, const char *str)
+				ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSScreenPutFontEx");
+				remoteProcedureCall.call(exportedSymbol, 1, 0, 0, remoteString.getAddress());
+
+				// void OSScreenFlipBuffersEx(int bufferNum)
+				exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSScreenFlipBuffersEx");
+				remoteProcedureCall.call(exportedSymbol, 1);
+			}
 		}
 	}
 
 	public static int getEffectiveToPhysical(int address) throws IOException
 	{
-		return call("OSEffectiveToPhysical", address);
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSEffectiveToPhysical");
+
+		return remoteProcedureCall.call32(exportedSymbol, address);
 	}
 
-	/* // Crashes the console
-	public static void exitCurrentProcess() throws IOException
+	/**
+	 * Freezes?
+	 osThread: OSThread  = {OSThread@841}
+	 address: int  = 0x105EB648
+	 suspendedAddress: int  = 0x105EB970
+	 nameLocationPointer: int  = 0x105EBC08
+	 name: String  = "105EB648"
+	 state: OSThreadState  = "Running"
+	 */
+	public static OSThread getCurrentThread() throws IOException
 	{
-		call("_Exit", 0);
-	}*/
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSGetCurrentThread");
+		int address = remoteProcedureCall.call32(exportedSymbol);
 
-	public static int getProcessPFID() throws IOException
+		return new OSThread(address);
+	}
+
+	/**
+	 * Freezes?
+	 */
+	public static OSSystemInfo getSystemInformation() throws IOException
 	{
-		return call("OSGetPFID");
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSSystemInfo");
+		int address = remoteProcedureCall.call32(exportedSymbol);
+
+		return new OSSystemInfo(address);
+	}
+
+	public static long getProcessPFID() throws IOException
+	{
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSGetPFID");
+
+		return remoteProcedureCall.call64(exportedSymbol);
 	}
 
 	public static boolean isAddressMapped(int address) throws IOException

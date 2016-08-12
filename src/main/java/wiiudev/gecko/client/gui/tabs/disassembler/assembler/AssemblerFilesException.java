@@ -1,11 +1,12 @@
 package wiiudev.gecko.client.gui.tabs.disassembler.assembler;
 
 import java.io.FileNotFoundException;
+import java.nio.file.Path;
 
 public class AssemblerFilesException extends FileNotFoundException
 {
-	public AssemblerFilesException(String filePath)
+	public AssemblerFilesException(Path filePath)
 	{
-		super(filePath + " not found!");
+		super(filePath.getFileName().toString() + " not found!");
 	}
 }

@@ -3,18 +3,16 @@ package wiiudev.gecko.client.gui.tabs.disassembler.assembler;
 import wiiudev.gecko.client.gui.tabs.disassembler.DisassembledInstruction;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Disassembler
 {
-	private static final String BINARY_NAME = "vdappc.exe";
-
 	public static List<DisassembledInstruction> disassemble(byte[] values, int address) throws Exception
 	{
 		Path tempFile = Files.createTempFile("machine-instructions", ".bin");
@@ -49,13 +47,16 @@ public class Disassembler
 
 	private static String runDisassembler(Path machineInstructionsFilePath, int address) throws Exception
 	{
-		if (!Files.exists(Paths.get(BINARY_NAME)))
+		Path binaryName = AssemblerFiles.getDisassemblerFilePath();
+
+		if (!Files.exists(binaryName))
 		{
-			throw new AssemblerFilesException(BINARY_NAME);
+			throw new AssemblerFilesException(binaryName);
 		}
 
 		ProcessBuilder processBuilder = new ProcessBuilder();
-		processBuilder.command(BINARY_NAME,
+		processBuilder.directory(new File(binaryName.getParent().toString()));
+		processBuilder.command(binaryName.toString(),
 				machineInstructionsFilePath.toString(),
 				"0x" + Integer.toHexString(address));
 		Process process = processBuilder.start();

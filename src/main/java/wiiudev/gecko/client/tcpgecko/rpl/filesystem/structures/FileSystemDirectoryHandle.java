@@ -13,6 +13,6 @@ public class FileSystemDirectoryHandle extends FileSystemObject
 
 	public int dereference() throws IOException
 	{
-		return MemoryReader.dereference(address);
+		return MemoryReader.dereference(getAddress());
 	}
 }

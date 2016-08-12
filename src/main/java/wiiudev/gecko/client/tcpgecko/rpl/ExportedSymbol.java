@@ -1,7 +1,5 @@
 package wiiudev.gecko.client.tcpgecko.rpl;
 
-import java.io.IOException;
-
 /**
  * A class to represent a symbol obtained from the Wii U
  *
@@ -18,16 +16,6 @@ public class ExportedSymbol
 		this.address = address;
 		this.rplName = rplName;
 		this.symbolName = symbolName;
-	}
-
-	/**
-	 * Calls this symbol with the provided parameters
-	 * @param parameters The parameters to pass
-	 */
-	public int call(int... parameters) throws IOException
-	{
-		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-		return remoteProcedureCall.call(this, parameters);
 	}
 
 	/**

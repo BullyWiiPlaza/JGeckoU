@@ -1,6 +1,5 @@
 package wiiudev.gecko.client.gui.tabs.disassembler.assembler;
 
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
 import javax.xml.bind.DatatypeConverter;
@@ -13,104 +12,78 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 public class Assembler
 {
-	private String compiler;
-	private String linker;
+	private Path compiler;
+	private Path linker;
 
-	private String inputFileName;
-	private String objectFileName;
-	private String assemblyBinaryFileName;
-	private String outputFileName;
+	private Path sourceFile;
+	private Path objectCodeFile;
+	private Path binaryFile;
 
-	public Assembler(String inputFileName) throws FileNotFoundException
+	private Assembler(Path sourceFile) throws FileNotFoundException
 	{
-		String intermediaryFileName = inputFileName;
-		String forcedExtension = ".s";
-
-		if (!intermediaryFileName.endsWith(forcedExtension))
-		{
-			intermediaryFileName = intermediaryFileName.concat(forcedExtension);
-		}
-
-		this.inputFileName = intermediaryFileName;
+		this.sourceFile = sourceFile;
 
 		initializeLibraries();
-
-		String inputBaseFileName = FilenameUtils.getBaseName(inputFileName);
-		objectFileName = inputBaseFileName + ".o";
-		assemblyBinaryFileName = inputBaseFileName + ".bin";
-		outputFileName = "a.out";
+		setUtilityPaths();
 	}
 
-	public static String assemble(String instruction) throws Exception
+	private void setUtilityPaths()
 	{
-		String assemblyFileName = "assembly";
-		Path assemblySourceFile = Paths.get(assemblyFileName + ".s");
-
-		try
-		{
-			Files.write(assemblySourceFile, instruction.getBytes(StandardCharsets.UTF_8));
-			Assembler assembler = new Assembler(assemblyFileName);
-			String binaryFileName = assembler.writeAssembledFile();
-			byte[] bytes = Files.readAllBytes(Paths.get(binaryFileName));
-
-			return DatatypeConverter.printHexBinary(bytes);
-		} finally
-		{
-			// Definitely clean up
-			Files.deleteIfExists(Paths.get(assemblyFileName + ".bin"));
-			Files.deleteIfExists(assemblySourceFile);
-		}
+		objectCodeFile = sourceFile.getParent().resolve(UUID.randomUUID() + ".o");
+		binaryFile = sourceFile.getParent().resolve(UUID.randomUUID() + ".bin");
 	}
 
 	private void initializeLibraries() throws FileNotFoundException
 	{
-		compiler = DevkitProLibraries.getCompilerFileName();
+		compiler = AssemblerFiles.getCompilerFilePath();
 		assertExistence(compiler);
 
-		linker = DevkitProLibraries.getLinkerFileName();
+		linker = AssemblerFiles.getLinkerFilePath();
 		assertExistence(linker);
 	}
 
-	private void assertExistence(String filePath) throws FileNotFoundException
+	private void assertExistence(Path filePath) throws FileNotFoundException
 	{
-		if (!new File(filePath).exists())
+		if (!Files.exists(filePath))
 		{
 			throw new AssemblerFilesException(filePath);
 		}
 	}
 
-	private String writeAssembledFile() throws Exception
+	private byte[] getAssembledBytes() throws Exception
 	{
 		try
 		{
-			delete(assemblyBinaryFileName);
 			compile();
 			link();
+
+			return Files.readAllBytes(binaryFile);
 		} finally
 		{
 			cleanAuxiliaryFiles();
 		}
-
-		return assemblyBinaryFileName;
 	}
 
 	private void compile() throws Exception
 	{
-		executeCommand(compiler, "-nostdinc", "-fno-builtin", "-mregnames", "-c", inputFileName, "-o", objectFileName);
+		executeCommand(compiler.getFileName().toString(), "-nostdinc", "-fno-builtin", "-mregnames", "-c", sourceFile.getFileName().toString(), "-o", objectCodeFile.getFileName().toString());
 	}
 
 	private void link() throws Exception
 	{
-		executeCommand(linker, "-Ttext", "1800000", "--oformat", "binary", objectFileName, "-o", assemblyBinaryFileName);
+		executeCommand(linker.getFileName().toString(), "-Ttext", "1800000", "--oformat", "binary", objectCodeFile.getFileName().toString(), "-o", binaryFile.getFileName().toString());
 	}
 
 	private void executeCommand(String... parameters) throws Exception
 	{
 		List<String> parametersList = Arrays.asList(parameters);
-		ProcessBuilder processBuilder = new ProcessBuilder(parametersList);
+		ProcessBuilder processBuilder = new ProcessBuilder();
+		processBuilder.directory(sourceFile.getParent().toFile());
+		processBuilder.command(parametersList);
 		Process process = processBuilder.start();
 		String errorMessage = IOUtils.toString(process.getErrorStream(), "UTF-8");
 
@@ -124,13 +97,27 @@ public class Assembler
 
 	private void cleanAuxiliaryFiles() throws IOException
 	{
-		delete(outputFileName);
-		delete(objectFileName);
+		Files.deleteIfExists(objectCodeFile);
+		Files.deleteIfExists(binaryFile);
 	}
 
-	private void delete(String fileName) throws IOException
+	public static String assemble(String instruction) throws Exception
 	{
-		Path path = Paths.get(fileName);
-		Files.deleteIfExists(path);
+		String assemblyFileName = UUID.randomUUID().toString();
+		Path assemblySourceFile = Paths.get(AssemblerFiles.getLibrariesDirectory()
+				+ File.separator + assemblyFileName + ".s");
+
+		try
+		{
+			byte[] instructionBytes = instruction.getBytes(StandardCharsets.UTF_8);
+			Files.write(assemblySourceFile, instructionBytes);
+			Assembler assembler = new Assembler(assemblySourceFile);
+			byte[] bytes = assembler.getAssembledBytes();
+
+			return DatatypeConverter.printHexBinary(bytes);
+		} finally
+		{
+			Files.deleteIfExists(assemblySourceFile);
+		}
 	}
 }

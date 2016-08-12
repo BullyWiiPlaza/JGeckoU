@@ -67,20 +67,30 @@ public class RemoteProcedureCall extends TCPGecko
 		return ByteBuffer.allocate(4).putInt(integer).array();
 	}
 
-	public int call(String rplName, String symbolName, int... parameters) throws IOException
-	{
-		ExportedSymbol exportedSymbol = getSymbol(rplName, symbolName, false, false);
-		return exportedSymbol.call(parameters);
-	}
-
 	/**
 	 * Calls a remote method.
 	 *
 	 * @param exportedSymbol The symbol that defines the method
 	 * @param parameters     The parameters for the method
-	 * @throws IllegalArgumentException If there are to many parameters
+	 * @return The first 32-bit of the return value
+	 * @throws IllegalArgumentException If there are too many parameters
 	 */
-	public int call(ExportedSymbol exportedSymbol, int... parameters) throws IOException
+	public int call32(ExportedSymbol exportedSymbol, int... parameters) throws IOException
+	{
+		return (int) call(exportedSymbol, true, parameters);
+	}
+
+	public void call(ExportedSymbol exportedSymbol, int... parameters) throws IOException
+	{
+		call32(exportedSymbol, parameters);
+	}
+
+	public long call64(ExportedSymbol exportedSymbol, int... parameters) throws IOException
+	{
+		return (long) call(exportedSymbol, false, parameters);
+	}
+
+	private Number call(ExportedSymbol exportedSymbol, boolean returnFirstInteger, int... parameters) throws IOException
 	{
 		int paddingIntegersCount = getPaddingIntegersCount(parameters);
 		int totalParametersCount = parameters.length + paddingIntegersCount;
@@ -104,15 +114,21 @@ public class RemoteProcedureCall extends TCPGecko
 			dataSender.writeInt(requestComponent);
 		}
 
-		System.out.println("Request [" + exportedSymbol.getRplName() + ": " + exportedSymbol.getSymbolName() + "] " + integerArrayToHexadecimal(request.array()));
+		// System.out.println("Request [" + exportedSymbol.getRplName() + ": " + exportedSymbol.getSymbolName() + "] " + integerArrayToHexadecimal(request.array()));
 
 		dataSender.flush();
 
-		// The reply is 8 bytes...
+		// The reply is 8 bytes
 		long reply = dataReceiver.readLong();
 
-		// ... but we are only interested in the first 4
-		return getFirstInteger(reply);
+		if (returnFirstInteger)
+		{
+			return getFirstInteger(reply);
+		}
+		else
+		{
+			return reply;
+		}
 	}
 
 	/**

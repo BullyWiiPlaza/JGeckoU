@@ -1,15 +1,11 @@
 import org.junit.Assert;
 import org.junit.Test;
 import wiiudev.gecko.client.gui.tabs.disassembler.DisassembledInstruction;
-import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Assembler;
-import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerException;
-import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerFilesException;
-import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Disassembler;
+import wiiudev.gecko.client.gui.tabs.disassembler.assembler.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 public class TestAssembler
@@ -55,8 +51,8 @@ public class TestAssembler
 	public void testLibrariesMissing() throws Exception
 	{
 		// Make sure the library is not found
-		Path gcc = Paths.get("powerpc-eabi-gcc.exe");
-		Path renamed = rename(gcc, "powerpc-eabi-gcc2.exe");
+		Path compiler = AssemblerFiles.getCompilerFilePath();
+		Path renamed = rename(compiler, "powerpc-eabi-gcc2.exe");
 
 		try
 		{
@@ -67,7 +63,7 @@ public class TestAssembler
 
 		} finally
 		{
-			rename(renamed, gcc.getFileName().toString());
+			rename(renamed, compiler.getFileName().toString());
 		}
 	}
 

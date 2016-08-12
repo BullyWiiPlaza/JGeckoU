@@ -96,14 +96,14 @@ public class ThreadsTableManager
 
 	public void addRow(OSThread osThread)
 	{
-		Object[] objects = new Object[]{osThread.geName(),
+		Object[] objects = new Object[]{osThread.getName(),
 				new Hexadecimal(osThread.getAddress()),
 				osThread.getState()};
 		DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
 		tableModel.addRow(objects);
 	}
 
-	public void updateRows() throws IOException
+	public void updateRows() throws Exception
 	{
 		osThreads = OSThread.readThreads();
 		populateRows();

@@ -2,6 +2,7 @@ package wiiudev.gecko.client.gui;
 
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
+import wiiudev.gecko.client.tcpgecko.rpl.ExportedSymbol;
 import wiiudev.gecko.client.tcpgecko.rpl.RemoteProcedureCall;
 
 import javax.swing.*;
@@ -76,7 +77,8 @@ public class RemoteProcedureCallDialog extends JDialog
 		try
 		{
 			RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-			long returnValue = remoteProcedureCall.call(rplName, symbolName, parameters);
+			ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(rplName, symbolName);
+			long returnValue = remoteProcedureCall.call32(exportedSymbol, parameters);
 			resultTextField.setText(Long.toHexString(returnValue).toUpperCase());
 		} catch (Exception exception)
 		{
