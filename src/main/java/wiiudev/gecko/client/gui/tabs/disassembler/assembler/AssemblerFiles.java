@@ -42,15 +42,15 @@ public class AssemblerFiles
 
 	public static Path getLibrariesDirectory()
 	{
-		String librariesDirectory = "Libraries" + File.separator;
+		String librariesDirectory = "libraries" + File.separator;
 
 		if(SystemUtils.IS_OS_WINDOWS)
 		{
-			librariesDirectory += "Windows";
+			librariesDirectory += "windows";
 		}
 		else if(SystemUtils.IS_OS_UNIX)
 		{
-			librariesDirectory += "Unix";
+			librariesDirectory += "unix";
 		}
 
 		return Paths.get(librariesDirectory);
