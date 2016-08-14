@@ -2,11 +2,14 @@ package wiiudev.gecko.client.gui;
 
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
+import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.rpl.ExportedSymbol;
 import wiiudev.gecko.client.tcpgecko.rpl.RemoteProcedureCall;
 
 import javax.swing.*;
 import javax.swing.text.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class RemoteProcedureCallDialog extends JDialog
 {
@@ -15,13 +18,24 @@ public class RemoteProcedureCallDialog extends JDialog
 	private JTextField rplNameField;
 	private JTextField symbolNameField;
 	private JTextArea parametersTextArea;
-	private JTextField resultTextField;
+	private JTextField functionResultField;
+	private JTextField functionAddressField;
 
 	public RemoteProcedureCallDialog()
 	{
 		setFrameProperties();
 		addParametersInputFilter();
 		addCallFunctionActionListener();
+
+		rplNameField.setText("coreinit.rpl");
+
+		addWindowListener(new WindowAdapter()
+		{
+			public void windowOpened(WindowEvent windowEvent)
+			{
+				symbolNameField.requestFocus();
+			}
+		});
 	}
 
 	private void addParametersInputFilter()
@@ -78,8 +92,9 @@ public class RemoteProcedureCallDialog extends JDialog
 		{
 			RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 			ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(rplName, symbolName);
-			long returnValue = remoteProcedureCall.call32(exportedSymbol, parameters);
-			resultTextField.setText(Long.toHexString(returnValue).toUpperCase());
+			functionAddressField.setText(new Hexadecimal(exportedSymbol.getAddress(), 8).toString());
+			long returnValue = remoteProcedureCall.call64(exportedSymbol, parameters);
+			functionResultField.setText(new Hexadecimal(returnValue, 16).toString());
 		} catch (Exception exception)
 		{
 			StackTraceUtils.handleException(rootPane, exception);

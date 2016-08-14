@@ -8,26 +8,23 @@ import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSContext;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThreadState;
-import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
 import wiiudev.gecko.client.tcpgecko.rpl.RemoteDisassembler;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.RemoteFileSystem;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.ErrorHandling;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.FileSystemStatus;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.structures.*;
+import wiiudev.gecko.client.tcpgecko.rpl.structures.AllocatedMemory;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 public class TCPGeckoTesting
 {
@@ -37,6 +34,7 @@ public class TCPGeckoTesting
 	public static void connect() throws IOException
 	{
 		connector.connect("192.168.178.35");
+		System.out.println("Connected to TCP Gecko...");
 	}
 
 	@Test
@@ -47,8 +45,11 @@ public class TCPGeckoTesting
 		int physical = CoreInit.getEffectiveToPhysical(0x10000000);
 		Assert.assertEquals(0x50000000, physical);
 
-		long processID = CoreInit.getProcessPFID();
-		Assert.assertEquals(processID, 0xF00000000L);
+		int processID = CoreInit.getProcessPFID();
+		Assert.assertEquals(processID, 0x0000000F);
+
+		long titleID = CoreInit.getTitleID();
+		System.out.println(titleID);
 
 		/*if(TitleDatabaseManager.isPlaying("Call of Duty: Black Ops II"))
 		{
@@ -112,13 +113,84 @@ public class TCPGeckoTesting
 		}
 	}
 
+	@Test
+	public void testFileSystem() throws IOException
+	{
+		List<DirectoryEntry> directoryEntries = new ArrayList<>();
+
+		try (FileSystemClient client = new FileSystemClient();
+		     FileSystemCommandBlock commandBlock = new FileSystemCommandBlock();
+		     FileSystemHandle directoryHandle = new FileSystemHandle();
+		     FileSystemHandle fileHandle = new FileSystemHandle();
+		     FileSystemPath filePath = new FileSystemPath("/vol/content");
+		     DirectoryEntry directoryEntry = new DirectoryEntry();
+			 AccessMode accessMode = new AccessMode(AccessMode.READ);
+			 AllocatedMemory destinationBuffer = new AllocatedMemory(0x40, 0x1000))
+		{
+			RemoteFileSystem remoteFileSystem = new RemoteFileSystem();
+
+			if (remoteFileSystem.initialize() == FileSystemStatus.OK)
+			{
+				remoteFileSystem.initializeCommandBlock(commandBlock);
+
+				if (remoteFileSystem.addClient(client,
+						ErrorHandling.NONE) == FileSystemStatus.OK)
+				{
+					if (remoteFileSystem.openDirectory(client, commandBlock, filePath,
+							directoryHandle, ErrorHandling.ALL) == FileSystemStatus.OK)
+					{
+						while (remoteFileSystem.readDirectory(client, commandBlock, directoryHandle,
+								directoryEntry, ErrorHandling.ALL) == FileSystemStatus.OK)
+						{
+							int flag = directoryEntry.getFlag();
+							System.out.println("Flag: " + flag);
+							System.out.println("Directory: " +
+									directoryEntry.isDirectory());
+							int size = directoryEntry.getSize();
+							System.out.println("Size: " + size);
+							String name = directoryEntry.getName();
+							System.out.println("Name: " + name);
+
+							if(directoryEntry.isDirectory())
+							{
+
+							}
+							else
+							{
+								directoryEntries.add(directoryEntry);
+
+								/*// TODO Stuck, no reply but no freeze?
+								if(remoteFileSystem.openFile(client, commandBlock, filePath,
+										accessMode, fileHandle, ErrorHandling.NONE) == FileSystemStatus.OK)
+								{
+									int fileSize = remoteFileSystem.readFile(client, commandBlock, destinationBuffer,
+											fileHandle, ErrorHandling.NONE);
+									MemoryReader memoryReader = new MemoryReader();
+									byte[] bytes = memoryReader.readBytes(destinationBuffer.getAddress(), fileSize);
+									Files.write(Paths.get(name), bytes);
+								}
+
+								remoteFileSystem.closeFile(client, commandBlock, directoryHandle, ErrorHandling.NONE);
+								break;*/
+							}
+						}
+					}
+
+					remoteFileSystem.closeDirectory(client, commandBlock, directoryHandle, ErrorHandling.NONE);
+				}
+			}
+		}
+
+		System.out.println(directoryEntries.size());
+	}
+
 	private void testFileSystem(String[] folders) throws IOException
 	{
-		try (RemoteFileSystem remoteFileSystem = new RemoteFileSystem();
+		/*try (RemoteFileSystem remoteFileSystem = new RemoteFileSystem();
 		     FileSystemClient client = new FileSystemClient();
 		     FileSystemCommandBlock commandBlock = new FileSystemCommandBlock();
-		     FileSystemDirectoryHandle directoryHandle = new FileSystemDirectoryHandle();
-		     FileSystemPath path = new FileSystemPath();
+		     FileSystemHandle directoryHandle = new FileSystemHandle();
+		     FileSystemPath path = new FileSystemPath("");
 		     FileSystemBuffer buffer = new FileSystemBuffer())
 		{
 			FileSystemStatus status;
@@ -162,7 +234,7 @@ public class TCPGeckoTesting
 
 				do
 				{
-					status = remoteFileSystem.readDirectory(client, commandBlock, directoryHandle, buffer, ErrorHandling.ALL);
+					// status = remoteFileSystem.readDirectory(client, commandBlock, directoryHandle, buffer, ErrorHandling.ALL);
 
 					if (status != FileSystemStatus.OK)
 					{
@@ -197,7 +269,7 @@ public class TCPGeckoTesting
 			}
 
 			remoteFileSystem.unregisterClient(client, ErrorHandling.NONE);
-		}
+		}*/
 	}
 
 	@Test
@@ -307,5 +379,6 @@ public class TCPGeckoTesting
 	public static void disconnect() throws IOException, InterruptedException
 	{
 		Connector.getInstance().closeConnection();
+		System.out.println("Disconnected from TCP Gecko...");
 	}
 }

@@ -160,6 +160,11 @@ public class JGeckoUGUI extends JFrame
 	private JButton osTimeButton;
 	private JButton processPFIDButton;
 	private JButton remoteDisassemblerButton;
+	private JButton titleIDButton;
+	private JButton osIDButton;
+	private JButton appFlagsButton;
+	private JButton sdkVersionButton;
+	private JButton shutdownButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -573,13 +578,99 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
+		shutdownButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				Object[] options = {"OK",
+						"Cancel"};
+
+				int selectedAnswer = JOptionPane.showOptionDialog(rootPane,
+						"Would you really like to shutdown your Wii U?",
+						shutdownButton.getText(),
+						JOptionPane.YES_NO_CANCEL_OPTION,
+						JOptionPane.QUESTION_MESSAGE,
+						null,
+						options,
+						null);
+
+				if(selectedAnswer == JOptionPane.YES_OPTION)
+				{
+					CoreInit.shutdown();
+				}
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		appFlagsButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				long appFlags = CoreInit.getAppFlags();
+				JOptionPane.showMessageDialog(this,
+						new Hexadecimal(appFlags, 8),
+						appFlagsButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		sdkVersionButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				long sdkVersion = CoreInit.getSDKVersion();
+				JOptionPane.showMessageDialog(this,
+						new Hexadecimal(sdkVersion, 8),
+						sdkVersionButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		osIDButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				long osID = CoreInit.getOSID();
+				JOptionPane.showMessageDialog(this,
+						new Hexadecimal(osID, 16),
+						osIDButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		titleIDButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				long titleID = CoreInit.getTitleID();
+				JOptionPane.showMessageDialog(this,
+						new Hexadecimal(titleID, 16),
+						titleIDButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
 		osTimeButton.addActionListener(actionEvent ->
 		{
 			try
 			{
 				long osTime = CoreInit.getOSTime();
 				JOptionPane.showMessageDialog(this,
-						Long.toHexString(osTime).toUpperCase(),
+						new Hexadecimal(osTime, 16),
 						osTimeButton.getText(),
 						JOptionPane.INFORMATION_MESSAGE);
 			} catch (IOException exception)
@@ -592,9 +683,9 @@ public class JGeckoUGUI extends JFrame
 		{
 			try
 			{
-				long osTime = CoreInit.getProcessPFID();
+				long processPFID = CoreInit.getProcessPFID();
 				JOptionPane.showMessageDialog(this,
-						Long.toHexString(osTime).toUpperCase(),
+						new Hexadecimal(processPFID, 8),
 						processPFIDButton.getText(),
 						JOptionPane.INFORMATION_MESSAGE);
 			} catch (IOException exception)
@@ -2644,6 +2735,11 @@ public class JGeckoUGUI extends JFrame
 				&& mayConnect && !connecting && titlesInitialized;
 		connectButton.setEnabled(shouldEnableConnectButton);
 		processPFIDButton.setEnabled(connected);
+		sdkVersionButton.setEnabled(connected);
+		shutdownButton.setEnabled(connected);
+		osIDButton.setEnabled(connected);
+		appFlagsButton.setEnabled(connected);
+		titleIDButton.setEnabled(connected);
 		remoteDisassemblerButton.setEnabled(connected);
 		displayMessageButton.setEnabled(connected);
 		disconnectButton.setEnabled(connected);

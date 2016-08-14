@@ -62,7 +62,7 @@ public class Testing
 		/*TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
 		titleDatabaseManager.restore();
 		Title title = titleDatabaseManager.getTitleFromGameId("AGMP01");
-		System.out.println(title.getTitleId().replace("-", ""));*/
+		System.out.println(title.getTitleID().replace("-", ""));*/
 
 		// System.out.println();
 

@@ -15,15 +15,15 @@ public class RemoteDisassembler
 		int end = start + length;
 
 		try (FindSymbol findSymbol = new FindSymbol();
-		     RemoteString remoteString = new RemoteString("%s"))
+		     RemoteString printingFunction = new RemoteString("%s"))
 		{
 			RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 			ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "DisassemblePPCRange");
 			remoteProcedureCall.call(exportedSymbol, start, end,
-					remoteString.getAddress(), findSymbol.getAddress(), 0);
+					printingFunction.getAddress(), findSymbol.getAddress(), 0);
 
 			MemoryReader memoryReader = new MemoryReader();
-			byte[] disassembledBytes = memoryReader.readBytes(remoteString.getAddress(), length);
+			byte[] disassembledBytes = memoryReader.readBytes(printingFunction.getAddress(), length);
 			String disassembled = new String(disassembledBytes);
 			System.out.println(disassembled);
 
@@ -37,13 +37,17 @@ public class RemoteDisassembler
 
 	public static String disassembleValue(int value) throws IOException
 	{
-		int address = CoreInit.allocateDefaultHeapMemory(4, 4);
-		MemoryWriter memoryWriter = new MemoryWriter();
-		memoryWriter.writeInt(address, value);
-		String disassembled = disassembleAddress(address);
-		CoreInit.freeDefaultHeapMemory(address);
+		try (AllocatedMemory allocatedMemory = new AllocatedMemory(4, 4))
+		{
+			int address = allocatedMemory.getAddress();
 
-		return disassembled;
+			// Write the value into the allocated memory address
+			MemoryWriter memoryWriter = new MemoryWriter();
+			memoryWriter.writeInt(address, value);
+
+			// Disassemble and return the result
+			return disassembleAddress(address);
+		}
 	}
 
 	public static String disassembleAddress(int address) throws IOException
@@ -57,9 +61,11 @@ public class RemoteDisassembler
 			ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "DisassemblePPCOpcode");
 			remoteProcedureCall.call(exportedSymbol, address, instructionBuffer.getAddress(), instructionBufferLength, findSymbol.getAddress(), 0);
 
+			// Read the output buffer's contents
 			MemoryReader memoryReader = new MemoryReader();
 			byte[] disassembledBytes = memoryReader.readBytes(instructionBuffer.getAddress(), instructionBufferLength);
 
+			// Clean up the disassembled String
 			String disassembled = new String(disassembledBytes);
 			disassembled = disassembled.replaceAll("\\(null\\)", " ");
 			disassembled = disassembled.replaceAll("\\s+", " ");

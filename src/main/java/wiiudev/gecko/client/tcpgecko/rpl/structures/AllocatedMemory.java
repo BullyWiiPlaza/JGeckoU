@@ -8,10 +8,12 @@ import java.io.IOException;
 public class AllocatedMemory implements Closeable
 {
 	private int address;
+	private int size;
 
 	public AllocatedMemory(int size, int alignment) throws IOException
 	{
 		address = CoreInit.allocateDefaultHeapMemory(size, alignment);
+		this.size = size;
 	}
 
 	public int getAddress()
@@ -23,5 +25,10 @@ public class AllocatedMemory implements Closeable
 	public void close() throws IOException
 	{
 		CoreInit.freeDefaultHeapMemory(address);
+	}
+
+	public int getSize()
+	{
+		return size;
 	}
 }

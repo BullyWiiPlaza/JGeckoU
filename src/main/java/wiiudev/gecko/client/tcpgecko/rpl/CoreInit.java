@@ -143,10 +143,18 @@ public class CoreInit
 		return new OSSystemInfo(address);
 	}
 
-	public static long getProcessPFID() throws IOException
+	public static int getProcessPFID() throws IOException
 	{
 		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSGetPFID");
+
+		return remoteProcedureCall.call32(exportedSymbol);
+	}
+
+	public static long getTitleID() throws IOException
+	{
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSGetTitleID");
 
 		return remoteProcedureCall.call64(exportedSymbol);
 	}
@@ -154,5 +162,37 @@ public class CoreInit
 	public static boolean isAddressMapped(int address) throws IOException
 	{
 		return getEffectiveToPhysical(address) != 0;
+	}
+
+	public static long getOSID() throws IOException
+	{
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSGetOSID");
+
+		return remoteProcedureCall.call64(exportedSymbol);
+	}
+
+	public static int getAppFlags() throws IOException
+	{
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "__OSGetAppFlags");
+
+		return remoteProcedureCall.call32(exportedSymbol);
+	}
+
+	public static int getSDKVersion() throws IOException
+	{
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "__OSGetProcessSDKVersion");
+
+		return remoteProcedureCall.call32(exportedSymbol);
+	}
+
+	public static void shutdown() throws IOException
+	{
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSShutdown");
+
+		remoteProcedureCall.call(exportedSymbol);
 	}
 }
