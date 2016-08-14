@@ -2,6 +2,7 @@ package wiiudev.gecko.client.gui.tabs.memory_viewer;
 
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
+import wiiudev.gecko.client.gui.RemoteProcedureCallDialog;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CodeWizardDialog;
 import wiiudev.gecko.client.gui.utilities.JFileChooserUtilities;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
@@ -71,6 +72,12 @@ public class MemoryViewerContextMenu extends JPopupMenu
 		disassemblerOption.addActionListener(actionEvent -> switchToDisassemblerTab());
 		add(disassemblerOption);
 
+		JMenuItem rpcOption = new JMenuItem("RPC");
+		KeyStroke rpcKeyStroke = KeyStroke.getKeyStroke("control R");
+		rpcOption.setAccelerator(rpcKeyStroke);
+		rpcOption.addActionListener(actionEvent -> performRemoteProcedureCall());
+		add(rpcOption);
+
 		table.addKeyListener(new KeyAdapter()
 		{
 			@Override
@@ -112,9 +119,24 @@ public class MemoryViewerContextMenu extends JPopupMenu
 					{
 						switchToDisassemblerTab();
 					}
+
+					if (keyEventPressed(pressedEvent, rpcKeyStroke.getKeyCode()))
+					{
+						performRemoteProcedureCall();
+					}
 				}
 			}
 		});
+	}
+
+	private void performRemoteProcedureCall()
+	{
+		RemoteProcedureCallDialog remoteProcedureCallDialog = new RemoteProcedureCallDialog();
+		int address = JGeckoUGUI.getInstance().getSelectedMemoryViewerAddress();
+		remoteProcedureCallDialog.setParameters(new int[]{address});
+		JRootPane rootPane = JGeckoUGUI.getInstance().getRootPane();
+		remoteProcedureCallDialog.setLocationRelativeTo(rootPane);
+		remoteProcedureCallDialog.setVisible(true);
 	}
 
 	private void switchToDisassemblerTab()

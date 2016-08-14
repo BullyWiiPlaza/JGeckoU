@@ -205,6 +205,11 @@ public class MemoryViewerTableManager
 		int selectedColumn = table.getSelectedColumn();
 		int selectedRow = table.getSelectedRow();
 
+		return getValueAt(selectedColumn, selectedRow);
+	}
+
+	private int getValueAt(int selectedColumn, int selectedRow)
+	{
 		String rowStartingAddress = (String) tableModel.getValueAt(selectedRow, 0);
 		long currentBaseAddress = Conversions.toDecimal(rowStartingAddress);
 		currentBaseAddress += (selectedColumn - 1) * INTEGER_SIZE;
@@ -298,5 +303,10 @@ public class MemoryViewerTableManager
 
 		String copiedCells = copiedCellsBuilder.toString();
 		SystemClipboard.copy(copiedCells);
+	}
+
+	public int getFirstMemoryAddress()
+	{
+		return getValueAt(0, 0) + INTEGER_SIZE;
 	}
 }

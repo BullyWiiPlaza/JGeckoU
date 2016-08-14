@@ -8,8 +8,10 @@ import wiiudev.gecko.client.tcpgecko.rpl.RemoteProcedureCall;
 
 import javax.swing.*;
 import javax.swing.text.*;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.net.URI;
 
 public class RemoteProcedureCallDialog extends JDialog
 {
@@ -20,6 +22,7 @@ public class RemoteProcedureCallDialog extends JDialog
 	private JTextArea parametersTextArea;
 	private JTextField functionResultField;
 	private JTextField functionAddressField;
+	private JButton coreInitDocumentationButton;
 
 	public RemoteProcedureCallDialog()
 	{
@@ -36,6 +39,21 @@ public class RemoteProcedureCallDialog extends JDialog
 				symbolNameField.requestFocus();
 			}
 		});
+
+		coreInitDocumentationButton.addActionListener(actionEvent ->
+				openURL("http://wiiubrew.org/wiki/Coreinit.rpl"));
+	}
+
+	private void openURL(String link)
+	{
+		Desktop desktop = Desktop.getDesktop();
+		try
+		{
+			desktop.browse(new URI(link));
+		} catch (Exception exception)
+		{
+			exception.printStackTrace();
+		}
 	}
 
 	private void addParametersInputFilter()
@@ -48,6 +66,7 @@ public class RemoteProcedureCallDialog extends JDialog
 	{
 		setContentPane(contentPane);
 		setModal(true);
+		setTitle("Remote Procedure Call");
 		getRootPane().setDefaultButton(callFunctionButton);
 		WindowUtilities.setIconImage(this);
 		setSize(400, 500);
@@ -99,6 +118,21 @@ public class RemoteProcedureCallDialog extends JDialog
 		{
 			StackTraceUtils.handleException(rootPane, exception);
 		}
+	}
+
+	public void setParameters(int[] parameters)
+	{
+		StringBuilder parametersBuilder = new StringBuilder();
+
+		for(int parameter : parameters)
+		{
+			String hexadecimalParameter = new Hexadecimal(parameter, 8).toString();
+			parametersBuilder.append(hexadecimalParameter);
+			parametersBuilder.append(System.lineSeparator());
+		}
+
+		String parametersString = parametersBuilder.toString().trim();
+		parametersTextArea.setText(parametersString);
 	}
 
 	private static class RPCParametersFilter extends DocumentFilter

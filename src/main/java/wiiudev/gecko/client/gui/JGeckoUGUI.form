@@ -1060,10 +1060,10 @@
                   </component>
                   <component id="4d483" class="javax.swing.JButton" binding="remoteProcedureCallButton">
                     <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                      <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Remote Procedure Call"/>
+                      <text value="Arbitrary Remote Procedure Call"/>
                       <toolTipText value="Allows you to perform an arbitrary RPC call"/>
                     </properties>
                   </component>
@@ -1156,15 +1156,6 @@
                     </constraints>
                     <properties>
                       <text value="No Input:"/>
-                    </properties>
-                  </component>
-                  <component id="494e3" class="javax.swing.JButton" binding="coreInitDocumentationButton">
-                    <constraints>
-                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <text value="Coreinit Documentation"/>
-                      <toolTipText value="Opens the Coreinit.rpl documentation in the default browser"/>
                     </properties>
                   </component>
                   <component id="3066" class="javax.swing.JButton" binding="shutdownButton" default-binding="true">

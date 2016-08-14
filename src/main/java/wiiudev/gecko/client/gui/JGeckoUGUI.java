@@ -138,7 +138,6 @@ public class JGeckoUGUI extends JFrame
 	private JButton convertEffectiveToPhysicalButton;
 	private JButton displayMessageButton;
 	private JButton remoteProcedureCallButton;
-	private JButton coreInitDocumentationButton;
 	private JTree tree1;
 	private JButton readFileSystemButton;
 	private JTextArea textArea1;
@@ -535,7 +534,7 @@ public class JGeckoUGUI extends JFrame
 			remoteDisassemblerDialog.setLocationRelativeTo(this);
 			remoteDisassemblerDialog.setVisible(true);
 
-			if(remoteDisassemblerDialog.isConfirmed())
+			if (remoteDisassemblerDialog.isConfirmed())
 			{
 				int value = remoteDisassemblerDialog.getEnteredValue();
 
@@ -582,8 +581,8 @@ public class JGeckoUGUI extends JFrame
 		{
 			try
 			{
-				Object[] options = {"OK",
-						"Cancel"};
+				Object[] options = {"Yes",
+						"No"};
 
 				int selectedAnswer = JOptionPane.showOptionDialog(rootPane,
 						"Would you really like to shutdown your Wii U?",
@@ -594,7 +593,7 @@ public class JGeckoUGUI extends JFrame
 						options,
 						null);
 
-				if(selectedAnswer == JOptionPane.YES_OPTION)
+				if (selectedAnswer == JOptionPane.YES_OPTION)
 				{
 					CoreInit.shutdown();
 				}
@@ -696,9 +695,6 @@ public class JGeckoUGUI extends JFrame
 
 		remoteProcedureCallButton.addActionListener(actionEvent ->
 				setVisible(new RemoteProcedureCallDialog(), rootPane, actionEvent));
-
-		coreInitDocumentationButton.addActionListener(actionEvent ->
-				openURL("http://wiiubrew.org/wiki/Coreinit.rpl"));
 	}
 
 	private void configureMiscellaneousTab()
@@ -746,11 +742,25 @@ public class JGeckoUGUI extends JFrame
 	private void connectionReset()
 	{
 		disconnect();
+		closeAllDialogs();
 
 		JOptionPane.showMessageDialog(rootPane,
 				"Please reconnect manually when ready.",
 				"Connection Reset",
 				JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	private void closeAllDialogs()
+	{
+		Window[] windows = getWindows();
+
+		for (Window window : windows)
+		{
+			if (window instanceof JDialog)
+			{
+				window.dispose();
+			}
+		}
 	}
 
 	public void selectDumpingTab()
@@ -1521,6 +1531,26 @@ public class JGeckoUGUI extends JFrame
 		memoryViewerValueField.setDocument(new InputLengthFilter(ValueSizes.THIRTY_TWO_BIT.getSize()));
 		new DefaultContextMenu().addTo(memoryViewerValueField);
 
+		memoryViewerValueField.addKeyListener(new KeyAdapter()
+		{
+			public void keyReleased(KeyEvent keyEvent)
+			{
+			}
+
+			public void keyTyped(KeyEvent keyEvent)
+			{
+			}
+
+			public void keyPressed(KeyEvent keyEvent)
+			{
+				if (keyEvent.getKeyCode() == KeyEvent.VK_ENTER
+						&& updateMemoryViewerButton.isEnabled())
+				{
+					pokeMemoryViewerMemory();
+				}
+			}
+		});
+
 		valueSizePokeComboBox.addItemListener(itemEvent ->
 		{
 			if (itemEvent.getStateChange() == ItemEvent.SELECTED)
@@ -1942,35 +1972,49 @@ public class JGeckoUGUI extends JFrame
 	private void addPokeButtonListener()
 	{
 		pokeValueButton.addActionListener(actionEvent ->
+				pokeMemoryViewerMemory());
+	}
+
+	private void pokeMemoryViewerMemory()
+	{
+		try
 		{
-			try
+			ValueSizes valueSize = (ValueSizes) valueSizePokeComboBox.getSelectedItem();
+			int targetAddress = Conversions.toDecimal(memoryViewerAddressField.getText());
+			int currentValue = new MemoryReader().readValue(targetAddress, valueSize);
+			int newValue = applySelectedPokeOperation(currentValue);
+			MemoryWriter memoryWriter = new MemoryWriter();
+
+			switch (valueSize)
 			{
-				ValueSizes valueSize = (ValueSizes) valueSizePokeComboBox.getSelectedItem();
-				int targetAddress = Conversions.toDecimal(memoryViewerAddressField.getText());
-				int currentValue = new MemoryReader().readValue(targetAddress, valueSize);
-				int newValue = applySelectedPokeOperation(currentValue);
-				MemoryWriter memoryWriter = new MemoryWriter();
+				case EIGHT_BIT:
+					memoryWriter.write(targetAddress, (byte) newValue);
+					break;
 
-				switch (valueSize)
-				{
-					case EIGHT_BIT:
-						memoryWriter.write(targetAddress, (byte) newValue);
-						break;
+				case SIXTEEN_BIT:
+					memoryWriter.writeShort(targetAddress, (short) newValue);
+					break;
 
-					case SIXTEEN_BIT:
-						memoryWriter.writeShort(targetAddress, (short) newValue);
-						break;
-
-					case THIRTY_TWO_BIT:
-						memoryWriter.writeInt(targetAddress, newValue);
-				}
-
-				updateMemoryViewer(false, false);
-			} catch (Exception exception)
-			{
-				StackTraceUtils.handleException(rootPane, exception);
+				case THIRTY_TWO_BIT:
+					memoryWriter.writeInt(targetAddress, newValue);
 			}
-		});
+
+			pokeMemoryViewerUpdate();
+		} catch (Exception exception)
+		{
+			StackTraceUtils.handleException(rootPane, exception);
+		}
+	}
+
+	private void pokeMemoryViewerUpdate()
+	{
+		// A "hacky" way to avoid the memory viewer to move after poking
+		int selectedAddress = memoryViewerTableManager.getSelectedAddress();
+		int firstAddress = memoryViewerTableManager.getFirstMemoryAddress();
+		memoryViewerAddressField.setText(new Hexadecimal(firstAddress, 8).toString());
+		updateMemoryViewer(false, false);
+		memoryViewerTableManager.selectAddress(selectedAddress);
+		memoryViewerAddressField.setText(new Hexadecimal(selectedAddress, 8).toString());
 	}
 
 	private int applySelectedPokeOperation(int currentValue)
