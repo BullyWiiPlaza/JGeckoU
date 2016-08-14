@@ -7,10 +7,8 @@ import wiiudev.gecko.client.tcpgecko.main.enumerations.Commands;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class RemoteProcedureCall extends TCPGecko
 {
@@ -36,7 +34,7 @@ public class RemoteProcedureCall extends TCPGecko
 
 		if (isPointer)
 		{
-			// Dereference pointer if we need to
+			// Dereference POINTER if we need to
 			address = MemoryReader.dereference(address);
 		}
 
@@ -69,44 +67,102 @@ public class RemoteProcedureCall extends TCPGecko
 		return ByteBuffer.allocate(4).putInt(integer).array();
 	}
 
-	public long call(String rplName, String symbolName, int... parameters) throws IOException
-	{
-		ExportedSymbol exportedSymbol = getSymbol(rplName, symbolName, false, false);
-		return exportedSymbol.call(parameters);
-	}
-
 	/**
 	 * Calls a remote method.
 	 *
 	 * @param exportedSymbol The symbol that defines the method
 	 * @param parameters     The parameters for the method
-	 * @throws IllegalArgumentException If there are to many parameters
+	 * @return The first 32-bit of the return value
+	 * @throws IllegalArgumentException If there are too many parameters
 	 */
-	public long call(ExportedSymbol exportedSymbol, int... parameters) throws IOException
+	public int call32(ExportedSymbol exportedSymbol, int... parameters) throws IOException
+	{
+		return (int) call(exportedSymbol, true, parameters);
+	}
+
+	public void call(ExportedSymbol exportedSymbol, int... parameters) throws IOException
+	{
+		call32(exportedSymbol, parameters);
+	}
+
+	public long call64(ExportedSymbol exportedSymbol, int... parameters) throws IOException
+	{
+		return (long) call(exportedSymbol, false, parameters);
+	}
+
+	private Number call(ExportedSymbol exportedSymbol, boolean returnFirstInteger, int... parameters) throws IOException
 	{
 		int paddingIntegersCount = getPaddingIntegersCount(parameters);
+		int totalParametersCount = parameters.length + paddingIntegersCount;
 
-		List<Integer> parametersList = Arrays.stream(parameters).boxed().collect(Collectors.toList());
-		for (int paddingCountIndex = 0; paddingCountIndex < paddingIntegersCount; paddingCountIndex++)
-		{
-			// Pad for the parameters count for the small or big RPC calls respectively
-			parametersList.add(0);
-		}
-
-		Commands command = parametersList.size() == SMALL_RPC_PARAMETERS_COUNT
+		Commands command = totalParametersCount == SMALL_RPC_PARAMETERS_COUNT
 				? Commands.RPC : Commands.RPC_BIG;
 		sendCommand(command);
 		int functionAddress = exportedSymbol.getAddress();
-		dataSender.writeInt(functionAddress);
 
-		for (int parameter : parametersList)
+		// Function address and parameters
+		IntBuffer request = IntBuffer.allocate(1 + totalParametersCount);
+		request.put(functionAddress);
+
+		for (int parameter : parameters)
 		{
-			dataSender.writeInt(parameter);
+			request.put(parameter);
 		}
+
+		for (int requestComponent : request.array())
+		{
+			dataSender.writeInt(requestComponent);
+		}
+
+		// System.out.println("Request [" + exportedSymbol.getRplName() + ": " + exportedSymbol.getSymbolName() + "] " + integerArrayToHexadecimal(request.array()));
 
 		dataSender.flush();
 
-		return dataReceiver.readLong();
+		// The reply is 8 bytes
+		long reply = dataReceiver.readLong();
+
+		if (returnFirstInteger)
+		{
+			return getFirstInteger(reply);
+		}
+		else
+		{
+			return reply;
+		}
+	}
+
+	/**
+	 * @param value The input value to use
+	 * @return The first 32-bit of the <code>value</code>
+	 */
+	private int getFirstInteger(long value)
+	{
+		ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+		buffer.putLong(value);
+
+		return buffer.getInt(0);
+	}
+
+	private static String byteToUnsignedHex(int integer)
+	{
+		String hex = Integer.toHexString(integer);
+
+		while (hex.length() < 8)
+		{
+			hex = "0" + hex;
+		}
+
+		return hex;
+	}
+
+	private String integerArrayToHexadecimal(int[] array)
+	{
+		StringBuilder builder = new StringBuilder(array.length * 8);
+		for (int integer : array)
+		{
+			builder.append(byteToUnsignedHex(integer));
+		}
+		return builder.toString();
 	}
 
 	private int getPaddingIntegersCount(int... parameters)
@@ -124,6 +180,6 @@ public class RemoteProcedureCall extends TCPGecko
 			return BIG_RPC_PARAMETERS_COUNT - parametersCount;
 		}
 
-		throw new IllegalArgumentException("Invalid parameters count: " + parametersCount);
+		throw new IllegalArgumentException("Invalid parameters count " + parametersCount);
 	}
 }

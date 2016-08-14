@@ -14,7 +14,7 @@ public class SubFile
 
 	public String Path()
 	{
-		return parent().Path() + "/" + PName;
+		return parent().getPath() + "/" + PName;
 	}
 
 	public SubFile(String name, int tag, long length, FileStructure parent)

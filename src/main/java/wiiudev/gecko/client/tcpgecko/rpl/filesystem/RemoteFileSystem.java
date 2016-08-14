@@ -3,44 +3,41 @@ package wiiudev.gecko.client.tcpgecko.rpl.filesystem;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
-import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
+import wiiudev.gecko.client.tcpgecko.rpl.ExportedSymbol;
+import wiiudev.gecko.client.tcpgecko.rpl.RemoteProcedureCall;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.ErrorHandling;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.FileSystemStatus;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.structures.*;
+import wiiudev.gecko.client.tcpgecko.rpl.structures.AllocatedMemory;
 
-import java.io.Closeable;
 import java.io.IOException;
 
-public class RemoteFileSystem extends TCPGecko implements Closeable
+public class RemoteFileSystem extends TCPGecko
 {
-	public RemoteFileSystem() throws IOException
+	private RemoteProcedureCall remoteProcedureCall;
+
+	public RemoteFileSystem()
 	{
-		initialize();
+		this.remoteProcedureCall = new RemoteProcedureCall();
 	}
 
 	/**
 	 * Initializes the file system
 	 */
-	private void initialize() throws IOException
+	public FileSystemStatus initialize() throws IOException
 	{
-		CoreInit.call("FSInit");
-	}
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSInit");
+		int status = remoteProcedureCall.call32(exportedSymbol);
 
-	/**
-	 * Shuts down the file system
-	 */
-	public void shutdown() throws IOException
-	{
-		CoreInit.call("FSShutdown");
+		return FileSystemStatus.getStatus(status);
 	}
 
 	public FileSystemStatus addClient(FileSystemClient fileSystemClient, ErrorHandling errorHandling) throws IOException
 	{
-		if(fileSystemClient.isRegistered())
+		if (fileSystemClient.isRegistered())
 		{
 			throw new IllegalArgumentException("The client is already registered!");
-		}
-		else
+		} else
 		{
 			return registerClient(fileSystemClient, errorHandling, true);
 		}
@@ -48,11 +45,10 @@ public class RemoteFileSystem extends TCPGecko implements Closeable
 
 	public FileSystemStatus unregisterClient(FileSystemClient fileSystemClient, ErrorHandling errorHandling) throws IOException
 	{
-		if(fileSystemClient.isRegistered())
+		if (fileSystemClient.isRegistered())
 		{
 			return registerClient(fileSystemClient, errorHandling, false);
-		}
-		else
+		} else
 		{
 			throw new IllegalArgumentException("The client is not registered yet!");
 		}
@@ -62,89 +58,125 @@ public class RemoteFileSystem extends TCPGecko implements Closeable
 	                                        ErrorHandling errorHandling,
 	                                        boolean register) throws IOException
 	{
-		int address = client.getAddress();
+		int clientAddress = client.getAddress();
 		String symbolName = register ? "FSAddClient" : "FSDelClient";
-		long status = CoreInit.call(symbolName, address, errorHandling.getValue());
-		client.setRegistered(register);
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", symbolName);
+		int status = remoteProcedureCall.call32(exportedSymbol, clientAddress, errorHandling.getValue());
+		client.setRegistered(this);
 
-		return FileSystemStatus.getStatus((int) status);
-	}
-
-	public void registerCommandBlock(FileSystemCommandBlock commandBlock) throws IOException
-	{
-		if(commandBlock.isRegistered())
-		{
-			throw new IllegalArgumentException("The command block is already registered!");
-		}
-		else
-		{
-			int address = commandBlock.getAddress();
-			CoreInit.call("FSInitCmdBlock", address);
-			commandBlock.setRegistered(true);
-		}
+		return FileSystemStatus.getStatus(status);
 	}
 
 	public FileSystemStatus openDirectory(FileSystemClient client,
 	                                      FileSystemCommandBlock commandBlock,
 	                                      FileSystemPath path,
-	                                      FileSystemDirectoryHandle directoryHandle,
+	                                      FileSystemHandle directoryHandle,
 	                                      ErrorHandling errorHandling) throws IOException
 	{
-		long status = CoreInit.call("FSOpenDir", client.getAddress(),
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSOpenDir");
+		int status = remoteProcedureCall.call32(exportedSymbol, client.getAddress(),
 				commandBlock.getAddress(), path.getAddress(),
 				directoryHandle.getAddress(), errorHandling.getValue());
-		FileSystemStatus fileSystemFileSystemStatus = FileSystemStatus.getStatus((int) status);
+		FileSystemStatus fileSystemFileSystemStatus = FileSystemStatus.getStatus(status);
 		System.out.println("File system status: " + fileSystemFileSystemStatus);
+
 		MemoryReader memoryReader = new MemoryReader();
 		int directoryHandleValue = memoryReader.readInt(directoryHandle.getAddress());
-		System.out.println("Dir handle value: "  + new Hexadecimal(directoryHandleValue));
+		System.out.println("Dir handle value: " + new Hexadecimal(directoryHandleValue));
 
 		return fileSystemFileSystemStatus;
-	}
-
-	public int getRegisteredClientsCount() throws IOException
-	{
-		return (int) CoreInit.call("FSGetClientNum");
-	}
-
-	@Override
-	public void close() throws IOException
-	{
-		shutdown();
 	}
 
 	public void initializeCommandBlock(FileSystemCommandBlock commandBlock) throws IOException
 	{
 		int address = commandBlock.getAddress();
-		CoreInit.call("FSInitCmdBlock", address);
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSInitCmdBlock");
+		remoteProcedureCall.call(exportedSymbol, address);
+	}
+
+	public FileSystemStatus openFile(FileSystemClient client,
+	                                 FileSystemCommandBlock commandBlock,
+	                                 FileSystemPath path,
+	                                 AccessMode accessMode,
+	                                 FileSystemHandle handle,
+	                                 ErrorHandling errorHandling) throws IOException
+	{
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSOpenFile");
+		int status = remoteProcedureCall.call32(exportedSymbol,
+				client.getAddress(),
+				commandBlock.getAddress(),
+				path.getAddress(),
+				accessMode.getAddress(),
+				handle.getAddress(),
+				errorHandling.getValue());
+
+		return FileSystemStatus.getStatus(status);
+	}
+
+	public int readFile(FileSystemClient client,
+	                                 FileSystemCommandBlock commandBlock,
+	                                 AllocatedMemory destinationBuffer,
+	                                 FileSystemHandle handle,
+	                                 ErrorHandling errorHandling) throws IOException
+
+	{
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSReadFile");
+
+		return remoteProcedureCall.call32(exportedSymbol,
+				client.getAddress(),
+				commandBlock.getAddress(),
+				destinationBuffer.getAddress(),
+				0x1,
+				destinationBuffer.getSize(),
+				handle.getAddress(),
+				0,
+				errorHandling.getValue());
 	}
 
 	public FileSystemStatus readDirectory(FileSystemClient client,
 	                                      FileSystemCommandBlock commandBlock,
-	                                      FileSystemDirectoryHandle fileSystemHandle,
-	                                      FileSystemBuffer buffer,
+	                                      FileSystemHandle directoryHandle,
+	                                      DirectoryEntry directoryEntry,
 	                                      ErrorHandling errorHandling) throws IOException
 	{
-		long status = CoreInit.call("FSReadDir",
-				client.getAddress(),
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSReadDir");
+		int status = remoteProcedureCall.call32(exportedSymbol, client.getAddress(),
 				commandBlock.getAddress(),
-				fileSystemHandle.dereference(),
-				buffer.getAddress(),
+				directoryHandle.dereference(),
+				directoryEntry.getAddress(),
 				errorHandling.getValue());
 
-		return FileSystemStatus.getStatus((int) status);
+		directoryEntry.retrieveData();
+
+		return FileSystemStatus.getStatus(status);
 	}
 
 	public FileSystemStatus closeDirectory(FileSystemClient client,
 	                                       FileSystemCommandBlock commandBlock,
-	                                       FileSystemDirectoryHandle directoryHandle,
+	                                       FileSystemHandle directoryHandle,
 	                                       ErrorHandling errorHandling) throws IOException
 	{
-		long status = CoreInit.call("FSCloseDir", client.getAddress(),
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSCloseDir");
+		int status = remoteProcedureCall.call32(exportedSymbol, client.getAddress(),
 				commandBlock.getAddress(),
 				directoryHandle.dereference(),
 				errorHandling.getValue());
 
-		return FileSystemStatus.getStatus((int) status);
+		return FileSystemStatus.getStatus(status);
+	}
+
+	public FileSystemStatus closeFile(FileSystemClient client,
+	                                  FileSystemCommandBlock commandBlock,
+	                                  FileSystemHandle directoryHandle,
+	                                  ErrorHandling errorHandling) throws IOException
+	{
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSCloseFile");
+		int status = remoteProcedureCall.call32(exportedSymbol,
+				client.getAddress(),
+				commandBlock.getAddress(),
+				directoryHandle.dereference(),
+				errorHandling.getValue());
+
+		return FileSystemStatus.getStatus(status);
 	}
 }

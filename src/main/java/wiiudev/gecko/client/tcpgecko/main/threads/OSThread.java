@@ -28,7 +28,7 @@ public class OSThread
 		setFields();
 	}
 
-	public static List<OSThread> readThreads() throws IOException
+	public static List<OSThread> readThreads() throws Exception
 	{
 		List<OSThread> osThreads = new ArrayList<>();
 
@@ -39,6 +39,7 @@ public class OSThread
 		while ((temporaryThreadAddress = memoryReader.readInt(threadAddress + 0x390)) != 0)
 		{
 			threadAddress = temporaryThreadAddress;
+			Thread.sleep(10); // Sleeps to avoid getting stuck (to be investigated why)
 		}
 
 		while ((temporaryThreadAddress = memoryReader.readInt(threadAddress + OSThreadStruct.LINK_ACTIVE.getOffset())) != 0)
@@ -46,6 +47,7 @@ public class OSThread
 			OSThread osThread = new OSThread(threadAddress);
 			osThreads.add(osThread);
 			threadAddress = temporaryThreadAddress;
+			Thread.sleep(10);
 		}
 
 		// The previous while would skip the last thread
@@ -110,7 +112,7 @@ public class OSThread
 		return suspendedAddress;
 	}
 
-	public String geName()
+	public String getName()
 	{
 		return name;
 	}

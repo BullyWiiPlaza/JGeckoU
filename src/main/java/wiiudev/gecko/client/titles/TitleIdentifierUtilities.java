@@ -1,63 +1,37 @@
 package wiiudev.gecko.client.titles;
 
-import org.apache.commons.codec.binary.Hex;
-import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
+import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
 
 import java.io.IOException;
 
 /**
  * A class for reading the game's title id from the memory
  */
-class TitleIdentifierUtilities
+public class TitleIdentifierUtilities
 {
+	public static String readDashedTitleID() throws IOException
+	{
+		long titleID = CoreInit.getTitleID();
+		String titleIDString = new Hexadecimal(titleID, 16).toString();
+		titleIDString = titleIDString.toUpperCase();
+
+		return getDashedTitleID(titleIDString);
+	}
+
 	/**
 	 * This is needed for comparing with the title database entries
 	 *
 	 * @return The dashed title id
 	 */
-	private static String getDashedTitleId(String titleId)
+	private static String getDashedTitleID(String titleID)
 	{
 		int startingIndex = 0;
 		int stepSize = 8;
 
-		String firstPart = titleId.substring(startingIndex, stepSize);
-		String secondPart = titleId.substring(stepSize, stepSize + stepSize);
+		String firstPart = titleID.substring(startingIndex, stepSize);
+		String secondPart = titleID.substring(stepSize, stepSize + stepSize);
 
 		return firstPart + "-" + secondPart;
-	}
-
-	static String readDashedTitleId() throws IOException
-	{
-		byte[] titleIdBytes = readTitleIdBytes();
-		String titleId = Hex.encodeHexString(titleIdBytes);
-		titleId = titleId.toUpperCase();
-
-		return getDashedTitleId(titleId);
-	}
-
-	/**
-	 * @return The title id of the currently running Wii U game
-	 * @throws IOException
-	 */
-	private static byte[] readTitleIdBytes() throws IOException
-	{
-		MemoryReader memoryReader = new MemoryReader();
-		int firmwareVersion = memoryReader.readFirmwareVersion();
-		int titleIdAddress;
-
-		if(firmwareVersion == 532)
-		{
-			titleIdAddress = 0x100136D0;
-		}
-		else if(firmwareVersion == 550 || firmwareVersion == 551)
-		{
-			titleIdAddress = 0x10013C10;
-		}
-		else
-		{
-			throw new FirmwareNotImplementedException("Automatic title detection is not implemented for your firmware version " + firmwareVersion);
-		}
-
-		return memoryReader.readBytes(titleIdAddress, 0x8);
 	}
 }

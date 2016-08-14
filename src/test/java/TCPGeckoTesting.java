@@ -1,7 +1,7 @@
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
+import org.junit.Test;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
@@ -9,22 +9,22 @@ import wiiudev.gecko.client.tcpgecko.main.threads.OSContext;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThreadState;
 import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
+import wiiudev.gecko.client.tcpgecko.rpl.RemoteDisassembler;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.RemoteFileSystem;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.ErrorHandling;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.FileSystemStatus;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.structures.*;
+import wiiudev.gecko.client.tcpgecko.rpl.structures.AllocatedMemory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 public class TCPGeckoTesting
 {
@@ -34,50 +34,62 @@ public class TCPGeckoTesting
 	public static void connect() throws IOException
 	{
 		connector.connect("192.168.178.35");
+		System.out.println("Connected to TCP Gecko...");
 	}
 
-	@Ignore
+	@Test
 	public void testRemoteProcedureCalls() throws Exception
 	{
+		CoreInit.getOSTime(); // Can't check this but just run it
+
 		int physical = CoreInit.getEffectiveToPhysical(0x10000000);
 		Assert.assertEquals(0x50000000, physical);
 
-		long processID = CoreInit.getProcessPFID();
-		Assert.assertEquals(processID, 0xF00000000L);
+		int processID = CoreInit.getProcessPFID();
+		Assert.assertEquals(processID, 0x0000000F);
 
-		/*testFileSystem(new String[]{"content"});*/
-
-		/*int allocated = CoreInit.allocateDefaultHeapMemory(0x50, 0x20);
-		System.out.println("Allocated: " + new Hexadecimal(allocated));
-		CoreInit.freeDefaultHeapMemory(0);
-		System.out.println("De-allocated!");*/
+		long titleID = CoreInit.getTitleID();
+		System.out.println(titleID);
 
 		/*if(TitleDatabaseManager.isPlaying("Call of Duty: Black Ops II"))
 		{
 			RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 			ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("t6mp_cafef_rpl.rpl", "Com_SessionMode_IsPublicOnlineGame");
 			System.out.println(new Hexadecimal(exportedSymbol.getAddress()));
-			// long result = exportedSymbol.call();
+			// long result = exportedSymbol.call32();
 			// System.out.println(result);
 		}*/
-
-		/*int heap = CoreInit.allocateDefaultHeapMemory(0x50, 0x20);
-		CoreInit.freeDefaultHeapMemory(heap);
-		System.out.println(heap);*/
-
-		/*int stringAddress = CoreInit.allocateString("This is my String");
-		System.out.println(stringAddress);
-		CoreInit.freeSystemMemory(stringAddress);*/
 	}
 
-	@Ignore
-	public void testThreads() throws IOException, InterruptedException
+	@Test
+	public void testRemoteDisassembler() throws IOException
+	{
+		String disassembled = RemoteDisassembler.disassembleValue(0x60000000);
+		Assert.assertEquals(disassembled, "ori r0, r0, 0");
+
+		disassembled = RemoteDisassembler.disassembleAddress(0x01087BC0);
+		Assert.assertEquals(disassembled, "addi r11, r11, 4");
+	}
+
+	@Test
+	public void testMemoryAllocation() throws IOException
+	{
+		int allocated = CoreInit.allocateDefaultHeapMemory(0x50, 0x20);
+		CoreInit.freeDefaultHeapMemory(allocated);
+
+		int allocated2 = CoreInit.allocateDefaultHeapMemory(0x50, 0x20);
+		CoreInit.freeDefaultHeapMemory(allocated2);
+
+		Assert.assertEquals(allocated, allocated2);
+	}
+
+	@Test
+	public void testThreads() throws Exception
 	{
 		List<OSThread> osThreads = OSThread.readThreads();
 
 		OSThread osThread = osThreads.get(0);
 		OSContext osContext = new OSContext(osThread.getAddress());
-		System.out.println(osContext);
 		testThreadState(osThread);
 	}
 
@@ -85,7 +97,7 @@ public class TCPGeckoTesting
 	{
 		OSThreadState state = osThread.getState();
 
-		switch(state)
+		switch (state)
 		{
 			case PAUSED:
 				osThread.setState(OSThreadState.RUNNING);
@@ -101,82 +113,166 @@ public class TCPGeckoTesting
 		}
 	}
 
-	private void testFileSystem(String[] folders) throws IOException
+	@Test
+	public void testFileSystem() throws IOException
 	{
-		RemoteFileSystem remoteFileSystem = new RemoteFileSystem();
-		FileSystemClient client = new FileSystemClient();
-		FileSystemCommandBlock commandBlock = new FileSystemCommandBlock();
-		remoteFileSystem.addClient(client, ErrorHandling.NONE);
-		remoteFileSystem.initializeCommandBlock(commandBlock);
+		List<DirectoryEntry> directoryEntries = new ArrayList<>();
 
-		FileSystemDirectoryHandle directoryHandle = new FileSystemDirectoryHandle();
-		FileSystemPath path = new FileSystemPath();
-		FileSystemBuffer buffer = new FileSystemBuffer();
-
-		FileStructure root = new FileStructure("vol", -1);
-		Queue<FileStructure> scanQueue = new LinkedList<>();
-
-		for (String item : folders)
+		try (FileSystemClient client = new FileSystemClient();
+		     FileSystemCommandBlock commandBlock = new FileSystemCommandBlock();
+		     FileSystemHandle directoryHandle = new FileSystemHandle();
+		     FileSystemHandle fileHandle = new FileSystemHandle();
+		     FileSystemPath filePath = new FileSystemPath("/vol/content");
+		     DirectoryEntry directoryEntry = new DirectoryEntry();
+			 AccessMode accessMode = new AccessMode(AccessMode.READ);
+			 AllocatedMemory destinationBuffer = new AllocatedMemory(0x40, 0x1000))
 		{
-			scanQueue.add(root.addSubFolder(item, -1));
-		}
+			RemoteFileSystem remoteFileSystem = new RemoteFileSystem();
 
-		while (scanQueue.size() > 0)
-		{
-			FileStructure current = scanQueue.remove();
-			String thePath = current.Path();
-			MemoryWriter memoryWriter = new MemoryWriter();
-			memoryWriter.writeString(path.getAddress(), thePath);
-
-			FileSystemStatus status = remoteFileSystem.openDirectory(client, commandBlock, path, directoryHandle, ErrorHandling.ALL);
-
-			if (status != FileSystemStatus.OK)
+			if (remoteFileSystem.initialize() == FileSystemStatus.OK)
 			{
-				continue;
+				remoteFileSystem.initializeCommandBlock(commandBlock);
+
+				if (remoteFileSystem.addClient(client,
+						ErrorHandling.NONE) == FileSystemStatus.OK)
+				{
+					if (remoteFileSystem.openDirectory(client, commandBlock, filePath,
+							directoryHandle, ErrorHandling.ALL) == FileSystemStatus.OK)
+					{
+						while (remoteFileSystem.readDirectory(client, commandBlock, directoryHandle,
+								directoryEntry, ErrorHandling.ALL) == FileSystemStatus.OK)
+						{
+							int flag = directoryEntry.getFlag();
+							System.out.println("Flag: " + flag);
+							System.out.println("Directory: " +
+									directoryEntry.isDirectory());
+							int size = directoryEntry.getSize();
+							System.out.println("Size: " + size);
+							String name = directoryEntry.getName();
+							System.out.println("Name: " + name);
+
+							if(directoryEntry.isDirectory())
+							{
+
+							}
+							else
+							{
+								directoryEntries.add(directoryEntry);
+
+								/*// TODO Stuck, no reply but no freeze?
+								if(remoteFileSystem.openFile(client, commandBlock, filePath,
+										accessMode, fileHandle, ErrorHandling.NONE) == FileSystemStatus.OK)
+								{
+									int fileSize = remoteFileSystem.readFile(client, commandBlock, destinationBuffer,
+											fileHandle, ErrorHandling.NONE);
+									MemoryReader memoryReader = new MemoryReader();
+									byte[] bytes = memoryReader.readBytes(destinationBuffer.getAddress(), fileSize);
+									Files.write(Paths.get(name), bytes);
+								}
+
+								remoteFileSystem.closeFile(client, commandBlock, directoryHandle, ErrorHandling.NONE);
+								break;*/
+							}
+						}
+					}
+
+					remoteFileSystem.closeDirectory(client, commandBlock, directoryHandle, ErrorHandling.NONE);
+				}
 			}
-
-			do
-			{
-				status = remoteFileSystem.readDirectory(client, commandBlock, directoryHandle, buffer, ErrorHandling.ALL);
-
-				if(status != FileSystemStatus.OK)
-				{
-					break;
-				}
-
-				MemoryReader memoryReader = new MemoryReader();
-				int bufferAddress = buffer.getAddress();
-				byte[] bytes = memoryReader.readBytes(bufferAddress, bufferAddress + 0x200);
-				ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
-				long attr = Long.reverseBytes(byteBuffer.getLong(0));
-				long size = Long.reverseBytes(byteBuffer.getLong(8));
-				byte [] subArray = Arrays.copyOfRange(bytes, 0x64, 0x100);
-				String name = new String(subArray);
-				name = name.replace("\0", "");
-
-				if ((attr & 0x80000000) != 0)
-				{
-					scanQueue.add(current.addSubFolder(name, -1));
-				}
-				else
-				{
-					current.addFile(name, -1, size);
-				}
-			} while (true);
-
-			remoteFileSystem.closeDirectory(client, commandBlock, directoryHandle, ErrorHandling.NONE);
 		}
 
-		// Clean up again
-		buffer.free();
-		path.free();
-		directoryHandle.free();
-		remoteFileSystem.unregisterClient(client, ErrorHandling.NONE);
-		commandBlock.free();
-		client.free();
+		System.out.println(directoryEntries.size());
 	}
 
-	@Ignore
+	private void testFileSystem(String[] folders) throws IOException
+	{
+		/*try (RemoteFileSystem remoteFileSystem = new RemoteFileSystem();
+		     FileSystemClient client = new FileSystemClient();
+		     FileSystemCommandBlock commandBlock = new FileSystemCommandBlock();
+		     FileSystemHandle directoryHandle = new FileSystemHandle();
+		     FileSystemPath path = new FileSystemPath("");
+		     FileSystemBuffer buffer = new FileSystemBuffer())
+		{
+			FileSystemStatus status;
+
+			remoteFileSystem.initialize();
+
+			System.out.println("Client Address: " + new Hexadecimal(client.getAddress()));
+			System.out.println("Command Block Address: " + new Hexadecimal(commandBlock.getAddress()));
+			status = remoteFileSystem.addClient(client, ErrorHandling.NONE);
+			// System.out.println("Add Client Status: " + new Hexadecimal(status2.value));
+			remoteFileSystem.initializeCommandBlock(commandBlock);
+			// System.out.println("Initialize Command Block Status: " + new Hexadecimal(status2.value));
+
+			System.out.println("Directory Handle Address: " + new Hexadecimal(directoryHandle.getAddress()));
+			System.out.println("getPath Address: " + new Hexadecimal(path.getAddress()));
+			System.out.println("Buffer Address: " + new Hexadecimal(buffer.getAddress()));
+
+			FileStructure rootFolder = new FileStructure("vol", -1);
+			Queue<FileStructure> scanQueue = new LinkedList<>();
+
+			for (String item : folders)
+			{
+				FileStructure subFolder = rootFolder.addSubFolder(item, -1);
+				scanQueue.add(subFolder);
+			}
+
+			while (scanQueue.size() > 0)
+			{
+				FileStructure current = scanQueue.remove();
+				String folderPath = current.getPath();
+				MemoryWriter memoryWriter = new MemoryWriter();
+				int pathAddress = path.getAddress();
+				memoryWriter.writeString(pathAddress, folderPath);
+
+				status = remoteFileSystem.openDirectory(client, commandBlock, path, directoryHandle, ErrorHandling.ALL);
+
+				if (status != FileSystemStatus.OK)
+				{
+					continue;
+				}
+
+				do
+				{
+					// status = remoteFileSystem.readDirectory(client, commandBlock, directoryHandle, buffer, ErrorHandling.ALL);
+
+					if (status != FileSystemStatus.OK)
+					{
+						break;
+					}
+
+					MemoryReader memoryReader = new MemoryReader();
+					int bufferAddress = buffer.getAddress();
+					byte[] bytes = memoryReader.readBytes(bufferAddress, 0x200);
+					System.out.println("Buffer: " + DatatypeConverter.printHexBinary(bytes));
+					ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+					int attribute = byteBuffer.getInt(0);
+					System.out.println("Attribute: " + new Hexadecimal(attribute, 8));
+					int size = byteBuffer.getInt(8);
+					System.out.println("Size: " + new Hexadecimal(size, 8));
+					System.out.println("Size de-referenced: " + new Hexadecimal(new MemoryReader().readInt(size), 8));
+					byte[] nameArray = Arrays.copyOfRange(bytes, 0x64, 0x100);
+					String name = new String(nameArray);
+
+					System.out.println("Name: " + name);
+
+					if ((attribute & 0x80000000) != 0)
+					{
+						scanQueue.add(current.addSubFolder(name, -1));
+					} else
+					{
+						current.addFile(name, -1, size);
+					}
+				} while (true);
+
+				remoteFileSystem.closeDirectory(client, commandBlock, directoryHandle, ErrorHandling.NONE);
+			}
+
+			remoteFileSystem.unregisterClient(client, ErrorHandling.NONE);
+		}*/
+	}
+
+	@Test
 	public void testMemoryReading() throws IOException, URISyntaxException
 	{
 		MemoryReader memoryReader = new MemoryReader();
@@ -223,7 +319,7 @@ public class TCPGeckoTesting
 		return Paths.get(ClassLoader.getSystemResource("dump.bin").toURI());
 	}
 
-	@Ignore
+	@Test
 	public void testMemoryWriting() throws IOException
 	{
 		MemoryWriter memoryWriter = new MemoryWriter();
@@ -283,5 +379,6 @@ public class TCPGeckoTesting
 	public static void disconnect() throws IOException, InterruptedException
 	{
 		Connector.getInstance().closeConnection();
+		System.out.println("Disconnected from TCP Gecko...");
 	}
 }

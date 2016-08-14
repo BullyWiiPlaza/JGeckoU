@@ -37,6 +37,7 @@ import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
 import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
+import wiiudev.gecko.client.tcpgecko.rpl.RemoteDisassembler;
 import wiiudev.gecko.client.titles.FirmwareNotImplementedException;
 import wiiudev.gecko.client.titles.Title;
 import wiiudev.gecko.client.titles.TitleDatabaseManager;
@@ -75,7 +76,6 @@ public class JGeckoUGUI extends JFrame
 	private JButton connectionHelpButton;
 	private JTextField ipAddressField;
 	private JCheckBox autoDetectCheckBox;
-	private JPanel codesPanel;
 	private JButton addCodeButton;
 	private JButton deleteCodeButton;
 	private JButton sendCodesButton;
@@ -138,7 +138,6 @@ public class JGeckoUGUI extends JFrame
 	private JButton convertEffectiveToPhysicalButton;
 	private JButton displayMessageButton;
 	private JButton remoteProcedureCallButton;
-	private JButton coreInitDocumentationButton;
 	private JTree tree1;
 	private JButton readFileSystemButton;
 	private JTextArea textArea1;
@@ -157,6 +156,14 @@ public class JGeckoUGUI extends JFrame
 	private JTextField disassemblerInstructionField;
 	private JButton assembleInstructionButton;
 	private JButton powerPCAssemblyDocumentationButton;
+	private JButton osTimeButton;
+	private JButton processPFIDButton;
+	private JButton remoteDisassemblerButton;
+	private JButton titleIDButton;
+	private JButton osIDButton;
+	private JButton appFlagsButton;
+	private JButton sdkVersionButton;
+	private JButton shutdownButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -194,12 +201,11 @@ public class JGeckoUGUI extends JFrame
 		configureMemoryDumpingTab();
 		removeUnfinishedTab();
 		configureMiscellaneousTab();
-		configureRPCTab();
+		configureRemoteProcedureCallTab();
 		configureAboutTab();
 
 		restorePersistentSettings();
 		addSettingsBackupShutdownHook();
-		monitorGeckoServerHealth();
 	}
 
 	private void addTabsChangedListener()
@@ -499,7 +505,7 @@ public class JGeckoUGUI extends JFrame
 		dialog.setVisible(true);
 	}
 
-	private void configureRPCTab()
+	private void configureRemoteProcedureCallTab()
 	{
 		displayMessageButton.addActionListener(actionEvent ->
 		{
@@ -508,27 +514,49 @@ public class JGeckoUGUI extends JFrame
 
 			if (textDialog.isConfirmed())
 			{
-				boolean isFatal = textDialog.shouldHaltSystem();
+				boolean shouldHaltSystem = textDialog.shouldHaltSystem();
 				String message = textDialog.getMessageText();
 
 				try
 				{
-					CoreInit.displayMessage(message, isFatal);
-				} catch (Exception exception)
+					CoreInit.displayMessage(message, shouldHaltSystem);
+				} catch (IOException ignored)
+				{
+					// This crash is to be expected so no handling it
+				}
+			}
+		});
+
+		remoteDisassemblerButton.addActionListener(e ->
+		{
+			RemoteDisassemblerDialog remoteDisassemblerDialog = new RemoteDisassemblerDialog();
+			remoteDisassemblerDialog.setTitle(remoteDisassemblerButton.getText());
+			remoteDisassemblerDialog.setLocationRelativeTo(this);
+			remoteDisassemblerDialog.setVisible(true);
+
+			if (remoteDisassemblerDialog.isConfirmed())
+			{
+				int value = remoteDisassemblerDialog.getEnteredValue();
+
+				try
+				{
+					String disassembled = RemoteDisassembler.disassembleValue(value);
+					JOptionPane.showMessageDialog(JGeckoUGUI.this,
+							disassembled,
+							remoteDisassemblerButton.getText(),
+							JOptionPane.INFORMATION_MESSAGE);
+				} catch (IOException exception)
 				{
 					StackTraceUtils.handleException(rootPane, exception);
 				}
 			}
 		});
 
-		// Not functional yet...
-		displayMessageButton.setVisible(false);
-
 		convertEffectiveToPhysicalButton.addActionListener(actionEvent ->
 		{
 			String suppliedInput = JOptionPane.showInputDialog(this,
 					"Please enter the effective hexadecimal address to convert:",
-					"OSEffectiveToPhysical",
+					convertEffectiveToPhysicalButton.getText(),
 					JOptionPane.INFORMATION_MESSAGE);
 
 			if (suppliedInput != null)
@@ -539,8 +567,8 @@ public class JGeckoUGUI extends JFrame
 					int physical = CoreInit.getEffectiveToPhysical(address);
 
 					JOptionPane.showMessageDialog(this,
-							"0x" + new Hexadecimal(physical, 8),
-							"OSEffectiveToPhysical",
+							new Hexadecimal(physical, 8),
+							convertEffectiveToPhysicalButton.getText(),
 							JOptionPane.INFORMATION_MESSAGE);
 				} catch (Exception exception)
 				{
@@ -549,11 +577,124 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
+		shutdownButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				Object[] options = {"Yes",
+						"No"};
+
+				int selectedAnswer = JOptionPane.showOptionDialog(rootPane,
+						"Would you really like to shutdown your Wii U?",
+						shutdownButton.getText(),
+						JOptionPane.YES_NO_CANCEL_OPTION,
+						JOptionPane.QUESTION_MESSAGE,
+						null,
+						options,
+						null);
+
+				if (selectedAnswer == JOptionPane.YES_OPTION)
+				{
+					CoreInit.shutdown();
+				}
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		appFlagsButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				long appFlags = CoreInit.getAppFlags();
+				JOptionPane.showMessageDialog(this,
+						new Hexadecimal(appFlags, 8),
+						appFlagsButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		sdkVersionButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				long sdkVersion = CoreInit.getSDKVersion();
+				JOptionPane.showMessageDialog(this,
+						new Hexadecimal(sdkVersion, 8),
+						sdkVersionButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		osIDButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				long osID = CoreInit.getOSID();
+				JOptionPane.showMessageDialog(this,
+						new Hexadecimal(osID, 16),
+						osIDButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		titleIDButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				long titleID = CoreInit.getTitleID();
+				JOptionPane.showMessageDialog(this,
+						new Hexadecimal(titleID, 16),
+						titleIDButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		osTimeButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				long osTime = CoreInit.getOSTime();
+				JOptionPane.showMessageDialog(this,
+						new Hexadecimal(osTime, 16),
+						osTimeButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		processPFIDButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				long processPFID = CoreInit.getProcessPFID();
+				JOptionPane.showMessageDialog(this,
+						new Hexadecimal(processPFID, 8),
+						processPFIDButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
 		remoteProcedureCallButton.addActionListener(actionEvent ->
 				setVisible(new RemoteProcedureCallDialog(), rootPane, actionEvent));
-
-		coreInitDocumentationButton.addActionListener(actionEvent ->
-				openURL("http://wiiubrew.org/wiki/Coreinit.rpl"));
 	}
 
 	private void configureMiscellaneousTab()
@@ -575,19 +716,16 @@ public class JGeckoUGUI extends JFrame
 	{
 		Thread monitor = new Thread(() ->
 		{
-			while (true)
+			while (TCPGecko.isConnected())
 			{
 				try
 				{
-					if (TCPGecko.isConnected())
-					{
-						MemoryReader memoryReader = new MemoryReader();
-						boolean isRunning = memoryReader.isRunning();
+					MemoryReader memoryReader = new MemoryReader();
+					boolean isRunning = memoryReader.isRunning();
 
-						if (!isRunning)
-						{
-							connectionReset();
-						}
+					if (!isRunning)
+					{
+						connectionReset();
 					}
 
 					Thread.sleep(500);
@@ -604,11 +742,25 @@ public class JGeckoUGUI extends JFrame
 	private void connectionReset()
 	{
 		disconnect();
+		closeAllDialogs();
 
 		JOptionPane.showMessageDialog(rootPane,
 				"Please reconnect manually when ready.",
 				"Connection Reset",
 				JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	private void closeAllDialogs()
+	{
+		Window[] windows = getWindows();
+
+		for (Window window : windows)
+		{
+			if (window instanceof JDialog)
+			{
+				window.dispose();
+			}
+		}
 	}
 
 	public void selectDumpingTab()
@@ -1276,7 +1428,7 @@ public class JGeckoUGUI extends JFrame
 			@Override
 			protected String doInBackground() throws Exception
 			{
-				String input = JOptionPane.showInputDialog(rootPane, "Please enter the pointer notation:", followPointerButton.getText(), JOptionPane.INFORMATION_MESSAGE);
+				String input = JOptionPane.showInputDialog(rootPane, "Please enter the POINTER notation:", followPointerButton.getText(), JOptionPane.INFORMATION_MESSAGE);
 
 				if (input != null)
 				{
@@ -1300,7 +1452,7 @@ public class JGeckoUGUI extends JFrame
 					} catch (StringIndexOutOfBoundsException invalidInput)
 					{
 						JOptionPane.showMessageDialog(rootPane,
-								"Invalid pointer expression!",
+								"Invalid POINTER expression!",
 								"Error",
 								JOptionPane.ERROR_MESSAGE);
 					} catch (Exception exception)
@@ -1378,6 +1530,26 @@ public class JGeckoUGUI extends JFrame
 
 		memoryViewerValueField.setDocument(new InputLengthFilter(ValueSizes.THIRTY_TWO_BIT.getSize()));
 		new DefaultContextMenu().addTo(memoryViewerValueField);
+
+		memoryViewerValueField.addKeyListener(new KeyAdapter()
+		{
+			public void keyReleased(KeyEvent keyEvent)
+			{
+			}
+
+			public void keyTyped(KeyEvent keyEvent)
+			{
+			}
+
+			public void keyPressed(KeyEvent keyEvent)
+			{
+				if (keyEvent.getKeyCode() == KeyEvent.VK_ENTER
+						&& updateMemoryViewerButton.isEnabled())
+				{
+					pokeMemoryViewerMemory();
+				}
+			}
+		});
 
 		valueSizePokeComboBox.addItemListener(itemEvent ->
 		{
@@ -1800,35 +1972,49 @@ public class JGeckoUGUI extends JFrame
 	private void addPokeButtonListener()
 	{
 		pokeValueButton.addActionListener(actionEvent ->
+				pokeMemoryViewerMemory());
+	}
+
+	private void pokeMemoryViewerMemory()
+	{
+		try
 		{
-			try
+			ValueSizes valueSize = (ValueSizes) valueSizePokeComboBox.getSelectedItem();
+			int targetAddress = Conversions.toDecimal(memoryViewerAddressField.getText());
+			int currentValue = new MemoryReader().readValue(targetAddress, valueSize);
+			int newValue = applySelectedPokeOperation(currentValue);
+			MemoryWriter memoryWriter = new MemoryWriter();
+
+			switch (valueSize)
 			{
-				ValueSizes valueSize = (ValueSizes) valueSizePokeComboBox.getSelectedItem();
-				int targetAddress = Conversions.toDecimal(memoryViewerAddressField.getText());
-				int currentValue = new MemoryReader().readValue(targetAddress, valueSize);
-				int newValue = applySelectedPokeOperation(currentValue);
-				MemoryWriter memoryWriter = new MemoryWriter();
+				case EIGHT_BIT:
+					memoryWriter.write(targetAddress, (byte) newValue);
+					break;
 
-				switch (valueSize)
-				{
-					case EIGHT_BIT:
-						memoryWriter.write(targetAddress, (byte) newValue);
-						break;
+				case SIXTEEN_BIT:
+					memoryWriter.writeShort(targetAddress, (short) newValue);
+					break;
 
-					case SIXTEEN_BIT:
-						memoryWriter.writeShort(targetAddress, (short) newValue);
-						break;
-
-					case THIRTY_TWO_BIT:
-						memoryWriter.writeInt(targetAddress, newValue);
-				}
-
-				updateMemoryViewer(false, false);
-			} catch (Exception exception)
-			{
-				StackTraceUtils.handleException(rootPane, exception);
+				case THIRTY_TWO_BIT:
+					memoryWriter.writeInt(targetAddress, newValue);
 			}
-		});
+
+			pokeMemoryViewerUpdate();
+		} catch (Exception exception)
+		{
+			StackTraceUtils.handleException(rootPane, exception);
+		}
+	}
+
+	private void pokeMemoryViewerUpdate()
+	{
+		// A "hacky" way to avoid the memory viewer to move after poking
+		int selectedAddress = memoryViewerTableManager.getSelectedAddress();
+		int firstAddress = memoryViewerTableManager.getFirstMemoryAddress();
+		memoryViewerAddressField.setText(new Hexadecimal(firstAddress, 8).toString());
+		updateMemoryViewer(false, false);
+		memoryViewerTableManager.selectAddress(selectedAddress);
+		memoryViewerAddressField.setText(new Hexadecimal(selectedAddress, 8).toString());
 	}
 
 	private int applySelectedPokeOperation(int currentValue)
@@ -2242,15 +2428,8 @@ public class JGeckoUGUI extends JFrame
 	{
 		try
 		{
-			if (Desktop.isDesktopSupported())
-			{
-				Desktop desktop = Desktop.getDesktop();
-				desktop.browse(new URI(link));
-			} else
-			{
-				Runtime runtime = Runtime.getRuntime();
-				runtime.exec("xdg-open " + link);
-			}
+			Desktop desktop = Desktop.getDesktop();
+			desktop.browse(new URI(link));
 		} catch (Exception exception)
 		{
 			StackTraceUtils.handleException(rootPane, exception);
@@ -2458,6 +2637,7 @@ public class JGeckoUGUI extends JFrame
 			Connector.getInstance().connect(ipAddress);
 		}
 
+		monitorGeckoServerHealth();
 		connectButton.setText(connectButtonText + "ed [" + ipAddress + "]");
 		connectedIPAddress = ipAddress;
 
@@ -2598,7 +2778,16 @@ public class JGeckoUGUI extends JFrame
 		boolean shouldEnableConnectButton = !connected
 				&& mayConnect && !connecting && titlesInitialized;
 		connectButton.setEnabled(shouldEnableConnectButton);
+		processPFIDButton.setEnabled(connected);
+		sdkVersionButton.setEnabled(connected);
+		shutdownButton.setEnabled(connected);
+		osIDButton.setEnabled(connected);
+		appFlagsButton.setEnabled(connected);
+		titleIDButton.setEnabled(connected);
+		remoteDisassemblerButton.setEnabled(connected);
+		displayMessageButton.setEnabled(connected);
 		disconnectButton.setEnabled(connected);
+		osTimeButton.setEnabled(connected);
 		assembleInstructionButton.setEnabled(connected && !assembling);
 		readThreadsButton.setEnabled(connected && !readingThreads);
 		reconnectButton.setEnabled(!connectButton.isEnabled()

@@ -21,6 +21,9 @@ public class MessageTextDialog extends JDialog
 			confirmed = true;
 			dispose();
 		});
+
+		// Always halting for now
+		haltSystemCheckBox.setVisible(false);
 	}
 
 	private void setFrameProperties()

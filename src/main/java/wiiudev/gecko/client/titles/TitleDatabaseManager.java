@@ -54,7 +54,7 @@ public class TitleDatabaseManager
 	 */
 	public Title getTitle() throws IOException
 	{
-		String dashedTitleId = TitleIdentifierUtilities.readDashedTitleId();
+		String dashedTitleId = TitleIdentifierUtilities.readDashedTitleID();
 		return getTitle(dashedTitleId);
 	}
 

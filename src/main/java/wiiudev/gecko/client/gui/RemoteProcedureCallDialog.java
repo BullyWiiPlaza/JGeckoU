@@ -2,10 +2,16 @@ package wiiudev.gecko.client.gui;
 
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
+import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
+import wiiudev.gecko.client.tcpgecko.rpl.ExportedSymbol;
 import wiiudev.gecko.client.tcpgecko.rpl.RemoteProcedureCall;
 
 import javax.swing.*;
 import javax.swing.text.*;
+import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.net.URI;
 
 public class RemoteProcedureCallDialog extends JDialog
 {
@@ -14,13 +20,40 @@ public class RemoteProcedureCallDialog extends JDialog
 	private JTextField rplNameField;
 	private JTextField symbolNameField;
 	private JTextArea parametersTextArea;
-	private JTextField resultTextField;
+	private JTextField functionResultField;
+	private JTextField functionAddressField;
+	private JButton coreInitDocumentationButton;
 
 	public RemoteProcedureCallDialog()
 	{
 		setFrameProperties();
 		addParametersInputFilter();
 		addCallFunctionActionListener();
+
+		rplNameField.setText("coreinit.rpl");
+
+		addWindowListener(new WindowAdapter()
+		{
+			public void windowOpened(WindowEvent windowEvent)
+			{
+				symbolNameField.requestFocus();
+			}
+		});
+
+		coreInitDocumentationButton.addActionListener(actionEvent ->
+				openURL("http://wiiubrew.org/wiki/Coreinit.rpl"));
+	}
+
+	private void openURL(String link)
+	{
+		Desktop desktop = Desktop.getDesktop();
+		try
+		{
+			desktop.browse(new URI(link));
+		} catch (Exception exception)
+		{
+			exception.printStackTrace();
+		}
 	}
 
 	private void addParametersInputFilter()
@@ -33,6 +66,7 @@ public class RemoteProcedureCallDialog extends JDialog
 	{
 		setContentPane(contentPane);
 		setModal(true);
+		setTitle("Remote Procedure Call");
 		getRootPane().setDefaultButton(callFunctionButton);
 		WindowUtilities.setIconImage(this);
 		setSize(400, 500);
@@ -76,12 +110,29 @@ public class RemoteProcedureCallDialog extends JDialog
 		try
 		{
 			RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-			long returnValue = remoteProcedureCall.call(rplName, symbolName, parameters);
-			resultTextField.setText(Long.toHexString(returnValue).toUpperCase());
+			ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(rplName, symbolName);
+			functionAddressField.setText(new Hexadecimal(exportedSymbol.getAddress(), 8).toString());
+			long returnValue = remoteProcedureCall.call64(exportedSymbol, parameters);
+			functionResultField.setText(new Hexadecimal(returnValue, 16).toString());
 		} catch (Exception exception)
 		{
 			StackTraceUtils.handleException(rootPane, exception);
 		}
+	}
+
+	public void setParameters(int[] parameters)
+	{
+		StringBuilder parametersBuilder = new StringBuilder();
+
+		for(int parameter : parameters)
+		{
+			String hexadecimalParameter = new Hexadecimal(parameter, 8).toString();
+			parametersBuilder.append(hexadecimalParameter);
+			parametersBuilder.append(System.lineSeparator());
+		}
+
+		String parametersString = parametersBuilder.toString().trim();
+		parametersTextArea.setText(parametersString);
 	}
 
 	private static class RPCParametersFilter extends DocumentFilter

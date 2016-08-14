@@ -87,6 +87,7 @@ public class CodeWizardDialog extends JDialog
 			if (itemEvent.getStateChange() == ItemEvent.SELECTED)
 			{
 				setCodeTypesAvailability();
+				setPossiblePointerSelections();
 			}
 		});
 
@@ -132,6 +133,23 @@ public class CodeWizardDialog extends JDialog
 		addParsePointerExpressionButtonListener();
 	}
 
+	private void setPossiblePointerSelections()
+	{
+		CodeTypes codeType = (CodeTypes) codeTypeSelection.getSelectedItem();
+
+		if (codeType == CodeTypes.LOAD_POINTER)
+		{
+			pointerSelection.removeAllItems();
+
+			pointerSelection.addItem(Pointer.NO_POINTER);
+			pointerSelection.addItem(Pointer.POINTER);
+		} else
+		{
+			DefaultComboBoxModel<Pointer> pointerDefaultComboBoxModel = new DefaultComboBoxModel<>(Pointer.values());
+			pointerSelection.setModel(pointerDefaultComboBoxModel);
+		}
+	}
+
 	public void setAddress(int address)
 	{
 		addressField.setText(Integer.toHexString(address).toUpperCase());
@@ -161,8 +179,8 @@ public class CodeWizardDialog extends JDialog
 						return;
 					}
 
-					codeTypeSelection.setSelectedItem(CodeTypes.ram_write);
-					pointerSelection.setSelectedItem(offsetsCount == 1 ? Pointer.pointer : Pointer.pointer_in_pointer);
+					codeTypeSelection.setSelectedItem(CodeTypes.RAM_WRITE);
+					pointerSelection.setSelectedItem(offsetsCount == 1 ? Pointer.POINTER : Pointer.POINTER_IN_POINTER);
 					valueSizeSelection.setSelectedItem(ValueSize.THIRTY_TWO_BIT);
 					pointerOffsetField.setText(Integer.toHexString(offsets[0]).toUpperCase());
 
@@ -250,28 +268,35 @@ public class CodeWizardDialog extends JDialog
 		CodeTypes codeType = (CodeTypes) codeTypeSelection.getSelectedItem();
 		boolean registerOperation = isRegisterOperation(codeType);
 		boolean twoRegistersOperation = isTwoRegistersOperation(codeType);
-		boolean valueFieldEnabled = (codeType != CodeTypes.string_write) && !registerOperation || twoRegistersOperation;
-		boolean stringWriteTextFieldEnabled = codeType == CodeTypes.string_write;
-		boolean isIndependentCodeType = codeType == CodeTypes.no_operation || codeType == CodeTypes.termination;
-		boolean modifyRegisterOperation = codeType == CodeTypes.integer_operations || codeType == CodeTypes.float_operations;
+		boolean valueFieldEnabled = (codeType != CodeTypes.STRING_WRITE) && !registerOperation || twoRegistersOperation;
+		boolean stringWriteTextFieldEnabled = codeType == CodeTypes.STRING_WRITE;
+		boolean isIndependentCodeType = codeType == CodeTypes.NO_OPERATION || codeType == CodeTypes.TERMINATION;
+		boolean modifyRegisterOperation = codeType == CodeTypes.INTEGER_OPERATIONS || codeType == CodeTypes.FLOAT_OPERATIONS;
 
+		setPointerRangeAvailability();
 		sourceRegisterTextField.setEnabled(modifyRegisterOperation);
 		targetRegisterTextField.setEnabled(registerOperation);
 		registerOperationsComboBox.setEnabled(twoRegistersOperation);
-		valueField.setEnabled(valueFieldEnabled && !isIndependentCodeType);
+		valueField.setEnabled(valueFieldEnabled && !isIndependentCodeType && codeType != CodeTypes.LOAD_POINTER);
 		stringWriteTextArea.setEnabled(stringWriteTextFieldEnabled);
-		pointerSelection.setEnabled(!isIndependentCodeType && !twoRegistersOperation);
-		valueSizeSelection.setEnabled(!isIndependentCodeType && !twoRegistersOperation);
-		addressField.setEnabled(!isIndependentCodeType && !twoRegistersOperation);
+		pointerSelection.setEnabled(!isIndependentCodeType && !twoRegistersOperation && codeType != CodeTypes.ADD_POINTER_OFFSET);
+		valueSizeSelection.setEnabled(!isIndependentCodeType && !twoRegistersOperation && codeType != CodeTypes.LOAD_POINTER && codeType != CodeTypes.ADD_POINTER_OFFSET);
 
-		boolean isSkipWrite = codeType == CodeTypes.skip_write;
-		valueIncrementField.setEnabled(isSkipWrite);
+		if (codeType != CodeTypes.ADD_POINTER_OFFSET)
+		{
+			valueSizeSelection.setSelectedItem(ValueSize.THIRTY_TWO_BIT);
+		}
+
+		addressField.setEnabled(!isIndependentCodeType && !twoRegistersOperation && codeType != CodeTypes.ADD_POINTER_OFFSET);
+		boolean isSkipWrite = codeType == CodeTypes.SKIP_WRITE;
+		boolean isFillMemory = codeType == CodeTypes.FILL_MEMORY;
+		valueIncrementField.setEnabled(isSkipWrite || isFillMemory);
 		writesOffsetField.setEnabled(isSkipWrite);
-		writesCountField.setEnabled(isSkipWrite);
+		writesCountField.setEnabled(isSkipWrite || isFillMemory);
 
 		addRegisterComboBoxItems();
 
-		if (codeType == CodeTypes.integer_operations)
+		if (codeType == CodeTypes.INTEGER_OPERATIONS)
 		{
 			registerOperationsComboBox.removeItemAt(registerOperationsComboBox.getItemCount() - 1);
 		}
@@ -300,12 +325,12 @@ public class CodeWizardDialog extends JDialog
 
 	private boolean isTwoRegistersOperation(CodeTypes codeType)
 	{
-		return codeType == CodeTypes.integer_operations || codeType == CodeTypes.float_operations;
+		return codeType == CodeTypes.INTEGER_OPERATIONS || codeType == CodeTypes.FLOAT_OPERATIONS;
 	}
 
 	private boolean isRegisterOperation(CodeTypes codeType)
 	{
-		return codeType == CodeTypes.load_int || codeType == CodeTypes.store_int || codeType == CodeTypes.integer_operations || codeType == CodeTypes.load_float || codeType == CodeTypes.store_float || codeType == CodeTypes.float_operations;
+		return codeType == CodeTypes.LOAD_INT || codeType == CodeTypes.STORE_INT || codeType == CodeTypes.INTEGER_OPERATIONS || codeType == CodeTypes.LOAD_FLOAT || codeType == CodeTypes.STORE_FLOAT || codeType == CodeTypes.FLOAT_OPERATIONS;
 	}
 
 	private void setPointerOffsetAvailability()
@@ -314,8 +339,9 @@ public class CodeWizardDialog extends JDialog
 
 		switch (selectedPointerType)
 		{
-			case pointer:
-				pointerOffsetField.setEnabled(true);
+			case POINTER:
+				CodeTypes codeType = (CodeTypes) codeTypeSelection.getSelectedItem();
+				pointerOffsetField.setEnabled(codeType != CodeTypes.LOAD_POINTER);
 				pointerRangeStartAddressField.setEnabled(true);
 				pointerRangeEndAddressField.setEnabled(true);
 				pointerOffset2Field.setEnabled(false);
@@ -323,7 +349,7 @@ public class CodeWizardDialog extends JDialog
 				pointerRangeEndAddress2Field.setEnabled(false);
 				break;
 
-			case pointer_in_pointer:
+			case POINTER_IN_POINTER:
 				pointerOffsetField.setEnabled(true);
 				pointerRangeStartAddressField.setEnabled(true);
 				pointerRangeEndAddressField.setEnabled(true);
@@ -332,15 +358,21 @@ public class CodeWizardDialog extends JDialog
 				pointerRangeEndAddress2Field.setEnabled(true);
 				break;
 
-			case no_pointer:
+			case NO_POINTER:
 				pointerOffsetField.setEnabled(false);
-				pointerRangeStartAddressField.setEnabled(false);
-				pointerRangeEndAddressField.setEnabled(false);
+				setPointerRangeAvailability();
 				pointerOffset2Field.setEnabled(false);
 				pointerRangeStartAddress2Field.setEnabled(false);
 				pointerRangeEndAddress2Field.setEnabled(false);
 				break;
 		}
+	}
+
+	private void setPointerRangeAvailability()
+	{
+		CodeTypes codeType = (CodeTypes) codeTypeSelection.getSelectedItem();
+		pointerRangeStartAddressField.setEnabled(codeType == CodeTypes.LOAD_POINTER);
+		pointerRangeEndAddressField.setEnabled(codeType == CodeTypes.LOAD_POINTER);
 	}
 
 	private void setValueFieldInputFilter()
@@ -393,146 +425,164 @@ public class CodeWizardDialog extends JDialog
 		String codeType = selectedCodeType.getValue();
 		codeBuilder.append(codeType);
 
-		if (selectedCodeType == CodeTypes.termination)
+		if (selectedCodeType == CodeTypes.ADD_POINTER_OFFSET)
 		{
-			String TERMINATION_CODE = "00000000 DEADCAFE";
-			codeBuilder.append(TERMINATION_CODE.replace(" ", "").substring(2));
-			return CheatCodeFormatter.format(codeBuilder.toString(), false);
-		}
-
-		if (selectedCodeType == CodeTypes.no_operation)
-		{
-			codeBuilder.append(NOP_CODE.replace(" ", "").substring(2));
-			return CheatCodeFormatter.format(codeBuilder.toString(), false);
-		}
-
-		Pointer selectedPointerType = (Pointer) pointerSelection.getSelectedItem();
-
-		if (isTwoRegistersOperation(selectedCodeType))
-		{
-			RegisterOperations integerOperation = (RegisterOperations) registerOperationsComboBox.getSelectedItem();
-			String operation = integerOperation.getValue();
-			codeBuilder.append(operation);
+			codeBuilder.append("000000");
+			String value = doPadding(valueField.getText());
+			codeBuilder.append(value);
 		} else
 		{
-			String pointer = selectedPointerType.getValue();
-			codeBuilder.append(pointer);
+			if (selectedCodeType == CodeTypes.TERMINATION)
+			{
+				String TERMINATION_CODE = "00000000 DEADCAFE";
+				codeBuilder.append(TERMINATION_CODE.replace(" ", "").substring(2));
+				return CheatCodeFormatter.format(codeBuilder.toString(), false);
+			}
 
-			ValueSize valueSize = (ValueSize) valueSizeSelection.getSelectedItem();
-			String size = valueSize.getValue();
-			codeBuilder.append(size);
-		}
+			if (selectedCodeType == CodeTypes.NO_OPERATION)
+			{
+				codeBuilder.append(NOP_CODE.replace(" ", "").substring(2));
+				return CheatCodeFormatter.format(codeBuilder.toString(), false);
+			}
 
-		String stringWriteText = stringWriteTextArea.getText();
-		String stringWriteHexadecimal = Conversions.asciiToHexadecimal(stringWriteText);
-
-		if (selectedCodeType == CodeTypes.string_write)
-		{
-			int bytesCount = stringWriteHexadecimal.length() / 2;
-			String paddedSize = Conversions.toHexadecimal(bytesCount, 4);
-			codeBuilder.append(paddedSize);
-		} else if (selectedCodeType == CodeTypes.skip_write)
-		{
-			String writesCount = doPadding(writesCountField.getText(), 4);
-			codeBuilder.append(writesCount);
-		} else
-		{
-			codeBuilder.append("0");
+			Pointer selectedPointerType = (Pointer) pointerSelection.getSelectedItem();
 
 			if (isTwoRegistersOperation(selectedCodeType))
 			{
-				String sourceRegister = sourceRegisterTextField.getText();
+				RegisterOperations integerOperation = (RegisterOperations) registerOperationsComboBox.getSelectedItem();
+				String operation = integerOperation.getValue();
+				codeBuilder.append(operation);
+			} else
+			{
+				String pointer = selectedPointerType.getValue();
+				codeBuilder.append(pointer);
 
-				if (sourceRegister.equals(""))
+				if (selectedCodeType == CodeTypes.LOAD_POINTER)
 				{
-					sourceRegister = "0";
+					codeBuilder.append("0");
+				} else
+				{
+					ValueSize valueSize = (ValueSize) valueSizeSelection.getSelectedItem();
+					String size = valueSize.getValue();
+					codeBuilder.append(size);
 				}
+			}
 
-				codeBuilder.append(sourceRegister);
+			String stringWriteText = stringWriteTextArea.getText();
+			String stringWriteHexadecimal = Conversions.asciiToHexadecimal(stringWriteText);
+
+			if (selectedCodeType == CodeTypes.STRING_WRITE)
+			{
+				int bytesCount = stringWriteHexadecimal.length() / 2;
+				String paddedSize = Conversions.toHexadecimal(bytesCount, 4);
+				codeBuilder.append(paddedSize);
+			} else if (selectedCodeType == CodeTypes.SKIP_WRITE)
+			{
+				String writesCount = doPadding(writesCountField.getText(), 4);
+				codeBuilder.append(writesCount);
 			} else
 			{
 				codeBuilder.append("0");
-			}
 
-			codeBuilder.append("0");
-
-			if (isRegisterOperation(selectedCodeType))
-			{
-				String register = targetRegisterTextField.getText();
-
-				if (register.equals(""))
+				if (isTwoRegistersOperation(selectedCodeType))
 				{
-					register = "0";
+					String sourceRegister = sourceRegisterTextField.getText();
+
+					if (sourceRegister.equals(""))
+					{
+						sourceRegister = "0";
+					}
+
+					codeBuilder.append(sourceRegister);
+				} else
+				{
+					codeBuilder.append("0");
 				}
 
-				codeBuilder.append(register);
+				codeBuilder.append("0");
+
+				if (isRegisterOperation(selectedCodeType))
+				{
+					String register = targetRegisterTextField.getText();
+
+					if (register.equals(""))
+					{
+						register = "0";
+					}
+
+					codeBuilder.append(register);
+				} else
+				{
+					codeBuilder.append("0");
+				}
+			}
+
+			if (isTwoRegistersOperation(selectedCodeType))
+			{
+				String value = doPadding(valueField.getText());
+				codeBuilder.append(value);
+				return CheatCodeFormatter.format(codeBuilder.toString(), false);
 			} else
 			{
-				codeBuilder.append("0");
+				String address = doPadding(addressField.getText());
+				codeBuilder.append(address);
 			}
-		}
 
-		if (isTwoRegistersOperation(selectedCodeType))
-		{
-			String value = doPadding(valueField.getText());
-			codeBuilder.append(value);
-			return CheatCodeFormatter.format(codeBuilder.toString(), false);
-		} else
-		{
-			String address = doPadding(addressField.getText());
-			codeBuilder.append(address);
-		}
+			if (selectedPointerType == Pointer.POINTER || selectedPointerType == Pointer.POINTER_IN_POINTER || selectedCodeType == CodeTypes.LOAD_POINTER)
+			{
+				String rangeStart = doPadding(pointerRangeStartAddressField.getText());
+				codeBuilder.append(rangeStart);
+				String rangeEnd = doPadding(pointerRangeEndAddressField.getText());
+				codeBuilder.append(rangeEnd);
 
-		if (selectedPointerType == Pointer.pointer || selectedPointerType == Pointer.pointer_in_pointer)
-		{
-			String rangeStart = doPadding(pointerRangeStartAddressField.getText());
-			codeBuilder.append(rangeStart);
-			String rangeEnd = doPadding(pointerRangeEndAddressField.getText());
-			codeBuilder.append(rangeEnd);
-			String pointerOffset = doPadding(pointerOffsetField.getText());
-			codeBuilder.append(pointerOffset);
+				if (selectedCodeType != CodeTypes.LOAD_POINTER)
+				{
+					String pointerOffset = doPadding(pointerOffsetField.getText());
+					codeBuilder.append(pointerOffset);
 
-			if (selectedPointerType == Pointer.pointer_in_pointer)
+					if (selectedPointerType == Pointer.POINTER_IN_POINTER)
+					{
+						codeBuilder.append("00000000");
+						String range2Start = doPadding(pointerRangeStartAddress2Field.getText());
+						codeBuilder.append(range2Start);
+						String range2End = doPadding(pointerRangeEndAddress2Field.getText());
+						codeBuilder.append(range2End);
+						String pointer2Offset = doPadding(pointerOffset2Field.getText());
+						codeBuilder.append(pointer2Offset);
+					}
+
+					if (isRegisterOperation(selectedCodeType))
+					{
+						codeBuilder.append("00000000");
+					}
+				}
+			}
+
+			if (selectedCodeType == CodeTypes.STRING_WRITE)
+			{
+				codeBuilder.append(stringWriteHexadecimal);
+				return CheatCodeFormatter.formatWithPadding(codeBuilder.toString(), "FF");
+			}
+
+			if (valueField.isEnabled())
+			{
+				String value = doPadding(valueField.getText());
+				codeBuilder.append(value);
+			}
+
+			if (selectedCodeType == CodeTypes.SKIP_WRITE)
+			{
+				String offset = doPadding(writesOffsetField.getText(), 8);
+				codeBuilder.append(offset);
+
+				String increment = doPadding(valueIncrementField.getText(), 8);
+				codeBuilder.append(increment);
+			}
+
+			if (selectedPointerType != Pointer.POINTER && selectedPointerType != Pointer.POINTER_IN_POINTER && !(isRegisterOperation(selectedCodeType)) && selectedCodeType != CodeTypes.LOAD_POINTER)
 			{
 				codeBuilder.append("00000000");
-				String range2Start = doPadding(pointerRangeStartAddress2Field.getText());
-				codeBuilder.append(range2Start);
-				String range2End = doPadding(pointerRangeEndAddress2Field.getText());
-				codeBuilder.append(range2End);
-				String pointer2Offset = doPadding(pointerOffset2Field.getText());
-				codeBuilder.append(pointer2Offset);
 			}
-
-			if (isRegisterOperation(selectedCodeType))
-			{
-				codeBuilder.append("00000000");
-			}
-		}
-
-		if (selectedCodeType == CodeTypes.string_write)
-		{
-			codeBuilder.append(stringWriteHexadecimal);
-			return CheatCodeFormatter.formatWithPadding(codeBuilder.toString(), "FF");
-		}
-
-		if (valueField.isEnabled())
-		{
-			String value = doPadding(valueField.getText());
-			codeBuilder.append(value);
-		}
-
-		if (selectedCodeType == CodeTypes.skip_write)
-		{
-			String offset = doPadding(writesOffsetField.getText(), 8);
-			codeBuilder.append(offset);
-
-			String increment = doPadding(valueIncrementField.getText(), 8);
-			codeBuilder.append(increment);
-		}
-
-		if (selectedPointerType != Pointer.pointer && selectedPointerType != Pointer.pointer_in_pointer && !(isRegisterOperation(selectedCodeType)))
-		{
-			codeBuilder.append("00000000");
 		}
 
 		return CheatCodeFormatter.format(codeBuilder.toString(), false);
@@ -569,8 +619,10 @@ public class CodeWizardDialog extends JDialog
 		valueField.setText(Integer.toHexString(value).toUpperCase());
 	}
 
-	public static void main(String[] arguments)
+	public static void main(String[] arguments) throws Exception
 	{
+		UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
 		new CodeWizardDialog().setVisible(true);
 	}
 }
