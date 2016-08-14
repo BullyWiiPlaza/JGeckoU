@@ -38,6 +38,12 @@ public class ThreadsTableContextMenu extends JPopupMenu
 				switchToMemoryViewer());
 		add(memoryViewerOption);
 
+		JMenuItem setNameOption = new JMenuItem("Change Name");
+		KeyStroke setNameKeyStroke = KeyStroke.getKeyStroke("control N");
+		setNameOption.setAccelerator(setNameKeyStroke);
+		setNameOption.addActionListener(actionEvent -> displayChangeThreadNameDialog());
+		add(setNameOption);
+
 		JTable table = threadsTableManager.getTable();
 		table.addKeyListener(new KeyAdapter()
 		{
@@ -54,9 +60,36 @@ public class ThreadsTableContextMenu extends JPopupMenu
 					{
 						toggleThreadStateConcurrently();
 					}
+					else if(keyEventPressed(pressedEvent, setNameKeyStroke.getKeyCode()))
+					{
+						displayChangeThreadNameDialog();
+					}
 				}
 			}
 		});
+	}
+
+	private void displayChangeThreadNameDialog()
+	{
+		JGeckoUGUI jGeckoUGUI = JGeckoUGUI.getInstance();
+		OSThread thread = jGeckoUGUI.getSelectedThread();
+		ChangeThreadNameDialog changeThreadNameDialog = new ChangeThreadNameDialog(thread);
+		changeThreadNameDialog.setLocationRelativeTo(jGeckoUGUI.getRootPane());
+		changeThreadNameDialog.setVisible(true);
+
+		if(changeThreadNameDialog.isConfirmed())
+		{
+			String name = changeThreadNameDialog.getName();
+
+			try
+			{
+				thread.setName(name);
+				jGeckoUGUI.updateThreads(false);
+			} catch (Exception exception)
+			{
+				exception.printStackTrace();
+			}
+		}
 	}
 
 	private void toggleThreadStateConcurrently()

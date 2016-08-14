@@ -1,8 +1,5 @@
 package wiiudev.gecko.client.tcpgecko.rpl;
 
-import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
-import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
-import wiiudev.gecko.client.tcpgecko.main.threads.OSThreadState;
 import wiiudev.gecko.client.tcpgecko.rpl.structures.OSSystemInfo;
 import wiiudev.gecko.client.tcpgecko.rpl.structures.RemoteString;
 
@@ -18,24 +15,10 @@ public class CoreInit
 		return remoteProcedureCall.call64(exportedSymbol);
 	}
 
-	public static void setThreadState(OSThread thread, OSThreadState state) throws IOException
-	{
-		MemoryWriter memoryWriter = new MemoryWriter();
-		int threadAddress = thread.getAddress();
-		int threadStateAddress = thread.getSuspendedAddress();
-		memoryWriter.writeBoolean(threadStateAddress, state == OSThreadState.PAUSED);
-
-		String symbolName = (state == OSThreadState.PAUSED) ? "OSSuspendThread" : "OSResumeThread";
-		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", symbolName);
-		remoteProcedureCall.call(exportedSymbol, threadAddress);
-	}
-
 	public static int allocateDefaultHeapMemory(int size, int alignment) throws IOException
 	{
 		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl",
-				"MEMAllocFromDefaultHeapEx", true, true);
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "MEMAllocFromDefaultHeapEx", true, true);
 
 		return remoteProcedureCall.call32(exportedSymbol, size, alignment);
 	}
@@ -43,8 +26,7 @@ public class CoreInit
 	public static void freeDefaultHeapMemory(int address) throws IOException
 	{
 		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl",
-				"MEMFreeToDefaultHeap", true, true);
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "MEMFreeToDefaultHeap", true, true);
 
 		remoteProcedureCall.call(exportedSymbol, address);
 	}
@@ -60,10 +42,17 @@ public class CoreInit
 	public static void freeSystemMemory(int address) throws IOException
 	{
 		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl",
-				"OSFreeToSystem");
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSFreeToSystem");
 
 		remoteProcedureCall.call(exportedSymbol, address);
+	}
+
+	public static void clearMemory(int address, int size) throws IOException
+	{
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "memclr");
+
+		remoteProcedureCall.call(exportedSymbol, address, size);
 	}
 
 	public static void setMemory(int address, int value, int size) throws IOException
@@ -111,24 +100,6 @@ public class CoreInit
 		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSEffectiveToPhysical");
 
 		return remoteProcedureCall.call32(exportedSymbol, address);
-	}
-
-	/**
-	 * Freezes?
-	 osThread: OSThread  = {OSThread@841}
-	 address: int  = 0x105EB648
-	 suspendedAddress: int  = 0x105EB970
-	 nameLocationPointer: int  = 0x105EBC08
-	 name: String  = "105EB648"
-	 state: OSThreadState  = "Running"
-	 */
-	public static OSThread getCurrentThread() throws IOException
-	{
-		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSGetCurrentThread");
-		int address = remoteProcedureCall.call32(exportedSymbol);
-
-		return new OSThread(address);
 	}
 
 	/**

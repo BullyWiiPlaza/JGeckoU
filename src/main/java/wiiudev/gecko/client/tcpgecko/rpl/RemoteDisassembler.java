@@ -10,6 +10,7 @@ import java.io.IOException;
 
 public class RemoteDisassembler
 {
+	// TODO Non-functional yet
 	public static String disassembleRange(int start, int length) throws IOException
 	{
 		int end = start + length;

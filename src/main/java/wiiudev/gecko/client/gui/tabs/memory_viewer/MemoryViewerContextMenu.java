@@ -7,6 +7,8 @@ import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CodeWizardDialog;
 import wiiudev.gecko.client.gui.utilities.JFileChooserUtilities;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
+import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
+import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -78,6 +80,15 @@ public class MemoryViewerContextMenu extends JPopupMenu
 		rpcOption.addActionListener(actionEvent -> performRemoteProcedureCall());
 		add(rpcOption);
 
+		JMenuItem dereferenceOption = new JMenuItem("Dereference");
+		KeyStroke dereferenceKeyStroke = KeyStroke.getKeyStroke("control E");
+		dereferenceOption.setAccelerator(dereferenceKeyStroke);
+		dereferenceOption.addActionListener(actionEvent -> dereferenceAddress());
+		int value = JGeckoUGUI.getInstance().getSelectedMemoryViewerValue();
+		boolean validAccess = AddressRange.isValidAccess(value, 4, MemoryAccessLevel.READ);
+		dereferenceOption.setEnabled(validAccess);
+		add(dereferenceOption);
+
 		table.addKeyListener(new KeyAdapter()
 		{
 			@Override
@@ -124,9 +135,26 @@ public class MemoryViewerContextMenu extends JPopupMenu
 					{
 						performRemoteProcedureCall();
 					}
+
+					if (keyEventPressed(pressedEvent, dereferenceKeyStroke.getKeyCode()))
+					{
+						dereferenceAddress();
+					}
 				}
 			}
 		});
+	}
+
+	private void dereferenceAddress()
+	{
+		JGeckoUGUI instance = JGeckoUGUI.getInstance();
+		int value = instance.getSelectedMemoryViewerValue();
+
+		if(AddressRange.isValidAccess(value, 4, MemoryAccessLevel.READ))
+		{
+			instance.setMemoryViewerAddress(value);
+			instance.updateMemoryViewer();
+		}
 	}
 
 	private void performRemoteProcedureCall()

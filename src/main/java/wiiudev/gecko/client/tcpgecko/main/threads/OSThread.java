@@ -2,7 +2,6 @@ package wiiudev.gecko.client.tcpgecko.main.threads;
 
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
-import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,7 +58,7 @@ public class OSThread
 
 	public void setState(OSThreadState state) throws IOException
 	{
-		CoreInit.setThreadState(this, state);
+		OSThreadRPC.setThreadState(this, state);
 		this.state = state;
 	}
 
@@ -117,9 +116,23 @@ public class OSThread
 		return name;
 	}
 
+	public void setName(String name) throws IOException
+	{
+		OSThreadRPC.setThreadName(this, name);
+		this.name = name;
+	}
+
 	public String readRegisters() throws IOException
 	{
 		OSContext osContext = new OSContext(address);
 		return osContext.toString();
+	}
+
+	@Override
+	public String toString()
+	{
+		return "Address: " + new Hexadecimal(address, 8) + System.lineSeparator()
+				+ "Name: " + name + System.lineSeparator() +
+				"State: " + state;
 	}
 }

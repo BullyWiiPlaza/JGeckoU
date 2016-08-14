@@ -1064,7 +1064,7 @@
                     </constraints>
                     <properties>
                       <text value="Arbitrary Remote Procedure Call"/>
-                      <toolTipText value="Allows you to perform an arbitrary RPC call"/>
+                      <toolTipText value="Allows you to perform an arbitrary remote procedure call"/>
                     </properties>
                   </component>
                   <component id="e7327" class="javax.swing.JButton" binding="osTimeButton" default-binding="true">
@@ -1164,6 +1164,14 @@
                     </constraints>
                     <properties>
                       <text value="Shutdown"/>
+                    </properties>
+                  </component>
+                  <component id="824d2" class="javax.swing.JButton" binding="tcpGeckoThreadButton" default-binding="true">
+                    <constraints>
+                      <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="TCP Gecko Thread"/>
                     </properties>
                   </component>
                 </children>

@@ -1,12 +1,10 @@
-import wiiudev.gecko.client.tcpgecko.main.Connector;
-import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
-
 public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
-		Connector.getInstance().connect("192.168.178.35");
-		MemoryReader memoryReader = new MemoryReader();
+		// IDAProFunctionsDumpParser idaProFunctionsDumpParser = new IDAProFunctionsDumpParser();
+		// Connector.getInstance().connect("192.168.178.35");
+		// MemoryReader memoryReader = new MemoryReader();
 		/*Connector.getInstance().connect("192.168.178.35");
 		MemoryReader memoryReader = new MemoryReader();
 		int physical = memoryReader.getEffectiveToPhysical(0x10000000);

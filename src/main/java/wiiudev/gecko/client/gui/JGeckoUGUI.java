@@ -33,6 +33,8 @@ import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
+import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
+import wiiudev.gecko.client.tcpgecko.main.threads.OSThreadRPC;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
@@ -164,6 +166,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton appFlagsButton;
 	private JButton sdkVersionButton;
 	private JButton shutdownButton;
+	private JButton tcpGeckoThreadButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -461,7 +464,7 @@ public class JGeckoUGUI extends JFrame
 
 						try
 						{
-							threadsTableManager.updateRows();
+							threadsTableManager.updateRows(true);
 						} catch (Exception exception)
 						{
 							StackTraceUtils.handleException(rootPane, exception);
@@ -618,6 +621,21 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
+		tcpGeckoThreadButton.addActionListener(e ->
+		{
+			try
+			{
+				OSThread osThread = OSThreadRPC.getCurrentThread();
+				JOptionPane.showMessageDialog(this,
+						osThread.toString(),
+						tcpGeckoThreadButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
 		sdkVersionButton.addActionListener(actionEvent ->
 		{
 			try
@@ -746,7 +764,7 @@ public class JGeckoUGUI extends JFrame
 
 		JOptionPane.showMessageDialog(rootPane,
 				"Please reconnect manually when ready.",
-				"Connection Reset",
+				"Connection Lost",
 				JOptionPane.INFORMATION_MESSAGE);
 	}
 
@@ -2779,6 +2797,7 @@ public class JGeckoUGUI extends JFrame
 				&& mayConnect && !connecting && titlesInitialized;
 		connectButton.setEnabled(shouldEnableConnectButton);
 		processPFIDButton.setEnabled(connected);
+		tcpGeckoThreadButton.setEnabled(connected);
 		sdkVersionButton.setEnabled(connected);
 		shutdownButton.setEnabled(connected);
 		osIDButton.setEnabled(connected);
@@ -2870,7 +2889,7 @@ public class JGeckoUGUI extends JFrame
 		updateMemoryViewer(true, true);
 	}
 
-	private void setMemoryViewerAddress(int address)
+	public void setMemoryViewerAddress(int address)
 	{
 		memoryViewerAddressField.setText(new Hexadecimal(address, 8).toString());
 	}
@@ -2899,5 +2918,15 @@ public class JGeckoUGUI extends JFrame
 	{
 		disassemblerAddressField.setText(Conversions.toHexadecimal(address, 8));
 		updateDisassembler();
+	}
+
+	public OSThread getSelectedThread()
+	{
+		return threadsTableManager.getSelectedItems().get(0);
+	}
+
+	public void updateThreads(boolean fetch) throws Exception
+	{
+		threadsTableManager.updateRows(fetch);
 	}
 }

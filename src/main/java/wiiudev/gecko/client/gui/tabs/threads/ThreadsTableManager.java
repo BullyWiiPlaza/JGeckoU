@@ -103,9 +103,13 @@ public class ThreadsTableManager
 		tableModel.addRow(objects);
 	}
 
-	public void updateRows() throws Exception
+	public void updateRows(boolean fetch) throws Exception
 	{
-		osThreads = OSThread.readThreads();
+		if (fetch)
+		{
+			osThreads = OSThread.readThreads();
+		}
+
 		populateRows();
 	}
 

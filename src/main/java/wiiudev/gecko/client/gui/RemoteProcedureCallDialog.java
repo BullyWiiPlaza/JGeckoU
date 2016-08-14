@@ -7,6 +7,8 @@ import wiiudev.gecko.client.tcpgecko.rpl.ExportedSymbol;
 import wiiudev.gecko.client.tcpgecko.rpl.RemoteProcedureCall;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
@@ -23,6 +25,7 @@ public class RemoteProcedureCallDialog extends JDialog
 	private JTextField functionResultField;
 	private JTextField functionAddressField;
 	private JButton coreInitDocumentationButton;
+	private IDAProFunctionsDumpParser coreInitFunctionsParser;
 
 	public RemoteProcedureCallDialog()
 	{
@@ -30,7 +33,29 @@ public class RemoteProcedureCallDialog extends JDialog
 		addParametersInputFilter();
 		addCallFunctionActionListener();
 
+		coreInitFunctionsParser = new IDAProFunctionsDumpParser("coreinit.txt");
 		rplNameField.setText("coreinit.rpl");
+
+		symbolNameField.getDocument().addDocumentListener(new DocumentListener()
+		{
+			@Override
+			public void insertUpdate(DocumentEvent documentEvent)
+			{
+				setSymbolNameFieldColor();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent documentEvent)
+			{
+				setSymbolNameFieldColor();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent documentEvent)
+			{
+				setSymbolNameFieldColor();
+			}
+		});
 
 		addWindowListener(new WindowAdapter()
 		{
@@ -42,6 +67,22 @@ public class RemoteProcedureCallDialog extends JDialog
 
 		coreInitDocumentationButton.addActionListener(actionEvent ->
 				openURL("http://wiiubrew.org/wiki/Coreinit.rpl"));
+	}
+
+	private void setSymbolNameFieldColor()
+	{
+		if(rplNameField.getText().startsWith("coreinit"))
+		{
+			String symbolText = symbolNameField.getText();
+			boolean containsSymbol = coreInitFunctionsParser.contains(symbolText);
+			symbolNameField.setBackground(containsSymbol ? Color.GREEN : Color.RED);
+			callFunctionButton.setEnabled(containsSymbol);
+		}
+		else
+		{
+			symbolNameField.setBackground(Color.WHITE);
+			callFunctionButton.setEnabled(true);
+		}
 	}
 
 	private void openURL(String link)

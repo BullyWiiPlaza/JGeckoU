@@ -41,7 +41,7 @@ public class RemoteString implements Closeable
 		int size = getDataSize(stringLength);
 
 		// Initialize the memory with zeros
-		CoreInit.setMemory(address, 0x00, size);
+		CoreInit.clearMemory(address, size);
 
 		// Set the String
 		MemoryWriter memoryWriter = new MemoryWriter();

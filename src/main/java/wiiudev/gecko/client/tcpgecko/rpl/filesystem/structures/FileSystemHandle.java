@@ -12,7 +12,7 @@ public class FileSystemHandle extends FileSystemObject
 		super(4, 4);
 
 		int directoryHandleAddress = getAddress();
-		CoreInit.setMemory(directoryHandleAddress, 0x00, 4);
+		CoreInit.clearMemory(directoryHandleAddress, 4);
 	}
 
 	public int dereference() throws IOException
