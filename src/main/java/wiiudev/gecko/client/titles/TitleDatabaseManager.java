@@ -6,7 +6,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-import wiiudev.gecko.client.XMLHelper;
+import wiiudev.gecko.client.gui.utilities.XMLHelper;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLOutputFactory;
@@ -229,11 +229,11 @@ public class TitleDatabaseManager
 		XMLHelper.writeFile(stringWriter, titleDatabaseFilePath);
 	}
 
-	public static boolean isPlaying(String titleName) throws Exception
+	public static class TitleNotFoundException extends IllegalArgumentException
 	{
-		TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
-		Title title = titleDatabaseManager.getTitle();
-
-		return titleName.equals(title.getGameName());
+		TitleNotFoundException(String titleId)
+		{
+			super("The title id " + titleId + " has not been found in the database");
+		}
 	}
 }

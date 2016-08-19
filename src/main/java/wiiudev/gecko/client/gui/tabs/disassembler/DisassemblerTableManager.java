@@ -25,7 +25,7 @@ public class DisassemblerTableManager
 	{
 		DefaultTableModel tableModel = JTableUtilities.getDefaultTableModel();
 		table.setModel(tableModel);
-		table.setSelectionModel(new ForcedListSelectionModel());
+		JTableUtilities.setSingleSelection(table);
 		this.table = table;
 		disassembledInstructions = new ArrayList<>();
 
@@ -146,23 +146,5 @@ public class DisassemblerTableManager
 
 		rectangle.setLocation(rectangle.x - point.x, rectangle.y - point.y);
 		table.scrollRectToVisible(rectangle);
-	}
-
-	private class ForcedListSelectionModel extends DefaultListSelectionModel
-	{
-		ForcedListSelectionModel()
-		{
-			setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		}
-
-		@Override
-		public void clearSelection()
-		{
-		}
-
-		@Override
-		public void removeSelectionInterval(int start, int end)
-		{
-		}
 	}
 }

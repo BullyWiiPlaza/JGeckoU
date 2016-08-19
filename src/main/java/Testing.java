@@ -65,16 +65,16 @@ public class Testing
 		// System.out.println();
 
 		/*Connector.getInstance().connect("192.168.178.35");
-		int address = new MemoryReader().search(0x10000000, 0x2A0A0000, 0x1000);
+		int address = new MemoryReader().search_old(0x10000000, 0x2A0A0000, 0x1000);
 		System.out.println(Integer.toHexString(address).toUpperCase());
 		/*MemorySearch memorySearch = new MemorySearch(0x10000000, 0x1000);
 		memorySearch.dump();
-		memorySearch.refine(0x6C64206E, SpecificValueComparison.EQUAL);
+		memorySearch.dumpBytes(0x6C64206E, SearchCondition.EQUAL);
 		memorySearch.dump();
-		// memorySearch.refine(0x20202000, SpecificValueComparison.NOT_EQUAL);
+		// memorySearch.dumpBytes(0x20202000, SearchCondition.NOT_EQUAL);
 		// WordSearch_old wordSearchOld = new WordSearch_old(0x10000000, 0x1000);
-		// wordSearchOld.refine(0x6C64206E);
-		// wordSearchOld.refine(0x6C64206E);
+		// wordSearchOld.dumpBytes(0x6C64206E);
+		// wordSearchOld.dumpBytes(0x6C64206E);
 		Connector.getInstance().closeConnection();*/
 	}
 }

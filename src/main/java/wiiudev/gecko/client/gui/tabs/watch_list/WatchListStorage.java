@@ -1,10 +1,10 @@
 package wiiudev.gecko.client.gui.tabs.watch_list;
 
 import org.w3c.dom.Element;
-import wiiudev.gecko.client.XMLHelper;
 import wiiudev.gecko.client.gui.MemoryPointerExpression;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.ValueSize;
 import wiiudev.gecko.client.gui.utilities.AbstractXMLStorage;
+import wiiudev.gecko.client.gui.utilities.XMLHelper;
 
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;

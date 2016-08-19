@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * A class for sending AND disabling the cheat code list
+ * A class for sending and disabling the cheat code list
  */
 public class CodeListSender
 {
@@ -16,8 +16,6 @@ public class CodeListSender
 
 	/**
 	 * Sends the current code list
-	 *
-	 * @throws IOException
 	 */
 	public void applyCodes() throws IOException
 	{
@@ -28,7 +26,6 @@ public class CodeListSender
 	 * Clears all codes from the memory AND optionally sends the fresh list
 	 *
 	 * @param sendCodes Whether to send codes OR not
-	 * @throws IOException
 	 */
 	private void clearCodes(boolean sendCodes) throws IOException
 	{
@@ -64,8 +61,6 @@ public class CodeListSender
 
 	/**
 	 * Writes the <code>codeList</code> to the memory
-	 *
-	 * @throws IOException
 	 */
 	private void sendCodes() throws IOException
 	{
@@ -77,8 +72,8 @@ public class CodeListSender
 		for (CodeListEntry codeListEntry : codesList)
 		{
 			String code = codeListEntry.getCode();
-			CheatCode cheatCode = new CheatCode(code);
-			byte[] cheatCodeBytes = cheatCode.getBytes();
+			CheatCodeFormatting cheatCodeFormatting = new CheatCodeFormatting(code);
+			byte[] cheatCodeBytes = cheatCodeFormatting.getBytes();
 			int cheatCodeBytesLength = cheatCodeBytes.length;
 
 			// Write the cheat code bytes
@@ -93,8 +88,6 @@ public class CodeListSender
 
 	/**
 	 * Disables all cheat codes
-	 *
-	 * @throws IOException
 	 */
 	public void disableCodes() throws IOException
 	{

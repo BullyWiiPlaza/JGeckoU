@@ -1,6 +1,6 @@
 package wiiudev.gecko.client.gui.tabs.disassembler;
 
-import wiiudev.gecko.client.conversion.Conversions;
+import wiiudev.gecko.client.conversions.Conversions;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 
 public class DisassembledInstruction

@@ -1,11 +1,11 @@
 package wiiudev.gecko.client.gui.tabs.code_list.code_wizard;
 
-import wiiudev.gecko.client.conversion.Conversions;
-import wiiudev.gecko.client.conversion.SystemClipboard;
+import wiiudev.gecko.client.conversions.Conversions;
+import wiiudev.gecko.client.conversions.SystemClipboard;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.MemoryPointerExpression;
-import wiiudev.gecko.client.gui.inputFilter.HexadecimalInputFilter;
-import wiiudev.gecko.client.gui.inputFilter.InputLengthFilter;
+import wiiudev.gecko.client.gui.input_filters.HexadecimalInputFilter;
+import wiiudev.gecko.client.gui.input_filters.InputLengthFilter;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.CodeTypes;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.Pointer;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.RegisterOperations;
@@ -67,7 +67,7 @@ public class CodeWizardDialog extends JDialog
 		valueSizeSelection.setModel(valueSizeDefaultComboBoxModel);
 		valueSizeSelection.setSelectedItem(ValueSize.THIRTY_TWO_BIT);
 
-		HexadecimalInputFilter.addHexadecimalInputFilter(addressField);
+		HexadecimalInputFilter.setHexadecimalInputFilter(addressField);
 
 		valueSizeSelection.addItemListener(itemEvent ->
 		{
@@ -127,7 +127,7 @@ public class CodeWizardDialog extends JDialog
 		pointerRangeEndAddress2Field.setDocument(new InputLengthFilter(8));
 		InputLengthFilter inputLengthFilter = new InputLengthFilter(4);
 		writesCountField.setDocument(inputLengthFilter);
-		HexadecimalInputFilter.addHexadecimalInputFilter(writesCountField, 4);
+		HexadecimalInputFilter.setHexadecimalInputFilter(writesCountField, 4);
 		writesOffsetField.setDocument(new InputLengthFilter(8));
 		valueIncrementField.setDocument(new InputLengthFilter(8));
 		addParsePointerExpressionButtonListener();

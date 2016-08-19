@@ -1,6 +1,6 @@
 package wiiudev.gecko.client.gui.tabs.memory_viewer;
 
-import wiiudev.gecko.client.gui.inputFilter.HexadecimalInputFilter;
+import wiiudev.gecko.client.gui.input_filters.HexadecimalInputFilter;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
 
 import javax.swing.*;
@@ -24,7 +24,7 @@ public class OffsetDialog extends JDialog
 		setLocationRelativeTo(rootPane);
 		getRootPane().setDefaultButton(okayButton);
 		setTitle("Add Offset");
-		HexadecimalInputFilter.addHexadecimalInputFilter(offsetField);
+		HexadecimalInputFilter.setHexadecimalInputFilter(offsetField);
 		okayButton.addActionListener(actionEvent -> onOK());
 		cancelButton.addActionListener(actionEvent -> onCancel());
 

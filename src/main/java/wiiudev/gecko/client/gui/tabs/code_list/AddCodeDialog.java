@@ -1,10 +1,9 @@
 package wiiudev.gecko.client.gui.tabs.code_list;
 
-import wiiudev.gecko.client.codes.CheatCode;
+import wiiudev.gecko.client.codes.CheatCodeFormatting;
 import wiiudev.gecko.client.codes.CodeListEntry;
-import wiiudev.gecko.client.codes.InvalidCheatCodeException;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
-import wiiudev.gecko.client.gui.inputFilter.InputCapitalizer;
+import wiiudev.gecko.client.gui.input_filters.InputCapitalization;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CodeWizardDialog;
 import wiiudev.gecko.client.gui.utilities.DefaultContextMenu;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
@@ -37,7 +36,7 @@ public class AddCodeDialog extends JDialog
 	public AddCodeDialog(CodeListEntry codeListEntry, boolean editMode)
 	{
 		this.editMode = editMode;
-		codeArea.setDocument(new InputCapitalizer());
+		codeArea.setDocument(new InputCapitalization());
 		codeTitleField.setText(codeListEntry.getTitle());
 		codeArea.setText(codeListEntry.getCode());
 		codeCommentField.setText(codeListEntry.getComment());
@@ -103,11 +102,11 @@ public class AddCodeDialog extends JDialog
 
 		try
 		{
-			new CheatCode(code);
+			new CheatCodeFormatting(code);
 			codeArea.setBackground(Color.GREEN);
 			saveCodeButton.setEnabled(true);
 			statusLabel.setText("Status: OK!");
-		} catch (InvalidCheatCodeException invalidCheatCodeException)
+		} catch (CheatCodeFormatting.InvalidCheatCodeException invalidCheatCodeException)
 		{
 			codeArea.setBackground(Color.RED);
 			saveCodeButton.setEnabled(false);

@@ -1,7 +1,7 @@
 package wiiudev.gecko.client.tcpgecko.main;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
+import wiiudev.gecko.client.gui.input_filters.ValueSizes;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.ValueSize;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Commands;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Status;
@@ -150,37 +150,6 @@ public class MemoryReader extends TCPGecko
 		}
 	}
 
-
-	/**
-	 * Reads a block of memory with length <code>bytes</code> starting at <code>address</code>
-	 *
-	 * @param address The address to start dumping memory at
-	 * @param length  The amount of bytes to dump
-	 */
-	public byte[] readBytes(int address, int length) throws IOException
-	{
-		ByteArrayOutputStream dumpedBytes = new ByteArrayOutputStream();
-
-		while (length > 0)
-		{
-			int requestSize = length;
-
-			if (requestSize > MAXIMUM_MEMORY_CHUNK_SIZE)
-			{
-				// Read in chunks
-				requestSize = MAXIMUM_MEMORY_CHUNK_SIZE;
-			}
-
-			byte[] retrievedBytes = readBytesSmall(address, requestSize);
-			dumpedBytes.write(retrievedBytes);
-
-			length -= requestSize;
-			address += requestSize;
-		}
-
-		return dumpedBytes.toByteArray();
-	}
-
 	public int readFirmwareVersion() throws IOException
 	{
 		reentrantLock.lock();
@@ -201,8 +170,8 @@ public class MemoryReader extends TCPGecko
 	 * Searches the server's memory starting at <code>address</code> for <code>value</code> for <code>length</code> amount of bytes
 	 *
 	 * @param address The address to start searching at
-	 * @param value   The value to search for
-	 * @param length  The maximum range of the search
+	 * @param value   The value to search_old for
+	 * @param length  The maximum range of the search_old
 	 * @return The address where <code>value</code> occurred the first time OR 0 if not found
 	 */
 	public int search(int address, int value, int length) throws IOException
@@ -220,42 +189,6 @@ public class MemoryReader extends TCPGecko
 			dataSender.flush();
 
 			return dataReceiver.read();
-		} finally
-		{
-			reentrantLock.unlock();
-		}
-	}
-
-	/**
-	 * Reads <code>length</code> bytes from the memory starting at <code>address</code>
-	 *
-	 * @param address The address to start reading memory from
-	 * @param length  The amount of bytes to read
-	 * @return A byte array containing all read bytes
-	 */
-	private byte[] readBytesSmall(int address, int length) throws IOException
-	{
-		reentrantLock.lock();
-
-		try
-		{
-			AddressRange.assertValidAccess(address, length, MemoryAccessLevel.READ);
-
-			byte[] received = new byte[length];
-
-			sendCommand(Commands.MEMORY_READ);
-			dataSender.writeInt(address);
-			dataSender.writeInt(address + length);
-			dataSender.flush();
-
-			Status status = readStatus();
-
-			if (status == Status.OK)
-			{
-				dataReceiver.readFully(received);
-			}
-
-			return received;
 		} finally
 		{
 			reentrantLock.unlock();
@@ -378,5 +311,78 @@ public class MemoryReader extends TCPGecko
 	{
 		MemoryReader memoryReader = new MemoryReader();
 		return memoryReader.readInt(address);
+	}
+
+	/**
+	 * Reads a block of memory with length <code>bytes</code> starting at <code>address</code>
+	 *
+	 * @param address The address to start dumping memory at
+	 * @param length  The amount of bytes to dump
+	 */
+	public byte[] readBytes(int address, int length) throws IOException
+	{
+		requestBytes(address, length);
+
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
+		while (length > 0)
+		{
+			int chunkSize = length;
+
+			if (chunkSize > MAXIMUM_MEMORY_CHUNK_SIZE)
+			{
+				chunkSize = MAXIMUM_MEMORY_CHUNK_SIZE;
+			}
+
+			byte[] readBytes = readBytes(chunkSize);
+			byteArrayOutputStream.write(readBytes);
+
+			length -= chunkSize;
+		}
+
+		TCPGecko.isRequestingBytes = false;
+
+		return byteArrayOutputStream.toByteArray();
+	}
+
+	public void requestBytes(int address, int length) throws IOException
+	{
+		reentrantLock.lock();
+
+		try
+		{
+			AddressRange.assertValidAccess(address, length, MemoryAccessLevel.READ);
+
+			sendCommand(Commands.MEMORY_READ);
+			dataSender.writeInt(address);
+			dataSender.writeInt(address + length);
+			dataSender.flush();
+
+			TCPGecko.isRequestingBytes = true;
+		} finally
+		{
+			reentrantLock.unlock();
+		}
+	}
+
+	public byte[] readBytes(int length) throws IOException
+	{
+		reentrantLock.lock();
+
+		try
+		{
+			Status status = readStatus();
+			byte[] received = new byte[length];
+
+			if (status == Status.OK)
+			{
+				dataReceiver.readFully(received);
+			}
+
+			return received;
+		} finally
+		{
+			reentrantLock.unlock();
+		}
 	}
 }

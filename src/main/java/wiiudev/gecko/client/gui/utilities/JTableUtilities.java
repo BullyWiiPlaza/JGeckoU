@@ -44,13 +44,7 @@ public class JTableUtilities
 	public static void deleteAllRows(JTable table)
 	{
 		DefaultTableModel defaultTableModel = (DefaultTableModel) table.getModel();
-		int rowCount = defaultTableModel.getRowCount();
-
-		// Remove rows one by one from the end of the table
-		for (int rowIndex = rowCount - 1; rowIndex >= 0; rowIndex--)
-		{
-			defaultTableModel.removeRow(rowIndex);
-		}
+		defaultTableModel.setRowCount(0);
 	}
 
 	public static void configureTable(JTable table, String[] columnHeaderNames)
@@ -78,5 +72,28 @@ public class JTableUtilities
 				return false;
 			}
 		};
+	}
+
+	public static void setSingleSelection(JTable table)
+	{
+		table.setSelectionModel(new ForcedListSelectionModel());
+	}
+
+	private static class ForcedListSelectionModel extends DefaultListSelectionModel
+	{
+		ForcedListSelectionModel()
+		{
+			setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		}
+
+		@Override
+		public void clearSelection()
+		{
+		}
+
+		@Override
+		public void removeSelectionInterval(int start, int end)
+		{
+		}
 	}
 }

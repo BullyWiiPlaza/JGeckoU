@@ -1,6 +1,6 @@
 package wiiudev.gecko.client.gui.tabs.memory_viewer;
 
-import wiiudev.gecko.client.conversion.Conversions;
+import wiiudev.gecko.client.conversions.Conversions;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.utilities.DefaultContextMenu;

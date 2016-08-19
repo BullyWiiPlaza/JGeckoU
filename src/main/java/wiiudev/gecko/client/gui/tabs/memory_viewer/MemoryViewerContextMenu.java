@@ -2,7 +2,7 @@ package wiiudev.gecko.client.gui.tabs.memory_viewer;
 
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
-import wiiudev.gecko.client.gui.RemoteProcedureCallDialog;
+import wiiudev.gecko.client.gui.dialogs.RemoteProcedureCallDialog;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CodeWizardDialog;
 import wiiudev.gecko.client.gui.utilities.JFileChooserUtilities;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;

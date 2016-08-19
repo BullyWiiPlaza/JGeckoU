@@ -13,7 +13,6 @@ public class Connector
 	protected DataOutputStream dataSender;
 	protected DataInputStream dataReceiver;
 
-	public static final int PORT = 7331;
 	private static Connector Connector;
 
 	/**
@@ -44,14 +43,13 @@ public class Connector
 	}
 
 	/**
-	 * Connects to a Nintendo Wii U console via its local IP address AND port {@value #PORT}
+	 * Connects to a Nintendo Wii U console via its local IP address and port
 	 *
 	 * @param ipAddress The local IP address of the Nintendo Wii U console to connect to
-	 * @throws IOException
 	 */
 	public void connect(String ipAddress) throws IOException
 	{
-		clientSocket = new Socket(ipAddress, PORT);
+		clientSocket = new Socket(ipAddress, 7331);
 
 		dataSender = new DataOutputStream(new BufferedOutputStream(clientSocket.getOutputStream()));
 		dataReceiver = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));

@@ -1,11 +1,11 @@
 package wiiudev.gecko.client.gui.tabs.disassembler;
 
-import wiiudev.gecko.client.conversion.SystemClipboard;
+import wiiudev.gecko.client.conversions.SystemClipboard;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
+import wiiudev.gecko.client.gui.utilities.PopupMenuUtilities;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 
 import javax.swing.*;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.List;
@@ -21,8 +21,8 @@ public class DisassemblerContextMenu extends JPopupMenu
 
 	public void addContextMenu()
 	{
-		KeyStroke memoryViewerKeyStroke = addOption("Memory Viewer", "control M", actionEvent -> switchToMemoryViewer());
-		KeyStroke copyCellsKeyStroke = addOption("Copy Cells", "control C", actionEvent -> copyCells());
+		KeyStroke memoryViewerKeyStroke = PopupMenuUtilities.addOption(this, "Memory Viewer", "control M", actionEvent -> switchToMemoryViewer());
+		KeyStroke copyCellsKeyStroke = PopupMenuUtilities.addOption(this, "Copy Cells", "control C", actionEvent -> copyCells());
 
 		JMenuItem option = new JMenuItem("Follow Branch");
 		KeyStroke followBranchKeyStroke = KeyStroke.getKeyStroke("control F");
@@ -40,13 +40,13 @@ public class DisassemblerContextMenu extends JPopupMenu
 			{
 				if (TCPGecko.isConnected())
 				{
-					if (keyEventPressed(pressedEvent, memoryViewerKeyStroke.getKeyCode()))
+					if (PopupMenuUtilities.keyEventPressed(pressedEvent, memoryViewerKeyStroke))
 					{
 						switchToMemoryViewer();
-					} else if (keyEventPressed(pressedEvent, copyCellsKeyStroke.getKeyCode()))
+					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, copyCellsKeyStroke))
 					{
 						copyCells();
-					} else if (keyEventPressed(pressedEvent, followBranchKeyStroke.getKeyCode()))
+					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, followBranchKeyStroke))
 					{
 						followBranch();
 					}
@@ -66,17 +66,6 @@ public class DisassemblerContextMenu extends JPopupMenu
 		}
 	}
 
-	private KeyStroke addOption(String text, String key, ActionListener actionListener)
-	{
-		JMenuItem option = new JMenuItem(text);
-		KeyStroke keyStroke = KeyStroke.getKeyStroke(key);
-		option.setAccelerator(keyStroke);
-		option.addActionListener(actionListener);
-		add(option);
-
-		return keyStroke;
-	}
-
 	private void copyCells()
 	{
 		List<DisassembledInstruction> disassembledInstructions = tableManager.getDisassembledInstructions();
@@ -90,11 +79,6 @@ public class DisassemblerContextMenu extends JPopupMenu
 
 		String copiedCells = copyCellsBuilder.toString().trim();
 		SystemClipboard.copy(copiedCells);
-	}
-
-	private boolean keyEventPressed(KeyEvent event, int targetKeyCode)
-	{
-		return event.getKeyCode() == targetKeyCode && (event.getModifiers() & KeyEvent.CTRL_MASK) != 0;
 	}
 
 	private void switchToMemoryViewer()

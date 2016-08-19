@@ -1,8 +1,8 @@
 package wiiudev.gecko.client.gui.tabs.memory_viewer;
 
-import wiiudev.gecko.client.conversion.Conversions;
-import wiiudev.gecko.client.conversion.SystemClipboard;
-import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
+import wiiudev.gecko.client.conversions.Conversions;
+import wiiudev.gecko.client.conversions.SystemClipboard;
+import wiiudev.gecko.client.gui.input_filters.ValueSizes;
 import wiiudev.gecko.client.gui.utilities.JTableUtilities;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;

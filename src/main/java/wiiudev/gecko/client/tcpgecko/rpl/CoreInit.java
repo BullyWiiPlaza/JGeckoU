@@ -102,13 +102,11 @@ public class CoreInit
 		return remoteProcedureCall.call32(exportedSymbol, address);
 	}
 
-	/**
-	 * Freezes?
-	 */
 	public static OSSystemInfo getSystemInformation() throws IOException
 	{
 		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSSystemInfo");
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl",
+				"OSGetSystemInfo");
 		int address = remoteProcedureCall.call32(exportedSymbol);
 
 		return new OSSystemInfo(address);

@@ -2,14 +2,15 @@ package wiiudev.gecko.client.gui;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.SystemUtils;
-import wiiudev.gecko.client.ValueOperations;
+import sun.plugin.dom.exception.InvalidStateException;
 import wiiudev.gecko.client.codes.*;
-import wiiudev.gecko.client.conversion.ConversionType;
-import wiiudev.gecko.client.conversion.Conversions;
+import wiiudev.gecko.client.conversions.ConversionType;
+import wiiudev.gecko.client.conversions.Conversions;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
-import wiiudev.gecko.client.gui.inputFilter.HexadecimalInputFilter;
-import wiiudev.gecko.client.gui.inputFilter.InputLengthFilter;
-import wiiudev.gecko.client.gui.inputFilter.ValueSizes;
+import wiiudev.gecko.client.gui.dialogs.*;
+import wiiudev.gecko.client.gui.input_filters.HexadecimalInputFilter;
+import wiiudev.gecko.client.gui.input_filters.InputLengthFilter;
+import wiiudev.gecko.client.gui.input_filters.ValueSizes;
 import wiiudev.gecko.client.gui.tabs.GraphicalMemoryDumper;
 import wiiudev.gecko.client.gui.tabs.code_list.AddCodeDialog;
 import wiiudev.gecko.client.gui.tabs.code_list.CodesListManager;
@@ -22,13 +23,16 @@ import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViewerTableManager;
 import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViews;
 import wiiudev.gecko.client.gui.tabs.pointer_search.DownloadingUtilities;
 import wiiudev.gecko.client.gui.tabs.pointer_search.ZipUtils;
+import wiiudev.gecko.client.gui.tabs.search.SearchResultsTableManager;
 import wiiudev.gecko.client.gui.tabs.threads.ThreadsTableManager;
 import wiiudev.gecko.client.gui.tabs.watch_list.*;
 import wiiudev.gecko.client.gui.utilities.DefaultContextMenu;
 import wiiudev.gecko.client.gui.utilities.JFileChooserUtilities;
 import wiiudev.gecko.client.gui.utilities.JTableUtilities;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
-import wiiudev.gecko.client.scanner.WiiUFinder;
+import wiiudev.gecko.client.memory_viewer.ValueOperations;
+import wiiudev.gecko.client.network_scanner.WiiUFinder;
+import wiiudev.gecko.client.search.*;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
@@ -40,10 +44,9 @@ import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
 import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
 import wiiudev.gecko.client.tcpgecko.rpl.RemoteDisassembler;
-import wiiudev.gecko.client.titles.FirmwareNotImplementedException;
+import wiiudev.gecko.client.tcpgecko.rpl.structures.OSSystemInfo;
 import wiiudev.gecko.client.titles.Title;
 import wiiudev.gecko.client.titles.TitleDatabaseManager;
-import wiiudev.gecko.client.titles.TitleNotFoundException;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -53,6 +56,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -67,14 +71,14 @@ public class JGeckoUGUI extends JFrame
 	private JPanel rootPanel;
 	private JButton connectButton;
 	private JButton disconnectButton;
-	private JTextField startingAddressField;
-	private JTextField lastAddressField;
-	private JComboBox comparisonOperationComboBox;
-	private JComboBox searchTypeComboBox;
-	private JTextField valueField;
+	private JTextField searchStartingAddressField;
+	private JTextField searchEndingAddressField;
+	private JComboBox<SearchCondition> comparisonOperationComboBox;
+	private JComboBox<SearchModes> searchModeComboBox;
+	private JTextField searchValueField;
 	private JButton searchButton;
-	private JButton restartButton;
-	private JTable resultsTable;
+	private JButton restartSearchButton;
+	private JTable searchResultsTable;
 	private JButton connectionHelpButton;
 	private JTextField ipAddressField;
 	private JCheckBox autoDetectCheckBox;
@@ -167,6 +171,12 @@ public class JGeckoUGUI extends JFrame
 	private JButton sdkVersionButton;
 	private JButton shutdownButton;
 	private JButton tcpGeckoThreadButton;
+	private JButton systemInformationButton;
+	private JComboBox<ValueSize> searchValueSizeComboBox;
+	private JLabel resultsCountLabel;
+	private JButton undoSearchButton;
+	private JLabel searchIterationLabel;
+	private JProgressBar searchProgressBar;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -185,6 +195,10 @@ public class JGeckoUGUI extends JFrame
 	private DisassemblerTableManager disassemblerTableManager;
 	private ThreadsTableManager threadsTableManager;
 	private boolean assembling;
+	private MemorySearcher memorySearcher;
+	private boolean searching;
+	private boolean noResultsFound;
+	private SearchResultsTableManager searchResultsTableManager;
 	private static JGeckoUGUI instance;
 
 	private JGeckoUGUI()
@@ -202,13 +216,360 @@ public class JGeckoUGUI extends JFrame
 		configureConversionsTab();
 		configureWatchListTab();
 		configureMemoryDumpingTab();
-		removeUnfinishedTab();
+		removeUnfinishedTabs();
 		configureMiscellaneousTab();
 		configureRemoteProcedureCallTab();
 		configureAboutTab();
+		configureSearchTab();
 
 		restorePersistentSettings();
 		addSettingsBackupShutdownHook();
+	}
+
+	private void configureSearchTab()
+	{
+		populateSearchModes();
+		populateSearchConditions();
+		populateSearchValueSizes();
+
+		searchResultsTableManager = new SearchResultsTableManager(searchResultsTable);
+		searchResultsTableManager.configure();
+
+		searchProgressBar.setStringPainted(true);
+
+		setSearchInputFilter();
+
+		HexadecimalInputFilter.setHexadecimalInputFilter(searchStartingAddressField);
+		HexadecimalInputFilter.setHexadecimalInputFilter(searchEndingAddressField);
+
+		searchEndingAddressField.getDocument().addDocumentListener(new DocumentListener()
+		{
+			@Override
+			public void insertUpdate(DocumentEvent documentEvent)
+			{
+				setConnectionButtonsAvailability();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent documentEvent)
+			{
+				setConnectionButtonsAvailability();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent documentEvent)
+			{
+				setConnectionButtonsAvailability();
+			}
+		});
+
+		searchStartingAddressField.getDocument().addDocumentListener(new DocumentListener()
+		{
+			@Override
+			public void insertUpdate(DocumentEvent documentEvent)
+			{
+				setConnectionButtonsAvailability();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent documentEvent)
+			{
+				setConnectionButtonsAvailability();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent documentEvent)
+			{
+				setConnectionButtonsAvailability();
+			}
+		});
+
+		searchModeComboBox.addItemListener(itemEvent ->
+		{
+			if (itemEvent.getStateChange() == ItemEvent.SELECTED)
+			{
+				setConnectionButtonsAvailability();
+			}
+		});
+
+		setResultsCountLabel(0);
+		setSearchIterationLabel(0);
+		setConnectionButtonsAvailability();
+
+		addSearchButtonListener();
+		addNewSearchButtonListener();
+		addUndoButtonListener();
+	}
+
+	private void addUndoButtonListener()
+	{
+		undoSearchButton.addActionListener(actionEvent ->
+		{
+			Object[] options = {"Yes", "No"};
+
+			int selectedAnswer = JOptionPane.showOptionDialog(rootPane,
+					"Would you really like to undo the last search?",
+					undoSearchButton.getText(),
+					JOptionPane.YES_NO_CANCEL_OPTION,
+					JOptionPane.QUESTION_MESSAGE,
+					null,
+					options,
+					null);
+
+			if (selectedAnswer == JOptionPane.YES_OPTION)
+			{
+				List<SearchResult> searchResults = memorySearcher.undoSearchResults();
+				populateSearchResults(searchResults);
+
+				noResultsFound = false;
+				setConnectionButtonsAvailability();
+				setSearchIterationLabel(memorySearcher.getSearchIterations());
+			}
+		});
+	}
+
+	private void addNewSearchButtonListener()
+	{
+		restartSearchButton.addActionListener(actionEvent ->
+		{
+			Object[] options = {"Yes", "No"};
+
+			int selectedAnswer = JOptionPane.showOptionDialog(rootPane,
+					"Would you really like to start a new search?",
+					restartSearchButton.getText(),
+					JOptionPane.YES_NO_CANCEL_OPTION,
+					JOptionPane.QUESTION_MESSAGE,
+					null,
+					options,
+					null);
+
+			if (selectedAnswer == JOptionPane.YES_OPTION)
+			{
+				startNewSearch();
+			}
+		});
+	}
+
+	private void addSearchButtonListener()
+	{
+		searchButton.addActionListener(actionEvent ->
+				new SwingWorker<String, String>()
+				{
+					@Override
+					protected String doInBackground() throws Exception
+					{
+						String searchButtonText = searchButton.getText();
+						searching = true;
+						programTabs.setEnabled(false);
+						searchButton.setText("Dumping...");
+						setConnectionButtonsAvailability();
+
+						try
+						{
+							if (memorySearcher == null)
+							{
+								// This can only be defined at the start of a new search
+								int startingAddress = Conversions.toDecimal(searchStartingAddressField.getText());
+								int endAddress = Conversions.toDecimal(searchEndingAddressField.getText());
+								memorySearcher = new MemorySearcher(startingAddress, endAddress - startingAddress);
+								setConnectionButtonsAvailability();
+							}
+
+							SearchRefinement searchRefinement = getSearchRefinement();
+							List<SearchResult> searchResults = memorySearcher.search(searchRefinement);
+							populateSearchResults(searchResults);
+							setSearchIterationLabel(memorySearcher.getSearchIterations());
+							setConnectionButtonsAvailability();
+						} catch (Exception exception)
+						{
+							StackTraceUtils.handleException(rootPane, exception);
+						} finally
+						{
+							searchButton.setText(searchButtonText);
+							programTabs.setEnabled(true);
+							searching = false;
+							setConnectionButtonsAvailability();
+
+							Toolkit.getDefaultToolkit().beep();
+
+							if (areSearchResultsEmpty())
+							{
+								noResultsFound = true;
+
+								Object[] options = {"Yes", "No"};
+
+								int selectedAnswer = JOptionPane.showOptionDialog(rootPane,
+										"Would you like to start a new search?",
+										"No results found",
+										JOptionPane.YES_NO_CANCEL_OPTION,
+										JOptionPane.QUESTION_MESSAGE,
+										null,
+										options,
+										null);
+
+								if (selectedAnswer == JOptionPane.YES_OPTION)
+								{
+									startNewSearch();
+								}
+							}
+						}
+
+						return null;
+					}
+				}.execute());
+	}
+
+	private boolean areSearchResultsEmpty()
+	{
+		return searchResultsTableManager.areSearchResultsEmpty();
+	}
+
+	private SearchRefinement getSearchRefinement()
+	{
+		// This can be changed during each search step
+		SearchCondition searchCondition = comparisonOperationComboBox.getItemAt(comparisonOperationComboBox.getSelectedIndex());
+		ValueSize valueSize = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex());
+		SearchModes searchMode = searchModeComboBox.getItemAt(searchModeComboBox.getSelectedIndex());
+
+		switch (searchMode)
+		{
+			case SPECIFIC:
+				BigInteger value = new BigInteger(searchValueField.getText(), 16);
+				return new SearchRefinement(searchCondition, valueSize, value);
+
+			case UNKNOWN:
+				if (memorySearcher.isFirstSearch())
+				{
+					return new SearchRefinement(valueSize);
+				}
+
+				return new SearchRefinement(searchCondition, valueSize);
+
+			default:
+				throw new IllegalStateException("Unhandled search mode");
+		}
+	}
+
+	private void setSearchIterationLabel(int iteration)
+	{
+		searchIterationLabel.setText("Iteration: " + iteration);
+	}
+
+	private void populateSearchResults(List<SearchResult> searchResults)
+	{
+		int searchResultsCount = searchResults.size();
+		setResultsCountLabel(searchResultsCount);
+
+		if (searchResults.size() < 99999)
+		{
+			searchResultsTableManager.populateSearchResults(searchResults);
+		}
+	}
+
+	private void startNewSearch()
+	{
+		searchResultsTableManager.removeAllRows();
+		setResultsCountLabel(0);
+		setSearchIterationLabel(0);
+		memorySearcher = null;
+		noResultsFound = false;
+		setConnectionButtonsAvailability();
+	}
+
+	private void setSearchInputFilter()
+	{
+		ValueSize valueSize = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex());
+
+		int charactersLength;
+
+		switch (valueSize)
+		{
+			case EIGHT_BIT:
+				charactersLength = 2;
+				break;
+
+			case SIXTEEN_BIT:
+				charactersLength = 4;
+				break;
+
+			case THIRTY_TWO_BIT:
+				charactersLength = 8;
+				break;
+
+			case SIXTY_FOUR_BIT:
+				charactersLength = 16;
+				break;
+
+			default:
+				throw new InvalidStateException("Invalid value size");
+		}
+
+		HexadecimalInputFilter.setHexadecimalInputFilter(searchValueField, charactersLength);
+	}
+
+	private void populateSearchValueSizes()
+	{
+		DefaultComboBoxModel<ValueSize> defaultComboBoxModel3 = new DefaultComboBoxModel<>(ValueSize.values());
+		searchValueSizeComboBox.setModel(defaultComboBoxModel3);
+		searchValueSizeComboBox.setSelectedItem(ValueSize.THIRTY_TWO_BIT);
+
+		searchValueSizeComboBox.addItemListener(itemEvent ->
+		{
+			if (itemEvent.getStateChange() == ItemEvent.SELECTED)
+			{
+				setConnectionButtonsAvailability();
+				setSearchInputFilter();
+			}
+		});
+	}
+
+	private void populateSearchConditions()
+	{
+		DefaultComboBoxModel<SearchCondition> defaultComboBoxModel2 = new DefaultComboBoxModel<>(SearchCondition.values());
+		comparisonOperationComboBox.setModel(defaultComboBoxModel2);
+	}
+
+	private void populateSearchModes()
+	{
+		DefaultComboBoxModel<SearchModes> defaultComboBoxModel = new DefaultComboBoxModel<>(SearchModes.values());
+		searchModeComboBox.setModel(defaultComboBoxModel);
+		searchModeComboBox.setSelectedItem(SearchModes.SPECIFIC);
+	}
+
+	private void setSearchButtonsAvailability()
+	{
+		boolean searchStarted = memorySearcher != null;
+		restartSearchButton.setEnabled(searchStarted && !searching);
+		searchValueSizeComboBox.setEnabled(!searchStarted);
+		searchStartingAddressField.setEnabled(!searchStarted);
+		searchEndingAddressField.setEnabled(!searchStarted);
+		undoSearchButton.setEnabled(searchStarted && memorySearcher.canUndoSearch());
+
+		SearchModes searchMode = searchModeComboBox.getItemAt(searchModeComboBox.getSelectedIndex());
+		if (searchMode == SearchModes.UNKNOWN)
+		{
+			searchValueField.setEnabled(false);
+
+			// First search?
+			if (memorySearcher == null)
+			{
+				comparisonOperationComboBox.setEnabled(false);
+			} else
+			{
+				comparisonOperationComboBox.setEnabled(true);
+			}
+		} else
+		{
+			searchValueField.setEnabled(true);
+			comparisonOperationComboBox.setEnabled(true);
+		}
+
+		setSearchButtonAvailability();
+	}
+
+	private void setResultsCountLabel(int count)
+	{
+		resultsCountLabel.setText("Results: " + count);
 	}
 
 	private void addTabsChangedListener()
@@ -343,7 +704,7 @@ public class JGeckoUGUI extends JFrame
 		updateDisassemblerButton.addActionListener(actionEvent ->
 				updateDisassembler());
 
-		HexadecimalInputFilter.addHexadecimalInputFilter(disassemblerAddressField);
+		HexadecimalInputFilter.setHexadecimalInputFilter(disassemblerAddressField);
 
 		disassemblerAddressField.getDocument().addDocumentListener(new DocumentListener()
 		{
@@ -530,7 +891,22 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		remoteDisassemblerButton.addActionListener(e ->
+		systemInformationButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				OSSystemInfo systemInfo = CoreInit.getSystemInformation();
+				JOptionPane.showMessageDialog(this,
+						systemInfo.toString(),
+						systemInformationButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				exception.printStackTrace();
+			}
+		});
+
+		remoteDisassemblerButton.addActionListener(actionEvent ->
 		{
 			RemoteDisassemblerDialog remoteDisassemblerDialog = new RemoteDisassemblerDialog();
 			remoteDisassemblerDialog.setTitle(remoteDisassemblerButton.getText());
@@ -544,7 +920,7 @@ public class JGeckoUGUI extends JFrame
 				try
 				{
 					String disassembled = RemoteDisassembler.disassembleValue(value);
-					JOptionPane.showMessageDialog(JGeckoUGUI.this,
+					JOptionPane.showMessageDialog(this,
 							disassembled,
 							remoteDisassemblerButton.getText(),
 							JOptionPane.INFORMATION_MESSAGE);
@@ -724,10 +1100,20 @@ public class JGeckoUGUI extends JFrame
 				TCPGecko.enforceMemoryAccessProtection = memoryAddressProtectionCheckBox.isSelected());
 	}
 
-	private void removeUnfinishedTab()
+	private void removeUnfinishedTabs()
 	{
-		programTabs.remove(searchTab);
+		if (!runningFromIntelliJ())
+		{
+			programTabs.remove(searchTab);
+		}
+
 		programTabs.remove(fileSystemTab);
+	}
+
+	private static boolean runningFromIntelliJ()
+	{
+		String classPath = System.getProperty("java.class.path");
+		return classPath.contains("IntelliJ IDEA");
 	}
 
 	private void monitorGeckoServerHealth()
@@ -738,15 +1124,18 @@ public class JGeckoUGUI extends JFrame
 			{
 				try
 				{
-					MemoryReader memoryReader = new MemoryReader();
-					boolean isRunning = memoryReader.isRunning();
-
-					if (!isRunning)
+					if (!TCPGecko.isRequestingBytes && !searching)
 					{
-						connectionReset();
+						MemoryReader memoryReader = new MemoryReader();
+						boolean isRunning = memoryReader.isRunning();
+
+						if (!isRunning)
+						{
+							connectionReset();
+						}
 					}
 
-					Thread.sleep(500);
+					Thread.sleep(100);
 				} catch (Exception exception)
 				{
 					connectionReset();
@@ -1068,6 +1457,11 @@ public class JGeckoUGUI extends JFrame
 			simpleProperties.put("UPDATE_WATCH_LIST", String.valueOf(updateWatchlistCheckBox.isSelected()));
 			simpleProperties.put("DUMPING_FILE_PATH", dumpFilePathField.getText());
 			simpleProperties.put("DISASSEMBLER_ADDRESS", disassemblerAddressField.getText());
+			simpleProperties.put("SEARCH_RANGE_START", searchStartingAddressField.getText());
+			simpleProperties.put("SEARCH_RANGE_END", searchEndingAddressField.getText());
+			simpleProperties.put("SEARCH_VALUE", searchValueField.getText());
+			simpleProperties.put("SEARCH_VALUE_SIZE", searchValueSizeComboBox.getSelectedItem().toString());
+
 			simpleProperties.writeToFile();
 		}));
 	}
@@ -1148,6 +1542,31 @@ public class JGeckoUGUI extends JFrame
 		if (disassemblerAddress != null)
 		{
 			disassemblerAddressField.setText(disassemblerAddress);
+		}
+
+		String searchStartingAddress = simpleProperties.get("SEARCH_RANGE_START");
+		if (searchStartingAddress != null)
+		{
+			searchStartingAddressField.setText(searchStartingAddress);
+		}
+
+		String searchEndingAddress = simpleProperties.get("SEARCH_RANGE_END");
+		if (searchEndingAddress != null)
+		{
+			searchEndingAddressField.setText(searchEndingAddress);
+		}
+
+		String searchValueSize = simpleProperties.get("SEARCH_VALUE_SIZE");
+		if (searchValueSize != null)
+		{
+			ValueSize valueSize = ValueSize.parse(searchValueSize);
+			searchValueSizeComboBox.setSelectedItem(valueSize);
+		}
+
+		String searchValue = simpleProperties.get("SEARCH_VALUE");
+		if (searchValue != null)
+		{
+			searchValueField.setText(searchValue);
 		}
 	}
 
@@ -1364,22 +1783,13 @@ public class JGeckoUGUI extends JFrame
 			int startingAddress = Integer.parseInt(dumpStartingAddressField.getText(), 16);
 			int endingAddress = Integer.parseInt(dumpEndingAddressField.getText(), 16);
 			int length = endingAddress - startingAddress;
-			String formattedWaitingTime = MemoryReader.getExpectedWaitingTime(length);
 
-			int selectedAnswer = JOptionPane.showConfirmDialog(
-					rootPane,
-					"Memory dumping is currently slow. Do you really want to dump " + length + " bytes?\nThe expected waiting time is approximately " + formattedWaitingTime + "!",
-					"Dump?",
-					JOptionPane.YES_NO_OPTION);
+			String targetFilePath = dumpFilePathField.getText();
+			File targetFile = new File(targetFilePath);
 
-			if (selectedAnswer == JOptionPane.YES_OPTION)
-			{
-				String targetFilePath = dumpFilePathField.getText();
-				File targetFile = new File(targetFilePath);
-
-				GraphicalMemoryDumper graphicalMemoryDumper = new GraphicalMemoryDumper(startingAddress, length, targetFile, memoryDumpingProgressBar, dumpMemoryButton);
-				graphicalMemoryDumper.dumpMemory();
-			}
+			GraphicalMemoryDumper graphicalMemoryDumper = new GraphicalMemoryDumper(startingAddress,
+					length, targetFile, memoryDumpingProgressBar, dumpMemoryButton);
+			graphicalMemoryDumper.dumpMemory();
 		});
 
 		chooseFilePathButton.addActionListener(actionEvent ->
@@ -1513,7 +1923,7 @@ public class JGeckoUGUI extends JFrame
 
 		updateMemoryViewerButton.addActionListener(actionEvent -> updateMemoryViewer(true, true));
 
-		HexadecimalInputFilter.addHexadecimalInputFilter(memoryViewerAddressField);
+		HexadecimalInputFilter.setHexadecimalInputFilter(memoryViewerAddressField);
 		addMemoryViewerAddressChangedListener();
 		new DefaultContextMenu().addTo(memoryViewerAddressField);
 
@@ -1573,22 +1983,8 @@ public class JGeckoUGUI extends JFrame
 		{
 			if (itemEvent.getStateChange() == ItemEvent.SELECTED)
 			{
-				ValueSizes valueSize = (ValueSizes) valueSizePokeComboBox.getSelectedItem();
-
-				switch (valueSize)
-				{
-					case EIGHT_BIT:
-						changePokeValueSize(ValueSizes.EIGHT_BIT.getSize());
-						break;
-
-					case SIXTEEN_BIT:
-						changePokeValueSize(ValueSizes.SIXTEEN_BIT.getSize());
-						break;
-
-					case THIRTY_TWO_BIT:
-						changePokeValueSize(ValueSizes.THIRTY_TWO_BIT.getSize());
-						break;
-				}
+				ValueSizes valueSize = valueSizePokeComboBox.getItemAt(valueSizePokeComboBox.getSelectedIndex());
+				changePokeValueSize(valueSize.getSize());
 			}
 		});
 
@@ -1605,7 +2001,6 @@ public class JGeckoUGUI extends JFrame
 		DefaultComboBoxModel<ValueSizes> defaultComboBoxModel2 = new DefaultComboBoxModel<>(ValueSizes.values());
 		valueSizePokeComboBox.setModel(defaultComboBoxModel2);
 		valueSizePokeComboBox.setSelectedItem(ValueSizes.THIRTY_TWO_BIT);
-		valueField.setText("");
 
 		addPokeButtonListener();
 		updateValueAndAddressField();
@@ -2721,16 +3116,8 @@ public class JGeckoUGUI extends JFrame
 			}
 
 			gameName = title.getGameName();
-		} catch (TitleNotFoundException | FirmwareNotImplementedException exception)
+		} catch (TitleDatabaseManager.TitleNotFoundException exception)
 		{
-			if (exception instanceof FirmwareNotImplementedException)
-			{
-				JOptionPane.showMessageDialog(rootPane,
-						exception.getMessage(),
-						"Warning",
-						JOptionPane.WARNING_MESSAGE);
-			}
-
 			// Let the user input the data then
 			NewGameDialog newGameDialog = new NewGameDialog(this);
 			newGameDialog.display();
@@ -2797,6 +3184,8 @@ public class JGeckoUGUI extends JFrame
 				&& mayConnect && !connecting && titlesInitialized;
 		connectButton.setEnabled(shouldEnableConnectButton);
 		processPFIDButton.setEnabled(connected);
+		systemInformationButton.setEnabled(connected);
+		setSearchButtonsAvailability();
 		tcpGeckoThreadButton.setEnabled(connected);
 		sdkVersionButton.setEnabled(connected);
 		shutdownButton.setEnabled(connected);
@@ -2838,6 +3227,16 @@ public class JGeckoUGUI extends JFrame
 
 		handleUpdateMemoryViewerButton();
 		handleDumpMemoryButtonAvailability();
+	}
+
+	private void setSearchButtonAvailability()
+	{
+		boolean isRangePositive = Conversions.toDecimal(searchEndingAddressField.getText())
+				- Conversions.toDecimal(searchStartingAddressField.getText()) > 0;
+		ValueSize valueSize = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex());
+		boolean isRangeAlignedCorrectly = valueSize != null && Conversions.toDecimal(searchStartingAddressField.getText()) % valueSize.getBytesCount() == 0
+				&& Conversions.toDecimal(searchEndingAddressField.getText()) % valueSize.getBytesCount() == 0;
+		searchButton.setEnabled(TCPGecko.isConnected() && !searching && !noResultsFound && isRangePositive && isRangeAlignedCorrectly);
 	}
 
 	private void setCodeListButtonsAvailability()
@@ -2928,5 +3327,15 @@ public class JGeckoUGUI extends JFrame
 	public void updateThreads(boolean fetch) throws Exception
 	{
 		threadsTableManager.updateRows(fetch);
+	}
+
+	public JButton getSearchButton()
+	{
+		return searchButton;
+	}
+
+	public JProgressBar getSearchProgressBar()
+	{
+		return searchProgressBar;
 	}
 }

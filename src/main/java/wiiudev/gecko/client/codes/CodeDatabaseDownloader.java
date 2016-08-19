@@ -77,10 +77,10 @@ public class CodeDatabaseDownloader
 				try
 				{
 					// Check if the cheat code is valid
-					new CheatCode(codeLine);
+					new CheatCodeFormatting(codeLine);
 					codeBuilder.append(codeLine);
 					codeBuilder.append(lineBreak);
-				} catch (InvalidCheatCodeException invalidCheatCodeException)
+				} catch (CheatCodeFormatting.InvalidCheatCodeException invalidCheatCodeException)
 				{
 					// Otherwise add it as a comment
 					commentBuilder.append(codeLine);

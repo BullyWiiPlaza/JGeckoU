@@ -1,7 +1,8 @@
 package wiiudev.gecko.client.gui.tabs;
 
 import org.apache.commons.io.FileUtils;
-import wiiudev.gecko.client.gui.utilities.Benchmark;
+import wiiudev.gecko.client.debugging.StackTraceUtils;
+import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 
@@ -51,8 +52,6 @@ public class GraphicalMemoryDumper
 			String dumpText = dumpMemoryButton.getText();
 			dumpMemoryButton.setText("Dumping...");
 			dumpMemoryButton.setEnabled(false);
-			Benchmark benchmark = new Benchmark();
-			benchmark.start();
 			long startingBytesCount = bytesCount;
 
 			try
@@ -63,10 +62,12 @@ public class GraphicalMemoryDumper
 				// Delete the target file before dumping into it
 				FileUtils.deleteQuietly(targetFile);
 
+				memoryReader.requestBytes(address, bytesCount);
+
 				// Read in chunks
 				while (bytesCount > TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
 				{
-					byte[] retrievedBytes = memoryReader.readBytes(address, TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
+					byte[] retrievedBytes = memoryReader.readBytes(TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
 					FileUtils.writeByteArrayToFile(targetFile, retrievedBytes, true);
 
 					bytesCount -= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
@@ -80,7 +81,7 @@ public class GraphicalMemoryDumper
 
 				if (bytesCount <= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
 				{
-					byte[] retrievedBytes = memoryReader.readBytes(address, bytesCount);
+					byte[] retrievedBytes = memoryReader.readBytes(bytesCount);
 					FileUtils.writeByteArrayToFile(targetFile, retrievedBytes, true);
 					bytesDumped += retrievedBytes.length;
 				}
@@ -88,20 +89,17 @@ public class GraphicalMemoryDumper
 				long progress = bytesDumped * 100 / startingBytesCount;
 				setProgress((int) progress);
 
+				Toolkit.getDefaultToolkit().beep();
+
 				return bytesDumped;
 			} catch (Exception exception)
 			{
-				exception.printStackTrace();
+				StackTraceUtils.handleException(JGeckoUGUI.getInstance().getRootPane(), exception);
 			} finally
 			{
+				TCPGecko.isRequestingBytes = false;
 				dumpMemoryButton.setText(dumpText);
 				dumpMemoryButton.setEnabled(true);
-				double elapsedSeconds = benchmark.getElapsedTime();
-				Toolkit.getDefaultToolkit().beep();
-				JOptionPane.showMessageDialog(null,
-						"Dumped " + startingBytesCount + " bytes after " + elapsedSeconds + " second(s)",
-						"Success",
-						JOptionPane.INFORMATION_MESSAGE);
 			}
 
 			return null;
