@@ -10,6 +10,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.LinkedList;
 import java.util.List;
 
 public class SearchResultsTableManager
@@ -91,21 +92,19 @@ public class SearchResultsTableManager
 		return searchResults.isEmpty();
 	}
 
-	public boolean isTableEmpty()
+	public List<SearchResult> getSelected()
 	{
-		return table.getRowCount() == 0;
-	}
+		int[] selectedRows = table.getSelectedRows();
 
-	public SearchResult getSelected()
-	{
-		int selectedRow = table.getSelectedRow();
+		List<SearchResult> selectedSearchResults = new LinkedList<>();
 
-		if(selectedRow == -1)
+		for (int selectedRow : selectedRows)
 		{
-			return null;
+			SearchResult selectedSearchResult = searchResults.get(selectedRow);
+			selectedSearchResults.add(selectedSearchResult);
 		}
 
-		return searchResults.get(selectedRow);
+		return selectedSearchResults;
 	}
 
 	public JTable getTable()

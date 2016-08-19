@@ -2,7 +2,6 @@ package wiiudev.gecko.client.gui;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.SystemUtils;
-import sun.plugin.dom.exception.InvalidStateException;
 import wiiudev.gecko.client.codes.*;
 import wiiudev.gecko.client.conversions.ConversionType;
 import wiiudev.gecko.client.conversions.Conversions;
@@ -237,6 +236,26 @@ public class JGeckoUGUI extends JFrame
 
 		searchProgressBar.setStringPainted(true);
 
+		searchValueField.addKeyListener(new KeyAdapter()
+		{
+			public void keyReleased(KeyEvent keyEvent)
+			{
+			}
+
+			public void keyTyped(KeyEvent keyEvent)
+			{
+			}
+
+			public void keyPressed(KeyEvent keyEvent)
+			{
+				if (keyEvent.getKeyCode() == KeyEvent.VK_ENTER
+						&& searchButton.isEnabled())
+				{
+					performSearchConcurrently();
+				}
+			}
+		});
+
 		setSearchInputFilter();
 
 		HexadecimalInputFilter.setHexadecimalInputFilter(searchStartingAddressField);
@@ -352,71 +371,76 @@ public class JGeckoUGUI extends JFrame
 
 	private void addSearchButtonListener()
 	{
-		searchButton.addActionListener(actionEvent ->
-				new SwingWorker<String, String>()
+		searchButton.addActionListener(actionEvent -> performSearchConcurrently());
+	}
+
+	private void performSearchConcurrently()
+	{
+		new SwingWorker<String, String>()
+		{
+			@Override
+			protected String doInBackground() throws Exception
+			{
+				String searchButtonText = searchButton.getText();
+				searching = true;
+				programTabs.setEnabled(false);
+				searchButton.setText("Dumping...");
+				setConnectionButtonsAvailability();
+
+				try
 				{
-					@Override
-					protected String doInBackground() throws Exception
+					if (memorySearcher == null)
 					{
-						String searchButtonText = searchButton.getText();
-						searching = true;
-						programTabs.setEnabled(false);
-						searchButton.setText("Dumping...");
+						// This can only be defined at the start of a new search
+						int startingAddress = Conversions.toDecimal(searchStartingAddressField.getText());
+						int endAddress = Conversions.toDecimal(searchEndingAddressField.getText());
+						memorySearcher = new MemorySearcher(startingAddress, endAddress - startingAddress);
 						setConnectionButtonsAvailability();
-
-						try
-						{
-							if (memorySearcher == null)
-							{
-								// This can only be defined at the start of a new search
-								int startingAddress = Conversions.toDecimal(searchStartingAddressField.getText());
-								int endAddress = Conversions.toDecimal(searchEndingAddressField.getText());
-								memorySearcher = new MemorySearcher(startingAddress, endAddress - startingAddress);
-								setConnectionButtonsAvailability();
-							}
-
-							SearchRefinement searchRefinement = getSearchRefinement();
-							List<SearchResult> searchResults = memorySearcher.search(searchRefinement);
-							populateSearchResults(searchResults);
-							setSearchIterationLabel(memorySearcher.getSearchIterations());
-							setConnectionButtonsAvailability();
-						} catch (Exception exception)
-						{
-							StackTraceUtils.handleException(rootPane, exception);
-						} finally
-						{
-							searchButton.setText(searchButtonText);
-							programTabs.setEnabled(true);
-							searching = false;
-							setConnectionButtonsAvailability();
-
-							Toolkit.getDefaultToolkit().beep();
-
-							if (areSearchResultsEmpty())
-							{
-								noResultsFound = true;
-
-								Object[] options = {"Yes", "No"};
-
-								int selectedAnswer = JOptionPane.showOptionDialog(rootPane,
-										"Would you like to start a new search?",
-										"No results found",
-										JOptionPane.YES_NO_CANCEL_OPTION,
-										JOptionPane.QUESTION_MESSAGE,
-										null,
-										options,
-										null);
-
-								if (selectedAnswer == JOptionPane.YES_OPTION)
-								{
-									startNewSearch();
-								}
-							}
-						}
-
-						return null;
 					}
-				}.execute());
+
+					SearchRefinement searchRefinement = getSearchRefinement();
+					List<SearchResult> searchResults = memorySearcher.search(searchRefinement);
+					populateSearchResults(searchResults);
+					setSearchIterationLabel(memorySearcher.getSearchIterations());
+					setConnectionButtonsAvailability();
+				} catch (Exception exception)
+				{
+					StackTraceUtils.handleException(rootPane, exception);
+				} finally
+				{
+					searchButton.setText(searchButtonText);
+					programTabs.setEnabled(true);
+					searching = false;
+
+					Toolkit.getDefaultToolkit().beep();
+
+					if (areSearchResultsEmpty())
+					{
+						noResultsFound = true;
+
+						Object[] options = {"Yes", "No"};
+
+						int selectedAnswer = JOptionPane.showOptionDialog(rootPane,
+								"Would you like to start a new search?",
+								"No results found",
+								JOptionPane.YES_NO_CANCEL_OPTION,
+								JOptionPane.QUESTION_MESSAGE,
+								null,
+								options,
+								null);
+
+						if (selectedAnswer == JOptionPane.YES_OPTION)
+						{
+							startNewSearch();
+						}
+					}
+
+					setConnectionButtonsAvailability();
+				}
+
+				return null;
+			}
+		}.execute();
 	}
 
 	private boolean areSearchResultsEmpty()
@@ -479,31 +503,7 @@ public class JGeckoUGUI extends JFrame
 	private void setSearchInputFilter()
 	{
 		ValueSize valueSize = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex());
-
-		int charactersLength;
-
-		switch (valueSize)
-		{
-			case EIGHT_BIT:
-				charactersLength = 2;
-				break;
-
-			case SIXTEEN_BIT:
-				charactersLength = 4;
-				break;
-
-			case THIRTY_TWO_BIT:
-				charactersLength = 8;
-				break;
-
-			case SIXTY_FOUR_BIT:
-				charactersLength = 16;
-				break;
-
-			default:
-				throw new InvalidStateException("Invalid value size");
-		}
-
+		int charactersLength = valueSize.getBytesCount() * 2;
 		HexadecimalInputFilter.setHexadecimalInputFilter(searchValueField, charactersLength);
 	}
 
@@ -3051,7 +3051,8 @@ public class JGeckoUGUI extends JFrame
 		}
 
 		monitorGeckoServerHealth();
-		connectButton.setText(connectButtonText + "ed [" + ipAddress + "]");
+		String ipAddressAddition = (autoDetectCheckBox.isSelected() ? (" [" + ipAddress + "]") : "");
+		connectButton.setText(connectButtonText + "ed" + ipAddressAddition);
 		connectedIPAddress = ipAddress;
 
 		setGameSpecificTitle();
@@ -3234,8 +3235,8 @@ public class JGeckoUGUI extends JFrame
 		boolean isRangePositive = Conversions.toDecimal(searchEndingAddressField.getText())
 				- Conversions.toDecimal(searchStartingAddressField.getText()) > 0;
 		ValueSize valueSize = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex());
-		boolean isRangeAlignedCorrectly = valueSize != null && Conversions.toDecimal(searchStartingAddressField.getText()) % valueSize.getBytesCount() == 0
-				&& Conversions.toDecimal(searchEndingAddressField.getText()) % valueSize.getBytesCount() == 0;
+		boolean isRangeAlignedCorrectly = valueSize != null
+				&& (Conversions.toDecimal(searchEndingAddressField.getText()) - Conversions.toDecimal(searchStartingAddressField.getText())) % valueSize.getBytesCount() == 0;
 		searchButton.setEnabled(TCPGecko.isConnected() && !searching && !noResultsFound && isRangePositive && isRangeAlignedCorrectly);
 	}
 

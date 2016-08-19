@@ -5,7 +5,8 @@ public enum ValueSize
 	EIGHT_BIT("8-Bit"),
 	SIXTEEN_BIT("16-Bit"),
 	THIRTY_TWO_BIT("32-Bit"),
-	SIXTY_FOUR_BIT("64-Bit");
+	SIXTY_FOUR_BIT("64-Bit"),
+	NINETY_SIX_BIT("96-Bit");
 
 	private String name;
 
@@ -29,6 +30,9 @@ public enum ValueSize
 
 			case SIXTY_FOUR_BIT:
 				return 8;
+
+			case NINETY_SIX_BIT:
+				return 12;
 		}
 
 		throw new IllegalStateException("Bytes count undefined for " + this);

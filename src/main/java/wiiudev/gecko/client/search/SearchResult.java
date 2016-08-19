@@ -1,5 +1,8 @@
 package wiiudev.gecko.client.search;
 
+import org.apache.commons.io.output.ByteArrayOutputStream;
+
+import java.io.IOException;
 import java.math.BigInteger;
 
 public class SearchResult implements Cloneable, Comparable
@@ -44,6 +47,18 @@ public class SearchResult implements Cloneable, Comparable
 	public BigInteger getPreviousValue()
 	{
 		return previousValue;
+	}
+
+	public byte[] getPreviousValueBytes() throws IOException
+	{
+		byte[] previousValue = getPreviousValue().toByteArray();
+		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+		int bytesCount = getValueSize().getBytesCount();
+		int paddingBytes = bytesCount - previousValue.length;
+		byteArrayOutputStream.write(new byte[paddingBytes]);
+		byteArrayOutputStream.write(previousValue);
+
+		return byteArrayOutputStream.toByteArray();
 	}
 
 	public int getAddress()
