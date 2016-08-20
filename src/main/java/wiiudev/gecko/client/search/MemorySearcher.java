@@ -167,8 +167,10 @@ public class MemorySearcher
 
 	private BigInteger getValue(ByteBuffer byteBuffer, ValueSize valueSize)
 	{
+		int currentPosition = byteBuffer.position();
 		byte[] retrieved = new byte[valueSize.getBytesCount()];
 		byteBuffer.get(retrieved);
+		byteBuffer.position(currentPosition + 1);
 
 		return new BigInteger(retrieved);
 	}

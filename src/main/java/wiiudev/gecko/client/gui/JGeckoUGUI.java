@@ -1102,11 +1102,6 @@ public class JGeckoUGUI extends JFrame
 
 	private void removeUnfinishedTabs()
 	{
-		if (!runningFromIntelliJ())
-		{
-			programTabs.remove(searchTab);
-		}
-
 		programTabs.remove(fileSystemTab);
 	}
 
