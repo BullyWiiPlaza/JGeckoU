@@ -44,7 +44,8 @@ public class MemorySearcher
 			searchButton.setText("Searching...");
 		}
 
-		while (byteBuffer.hasRemaining())
+		// Repeat as long as we can get the values
+		while (byteBuffer.position() + valueSize.getBytesCount() < byteBuffer.limit())
 		{
 			BigInteger currentValue = getValue(byteBuffer, valueSize);
 			int searchResultAddress = address + byteBuffer.position() - valueSize.getBytesCount();
@@ -167,10 +168,18 @@ public class MemorySearcher
 
 	private BigInteger getValue(ByteBuffer byteBuffer, ValueSize valueSize)
 	{
-		int currentPosition = byteBuffer.position();
 		byte[] retrieved = new byte[valueSize.getBytesCount()];
 		byteBuffer.get(retrieved);
-		byteBuffer.position(currentPosition + 1);
+
+		// For bigger value sizes still go in 32-bit steps
+		int additionalBytes = valueSize.getBytesCount() - ValueSize.THIRTY_TWO_BIT.getBytesCount();
+
+		if(additionalBytes > 0)
+		{
+			// Scale the buffer position backwards
+			int currentPosition = byteBuffer.position();
+			byteBuffer.position(currentPosition - additionalBytes);
+		}
 
 		return new BigInteger(retrieved);
 	}
