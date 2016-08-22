@@ -1,4 +1,4 @@
-package wiiudev.gecko.client.search;
+package wiiudev.gecko.client.memory_search.enumerations;
 
 public enum ValueSize
 {

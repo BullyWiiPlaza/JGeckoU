@@ -1,4 +1,8 @@
-package wiiudev.gecko.client.search;
+package wiiudev.gecko.client.memory_search;
+
+import wiiudev.gecko.client.memory_search.enumerations.SearchConditions;
+import wiiudev.gecko.client.memory_search.enumerations.SearchModes;
+import wiiudev.gecko.client.memory_search.enumerations.ValueSize;
 
 import java.math.BigInteger;
 
@@ -11,9 +15,9 @@ public class SearchRefinement
 
 	/**
 	 * Constructor for specific value searches
-	 * @param searchConditions The search condition
+	 * @param searchConditions The memory_search condition
 	 * @param valueSize The value's size
-	 * @param value The value to search
+	 * @param value The value to memory_search
 	 */
 	public SearchRefinement(SearchConditions searchConditions, ValueSize valueSize, BigInteger value)
 	{
@@ -25,7 +29,7 @@ public class SearchRefinement
 
 	/**
 	 * Constructor for the all unknown value searches but the first
-	 * @param searchConditions The search condition
+	 * @param searchConditions The memory_search condition
 	 * @param valueSize The value's size
 	 */
 	public SearchRefinement(SearchConditions searchConditions, ValueSize valueSize)
@@ -36,7 +40,7 @@ public class SearchRefinement
 	}
 
 	/**
-	 * Constructor for the first unknown value search
+	 * Constructor for the first unknown value memory_search
 	 * @param valueSize The value's size
 	 */
 	public SearchRefinement(ValueSize valueSize)

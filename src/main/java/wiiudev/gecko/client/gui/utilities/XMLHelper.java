@@ -51,6 +51,7 @@ public class XMLHelper
 		Reader reader = new InputStreamReader(inputStream, ENCODING);
 		InputSource inputSource = new InputSource(reader);
 		inputSource.setEncoding(ENCODING.displayName());
+
 		return documentBuilder.parse(inputSource);
 	}
 

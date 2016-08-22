@@ -29,9 +29,12 @@ import wiiudev.gecko.client.gui.utilities.DefaultContextMenu;
 import wiiudev.gecko.client.gui.utilities.JFileChooserUtilities;
 import wiiudev.gecko.client.gui.utilities.JTableUtilities;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
+import wiiudev.gecko.client.memory_search.*;
+import wiiudev.gecko.client.memory_search.enumerations.SearchConditions;
+import wiiudev.gecko.client.memory_search.enumerations.SearchModes;
+import wiiudev.gecko.client.memory_search.enumerations.ValueSize;
 import wiiudev.gecko.client.memory_viewer.ValueOperations;
 import wiiudev.gecko.client.network_scanner.WiiUFinder;
-import wiiudev.gecko.client.search.*;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
@@ -176,6 +179,8 @@ public class JGeckoUGUI extends JFrame
 	private JButton undoSearchButton;
 	private JLabel searchIterationLabel;
 	private JProgressBar searchProgressBar;
+	private JButton saveSearchButton;
+	private JButton loadSearchButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -311,13 +316,101 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		setResultsCountLabel(0);
-		setSearchIterationLabel(0);
+		loadSearchButton.addActionListener(actionEvent ->
+		{
+			JFileChooser fileChooser = new JFileChooser();
+			fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			JFileChooserUtilities.registerDeleteAction(fileChooser);
+			JFileChooserUtilities.setXMLFileChooser(fileChooser);
+
+			try
+			{
+				setSearchResultsCurrentDirectory(fileChooser);
+				int selectedOption = fileChooser.showOpenDialog(this);
+
+				if (selectedOption == JOptionPane.OK_OPTION)
+				{
+					File selectedFile = fileChooser.getSelectedFile();
+					ResultsStorage resultsStorage = new ResultsStorage(selectedFile.getAbsolutePath());
+					SearchBackup searchBackup = resultsStorage.readResults();
+					List<SearchResult> searchResults = searchBackup.getSearchResults();
+					populateSearchResults(searchResults);
+					SearchBounds searchBounds = searchBackup.getSearchBounds();
+					searchStartingAddressField.setText(Conversions.toHexadecimal(searchBounds.getAddress()));
+					searchEndingAddressField.setText(Conversions.toHexadecimal(searchBounds.getAddress() + searchBounds.getLength()));
+					memorySearcher = new MemorySearcher(searchBounds);
+					searchValueSizeComboBox.setSelectedItem(searchBackup.getValueSize());
+					memorySearcher.setSetResults(searchResults);
+					setSearchIterationsLabel();
+					setSearchButtonsAvailability();
+				}
+			} catch (Exception exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		saveSearchButton.addActionListener(actionEvent ->
+		{
+			JFileChooser fileChooser = new JFileChooser();
+			fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+			JFileChooserUtilities.registerDeleteAction(fileChooser);
+			JFileChooserUtilities.setXMLFileChooser(fileChooser);
+
+			try
+			{
+				Path targetPath = setSearchResultsCurrentDirectory(fileChooser);
+				int selectedOption = fileChooser.showSaveDialog(this);
+
+				if (selectedOption == JOptionPane.OK_OPTION)
+				{
+					File selectedFile = fileChooser.getSelectedFile();
+					ResultsStorage resultsStorage = new ResultsStorage(selectedFile.getAbsolutePath());
+					List<SearchResult> searchResults = searchResultsTableManager.getSearchResults();
+					SearchBounds searchBounds = new SearchBounds(Conversions.toDecimal(searchStartingAddressField.getText()),
+							Conversions.toDecimal(searchEndingAddressField.getText())
+									- Conversions.toDecimal(searchStartingAddressField.getText()));
+					resultsStorage.writeResults(searchResults, searchBounds);
+
+					JOptionPane.showMessageDialog(this,
+							"Search results written to\n"
+									+ resultsStorage.getFilePath(),
+							"Success",
+							JOptionPane.INFORMATION_MESSAGE);
+				}
+			} catch (Exception exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		setSearchResultsCountLabel();
+		setSearchIterationsLabel();
 		setConnectionButtonsAvailability();
 
 		addSearchButtonListener();
 		addNewSearchButtonListener();
 		addUndoButtonListener();
+	}
+
+	private Path setSearchResultsCurrentDirectory(JFileChooser fileChooser) throws Exception
+	{
+		String targetDirectory = "searches";
+
+		if (TCPGecko.isConnected())
+		{
+			TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
+			Title title = titleDatabaseManager.getTitle();
+			String parentFolderName = title.getGameId();
+			targetDirectory += File.separator + parentFolderName;
+		}
+
+		Path targetPath = Paths.get(targetDirectory);
+		Files.createDirectories(targetPath);
+
+		fileChooser.setCurrentDirectory(targetPath.toFile());
+
+		return targetPath;
 	}
 
 	private void addUndoButtonListener()
@@ -342,7 +435,7 @@ public class JGeckoUGUI extends JFrame
 
 				noResultsFound = false;
 				setConnectionButtonsAvailability();
-				setSearchIterationLabel(memorySearcher.getSearchIterations());
+				setSearchIterationsLabel();
 			}
 		});
 	}
@@ -391,17 +484,13 @@ public class JGeckoUGUI extends JFrame
 				{
 					if (memorySearcher == null)
 					{
-						// This can only be defined at the start of a new search
-						int startingAddress = Conversions.toDecimal(searchStartingAddressField.getText());
-						int endAddress = Conversions.toDecimal(searchEndingAddressField.getText());
-						memorySearcher = new MemorySearcher(startingAddress, endAddress - startingAddress);
-						setConnectionButtonsAvailability();
+						defineMemorySearcher();
 					}
 
 					SearchRefinement searchRefinement = getSearchRefinement();
 					List<SearchResult> searchResults = memorySearcher.search(searchRefinement);
 					populateSearchResults(searchResults);
-					setSearchIterationLabel(memorySearcher.getSearchIterations());
+					setSearchIterationsLabel();
 					setConnectionButtonsAvailability();
 				} catch (Exception exception)
 				{
@@ -412,9 +501,7 @@ public class JGeckoUGUI extends JFrame
 					programTabs.setEnabled(true);
 					searching = false;
 
-					Toolkit.getDefaultToolkit().beep();
-
-					if (areSearchResultsEmpty())
+					if (searchResultsTableManager.areSearchResultsEmpty())
 					{
 						noResultsFound = true;
 
@@ -443,9 +530,13 @@ public class JGeckoUGUI extends JFrame
 		}.execute();
 	}
 
-	private boolean areSearchResultsEmpty()
+	private void defineMemorySearcher()
 	{
-		return searchResultsTableManager.areSearchResultsEmpty();
+		// This can only be defined at the start of a new search
+		int startingAddress = Conversions.toDecimal(searchStartingAddressField.getText());
+		int endAddress = Conversions.toDecimal(searchEndingAddressField.getText());
+		memorySearcher = new MemorySearcher(startingAddress, endAddress - startingAddress);
+		setConnectionButtonsAvailability();
 	}
 
 	private SearchRefinement getSearchRefinement()
@@ -474,24 +565,26 @@ public class JGeckoUGUI extends JFrame
 		}
 	}
 
-	private void setSearchIterationLabel(int iteration)
+	private void setSearchIterationsLabel()
 	{
+		int iteration = memorySearcher == null ? 0 : memorySearcher.getSearchIterationsCount();
 		searchIterationLabel.setText("Iteration: " + iteration);
 	}
 
 	private void populateSearchResults(List<SearchResult> searchResults)
 	{
-		int searchResultsCount = searchResults.size();
-		setResultsCountLabel(searchResultsCount);
-		searchResultsTableManager.populateSearchResults(searchResults, searchResults.size() < 99999);
+		searchResultsTableManager.populateSearchResults(searchResults);
+		setSearchResultsCountLabel();
 	}
 
 	private void startNewSearch()
 	{
 		searchResultsTableManager.removeAllRows();
-		setResultsCountLabel(0);
-		setSearchIterationLabel(0);
+		searchResultsTableManager.clearSearchResults();
 		memorySearcher = null;
+
+		setSearchResultsCountLabel();
+		setSearchIterationsLabel();
 		noResultsFound = false;
 		setConnectionButtonsAvailability();
 	}
@@ -539,8 +632,10 @@ public class JGeckoUGUI extends JFrame
 		searchValueSizeComboBox.setEnabled(!searchStarted);
 		searchStartingAddressField.setEnabled(!searchStarted);
 		searchEndingAddressField.setEnabled(!searchStarted);
-		undoSearchButton.setEnabled(searchStarted && memorySearcher.canUndoSearch() &&!searching);
-
+		undoSearchButton.setEnabled(searchStarted && memorySearcher.canUndoSearch() && !searching);
+		saveSearchButton.setEnabled(searchResultsTableManager != null
+				&& searchResultsTableManager.getSearchResults() != null
+				&& !searchResultsTableManager.getSearchResults().isEmpty());
 		SearchModes searchMode = searchModeComboBox.getItemAt(searchModeComboBox.getSelectedIndex());
 		if (searchMode == SearchModes.UNKNOWN)
 		{
@@ -563,8 +658,10 @@ public class JGeckoUGUI extends JFrame
 		setSearchButtonAvailability();
 	}
 
-	private void setResultsCountLabel(int count)
+	private void setSearchResultsCountLabel()
 	{
+		int count = (searchResultsTableManager == null || searchResultsTableManager.getSearchResults() == null)
+				? 0 : searchResultsTableManager.getSearchResults().size();
 		resultsCountLabel.setText("Results: " + count);
 	}
 
@@ -1115,7 +1212,7 @@ public class JGeckoUGUI extends JFrame
 			{
 				try
 				{
-					if (!TCPGecko.isRequestingBytes && !searching)
+					if (!TCPGecko.isRequestingBytes && !searching && !readingThreads)
 					{
 						MemoryReader memoryReader = new MemoryReader();
 						boolean isRunning = memoryReader.isRunning();

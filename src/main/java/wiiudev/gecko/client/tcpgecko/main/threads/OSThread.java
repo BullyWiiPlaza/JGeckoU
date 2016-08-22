@@ -38,7 +38,6 @@ public class OSThread
 		while ((temporaryThreadAddress = memoryReader.readInt(threadAddress + 0x390)) != 0)
 		{
 			threadAddress = temporaryThreadAddress;
-			Thread.sleep(10); // Sleeps to avoid getting stuck (to be investigated why)
 		}
 
 		while ((temporaryThreadAddress = memoryReader.readInt(threadAddress + OSThreadStruct.LINK_ACTIVE.getOffset())) != 0)
@@ -46,7 +45,6 @@ public class OSThread
 			OSThread osThread = new OSThread(threadAddress);
 			osThreads.add(osThread);
 			threadAddress = temporaryThreadAddress;
-			Thread.sleep(10);
 		}
 
 		// The previous while would skip the last thread

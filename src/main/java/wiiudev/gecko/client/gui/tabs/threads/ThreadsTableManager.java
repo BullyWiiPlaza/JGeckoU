@@ -105,12 +105,14 @@ public class ThreadsTableManager
 
 	public void updateRows(boolean fetch) throws Exception
 	{
+		JTableUtilities.deleteAllRows(table);
+
 		if (fetch)
 		{
 			osThreads = OSThread.readThreads();
 		}
 
-		populateRows();
+		osThreads.forEach(this::addRow);
 	}
 
 	public void populateRows()

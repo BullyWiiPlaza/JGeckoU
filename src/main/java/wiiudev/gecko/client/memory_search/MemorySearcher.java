@@ -1,6 +1,9 @@
-package wiiudev.gecko.client.search;
+package wiiudev.gecko.client.memory_search;
 
 import wiiudev.gecko.client.gui.JGeckoUGUI;
+import wiiudev.gecko.client.memory_search.enumerations.SearchConditions;
+import wiiudev.gecko.client.memory_search.enumerations.SearchModes;
+import wiiudev.gecko.client.memory_search.enumerations.ValueSize;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -20,6 +23,11 @@ public class MemorySearcher
 	private List<SearchResult> searchResults;
 	private Stack<List<SearchResult>> searchResultsStack;
 	private boolean isFirstSearch;
+
+	public MemorySearcher(SearchBounds searchBounds)
+	{
+		this(searchBounds.getAddress(), searchBounds.getLength());
+	}
 
 	public MemorySearcher(int address, int length)
 	{
@@ -104,12 +112,12 @@ public class MemorySearcher
 		progressBar.setValue(100);
 		searchResults = updatedSearchResults;
 		isFirstSearch = false;
-		pushResults();
+		pushSearchResults();
 
 		return searchResults;
 	}
 
-	private void pushResults()
+	private void pushSearchResults()
 	{
 		List<SearchResult> clonedSearchResults = cloneList(searchResults);
 		searchResultsStack.add(clonedSearchResults);
@@ -125,7 +133,7 @@ public class MemorySearcher
 
 	public List<SearchResult> undoSearchResults()
 	{
-		// Discard current search
+		// Discard current memory_search
 		searchResultsStack.pop();
 
 		// Return empty results
@@ -145,7 +153,7 @@ public class MemorySearcher
 		return searchResultsStack.size() > 0;
 	}
 
-	public int getSearchIterations()
+	public int getSearchIterationsCount()
 	{
 		return searchResultsStack.size();
 	}
@@ -171,5 +179,11 @@ public class MemorySearcher
 	public boolean isFirstSearch()
 	{
 		return isFirstSearch;
+	}
+
+	public void setSetResults(List<SearchResult> searchResults)
+	{
+		this.searchResults = searchResults;
+		pushSearchResults();
 	}
 }

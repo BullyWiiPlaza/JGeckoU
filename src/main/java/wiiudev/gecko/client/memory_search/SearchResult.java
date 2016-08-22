@@ -1,6 +1,7 @@
-package wiiudev.gecko.client.search;
+package wiiudev.gecko.client.memory_search;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import wiiudev.gecko.client.memory_search.enumerations.ValueSize;
 
 import java.io.IOException;
 import java.math.BigInteger;

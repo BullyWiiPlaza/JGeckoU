@@ -1,4 +1,4 @@
-package wiiudev.gecko.client.search;
+package wiiudev.gecko.client.memory_search;
 
 import java.util.List;
 

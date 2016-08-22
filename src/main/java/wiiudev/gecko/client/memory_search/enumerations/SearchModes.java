@@ -1,4 +1,4 @@
-package wiiudev.gecko.client.search;
+package wiiudev.gecko.client.memory_search.enumerations;
 
 public enum SearchModes
 {
@@ -28,6 +28,6 @@ public enum SearchModes
 			}
 		}
 
-		throw new IllegalArgumentException("Illegal search mode");
+		throw new IllegalArgumentException("Illegal memory_search mode");
 	}
 }

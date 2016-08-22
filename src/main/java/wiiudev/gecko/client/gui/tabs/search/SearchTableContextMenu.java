@@ -3,7 +3,7 @@ package wiiudev.gecko.client.gui.tabs.search;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.utilities.PopupMenuUtilities;
-import wiiudev.gecko.client.search.SearchResult;
+import wiiudev.gecko.client.memory_search.SearchResult;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 

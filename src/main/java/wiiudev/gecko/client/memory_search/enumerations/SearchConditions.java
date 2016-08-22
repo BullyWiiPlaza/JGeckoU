@@ -1,4 +1,4 @@
-package wiiudev.gecko.client.search;
+package wiiudev.gecko.client.memory_search.enumerations;
 
 import java.math.BigInteger;
 
@@ -49,7 +49,7 @@ public enum SearchConditions
 				return comparisonResult <= 0;
 
 			default:
-				throw new IllegalArgumentException("Unhandled search condition");
+				throw new IllegalArgumentException("Unhandled memory_search condition");
 		}
 	}
 
@@ -63,6 +63,6 @@ public enum SearchConditions
 			}
 		}
 
-		throw new IllegalArgumentException("Illegal search condition");
+		throw new IllegalArgumentException("Illegal memory_search condition");
 	}
 }

@@ -2,7 +2,7 @@ package wiiudev.gecko.client.gui.tabs.search;
 
 import wiiudev.gecko.client.conversions.Conversions;
 import wiiudev.gecko.client.gui.utilities.JTableUtilities;
-import wiiudev.gecko.client.search.SearchResult;
+import wiiudev.gecko.client.memory_search.SearchResult;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 
@@ -64,12 +64,13 @@ public class SearchResultsTableManager
 		}
 	}
 
-	public void populateSearchResults(List<SearchResult> searchResults, boolean updateTable)
+	public void populateSearchResults(List<SearchResult> searchResults)
 	{
 		this.searchResults = searchResults;
 		removeAllRows();
 
-		if (updateTable)
+		// Do not populate the table when results are numerous
+		if (searchResults.size() < 99999)
 		{
 			searchResults.forEach(this::addRow);
 		}
@@ -114,5 +115,15 @@ public class SearchResultsTableManager
 	public JTable getTable()
 	{
 		return table;
+	}
+
+	public List<SearchResult> getSearchResults()
+	{
+		return searchResults;
+	}
+
+	public void clearSearchResults()
+	{
+		searchResults.clear();
 	}
 }

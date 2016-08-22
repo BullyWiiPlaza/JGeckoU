@@ -1,6 +1,6 @@
 package wiiudev.gecko.client.conversions;
 
-import wiiudev.gecko.client.search.ValueSize;
+import wiiudev.gecko.client.memory_search.enumerations.ValueSize;
 
 import javax.xml.bind.DatatypeConverter;
 import java.math.BigInteger;
