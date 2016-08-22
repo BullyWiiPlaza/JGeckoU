@@ -6,7 +6,10 @@ import javax.swing.*;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Stack;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -20,7 +23,7 @@ public class MemorySearcher
 
 	public MemorySearcher(int address, int length)
 	{
-		searchResults = new LinkedList<>();
+		searchResults = new ArrayList<>();
 		searchResultsStack = new Stack<>();
 		this.address = address;
 		this.length = length;
@@ -33,82 +36,72 @@ public class MemorySearcher
 		boolean isUnknownValueSearch = searchMode == SearchModes.UNKNOWN;
 		ValueSize valueSize = searchRefinement.getValueSize();
 		SearchQueryOptimizer searchQueryOptimizer = new SearchQueryOptimizer(address, length);
-		ByteBuffer byteBuffer = searchQueryOptimizer.dumpBytes(searchResults);
-		Set<SearchResult> searchResultsSet = new HashSet<>(searchResults);
+		ByteBuffer valuesReader = searchQueryOptimizer.dumpBytes(searchResults);
 		List<SearchResult> updatedSearchResults = new LinkedList<>();
 
 		JButton searchButton = JGeckoUGUI.getInstance().getSearchButton();
+		JProgressBar progressBar = JGeckoUGUI.getInstance().getSearchProgressBar();
 
-		if (!isFirstSearch)
+		int valueSizeBytesCount = valueSize.getBytesCount();
+		int byteBufferLimit = valuesReader.limit();
+
+		searchButton.setText("Searching...");
+		progressBar.setValue(0);
+
+		if (isFirstSearch)
 		{
-			searchButton.setText("Searching...");
-		}
-
-		// Repeat as long as we can get the values
-		while (byteBuffer.position() + valueSize.getBytesCount() < byteBuffer.limit())
-		{
-			BigInteger currentValue = getValue(byteBuffer, valueSize);
-			int searchResultAddress = address + byteBuffer.position() - valueSize.getBytesCount();
-			SearchResult searchResult = new SearchResult(searchResultAddress, currentValue, currentValue, valueSize);
-
-			// Add them all for the first unknown value search
-			if (isUnknownValueSearch && isFirstSearch)
+			while (valuesReader.position() + valueSizeBytesCount < byteBufferLimit)
 			{
-				updatedSearchResults.add(searchResult);
+				BigInteger currentValue = getValue(valuesReader, valueSizeBytesCount);
+				int searchResultAddress = address + valuesReader.position() - valueSize.getBytesCount();
+				SearchResult searchResult = new SearchResult(searchResultAddress, currentValue, currentValue, valueSize);
 
-				continue;
-			}
-
-			SearchCondition searchCondition = searchRefinement.getSearchCondition();
-			boolean isSearchConditionTrue;
-
-			// Not the first unknown value search
-			if (isUnknownValueSearch)
-			{
-				if (searchResultsSet.contains(searchResult))
+				if (isUnknownValueSearch)
 				{
-					SearchResult retrievedSearchResult = getSearchResult(searchResultAddress);
-					BigInteger previousValue = retrievedSearchResult.getCurrentValue();
-					isSearchConditionTrue = searchCondition.isTrue(previousValue, currentValue);
+					updatedSearchResults.add(searchResult);
+				} else
+				{
+					SearchConditions searchCondition = searchRefinement.getSearchCondition();
+					BigInteger targetValue = searchRefinement.getValue();
+					boolean isSearchConditionTrue = searchCondition.isTrue(targetValue, currentValue);
 
 					if (isSearchConditionTrue)
 					{
-						// Update the search result
-						retrievedSearchResult.updateValue(currentValue);
-						updatedSearchResults.add(retrievedSearchResult);
+						updatedSearchResults.add(searchResult);
 					}
 				}
 
-				continue;
+				int progress = valuesReader.position() * 100 / byteBufferLimit;
+				progressBar.setValue(progress);
 			}
+		} else
+		{
+			int searchResultsIndex = 0;
 
-			BigInteger targetValue = searchRefinement.getValue();
-			isSearchConditionTrue = searchCondition.isTrue(targetValue, currentValue);
-
-			if (isFirstSearch)
+			for (SearchResult searchResult : searchResults)
 			{
+				int currentAddress = searchResult.getAddress();
+				valuesReader.position(currentAddress - address);
+				BigInteger currentValue = getValue(valuesReader, valueSizeBytesCount);
+				SearchConditions searchCondition = searchRefinement.getSearchCondition();
+
+				BigInteger targetValue = isUnknownValueSearch ? searchResult.getCurrentValue() : searchRefinement.getValue();
+				boolean isSearchConditionTrue = searchCondition.isTrue(targetValue, currentValue);
+
 				if (isSearchConditionTrue)
 				{
-					// Add the result if this is the first search only
+					searchResult.updateValue(currentValue);
 					updatedSearchResults.add(searchResult);
 				}
 
-				continue;
-			}
+				int progress = searchResultsIndex * 100 / searchResults.size();
+				progressBar.setValue(progress);
 
-			// Specific value search refining (2nd+ search)
-			if (searchResultsSet.contains(searchResult))
-			{
-				if (isSearchConditionTrue)
-				{
-					// Update the search result
-					SearchResult result = getSearchResult(searchResultAddress);
-					result.updateValue(currentValue);
-					updatedSearchResults.add(result);
-				}
+				searchResultsIndex++;
 			}
 		}
 
+		progressBar.setValue(100);
 		searchResults = updatedSearchResults;
 		isFirstSearch = false;
 		pushResults();
@@ -120,15 +113,6 @@ public class MemorySearcher
 	{
 		List<SearchResult> clonedSearchResults = cloneList(searchResults);
 		searchResultsStack.add(clonedSearchResults);
-	}
-
-	private SearchResult getSearchResult(int address)
-	{
-		SearchResult searchResult = new SearchResult(address);
-		Comparator<SearchResult> comparator = (firstSearchResult, secondSearchResult) -> new Integer(firstSearchResult.getAddress()).compareTo(secondSearchResult.getAddress());
-		int searchResultIndex = Collections.binarySearch(searchResults, searchResult, comparator);
-
-		return searchResults.get(searchResultIndex);
 	}
 
 	private static List<SearchResult> cloneList(List<SearchResult> searchResults)
@@ -166,15 +150,15 @@ public class MemorySearcher
 		return searchResultsStack.size();
 	}
 
-	private BigInteger getValue(ByteBuffer byteBuffer, ValueSize valueSize)
+	private BigInteger getValue(ByteBuffer byteBuffer, int bytesCount)
 	{
-		byte[] retrieved = new byte[valueSize.getBytesCount()];
+		byte[] retrieved = new byte[bytesCount];
 		byteBuffer.get(retrieved);
 
 		// For bigger value sizes still go in 32-bit steps
-		int additionalBytes = valueSize.getBytesCount() - ValueSize.THIRTY_TWO_BIT.getBytesCount();
+		int additionalBytes = bytesCount - ValueSize.THIRTY_TWO_BIT.getBytesCount();
 
-		if(additionalBytes > 0)
+		if (additionalBytes > 0)
 		{
 			// Scale the buffer position backwards
 			int currentPosition = byteBuffer.position();

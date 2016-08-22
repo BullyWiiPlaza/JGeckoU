@@ -13,14 +13,9 @@ public class SearchResult implements Cloneable, Comparable
 	private BigInteger currentValue;
 	private BigInteger valueDifference;
 
-	public SearchResult(int address)
-	{
-		this.address = address;
-	}
-
 	public SearchResult(int address, BigInteger previousValue, BigInteger currentValue, ValueSize valueSize)
 	{
-		this(address);
+		this.address = address;
 		this.valueSize = valueSize;
 		this.previousValue = previousValue;
 		this.currentValue = currentValue;
@@ -30,13 +25,8 @@ public class SearchResult implements Cloneable, Comparable
 
 	private void setValueDifference()
 	{
-		if (previousValue == null || currentValue == null)
-		{
-			valueDifference = null;
-		} else
-		{
-			valueDifference = previousValue.subtract(currentValue).abs();
-		}
+		BigInteger subtractionResult = previousValue.subtract(currentValue);
+		valueDifference = subtractionResult.abs();
 	}
 
 	public BigInteger getCurrentValue()
@@ -88,7 +78,7 @@ public class SearchResult implements Cloneable, Comparable
 
 		SearchResult searchResult = (SearchResult) object;
 
-		return searchResult.getAddress() == this.getAddress();
+		return searchResult.getAddress() == getAddress();
 	}
 
 	@Override

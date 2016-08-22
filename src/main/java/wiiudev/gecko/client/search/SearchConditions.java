@@ -2,7 +2,7 @@ package wiiudev.gecko.client.search;
 
 import java.math.BigInteger;
 
-public enum SearchCondition
+public enum SearchConditions
 {
 	EQUAL("Equal"),
 	NOT_EQUAL ("Not Equal"),
@@ -13,7 +13,7 @@ public enum SearchCondition
 
 	private String name;
 
-	SearchCondition(String name)
+	SearchConditions(String name)
 	{
 		this.name = name;
 	}
@@ -51,5 +51,18 @@ public enum SearchCondition
 			default:
 				throw new IllegalArgumentException("Unhandled search condition");
 		}
+	}
+
+	public static SearchConditions parse(String searchCondition)
+	{
+		for(SearchConditions condition : values())
+		{
+			if(condition.name.equals(searchCondition))
+			{
+				return condition;
+			}
+		}
+
+		throw new IllegalArgumentException("Illegal search condition");
 	}
 }

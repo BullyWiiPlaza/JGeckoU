@@ -64,11 +64,15 @@ public class SearchResultsTableManager
 		}
 	}
 
-	public void populateSearchResults(List<SearchResult> searchResults)
+	public void populateSearchResults(List<SearchResult> searchResults, boolean updateTable)
 	{
 		this.searchResults = searchResults;
 		removeAllRows();
-		searchResults.forEach(this::addRow);
+
+		if (updateTable)
+		{
+			searchResults.forEach(this::addRow);
+		}
 	}
 
 	private void addRow(SearchResult searchResult)

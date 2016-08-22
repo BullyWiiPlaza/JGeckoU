@@ -5,33 +5,33 @@ import java.math.BigInteger;
 public class SearchRefinement
 {
 	private SearchModes searchMode;
-	private SearchCondition searchCondition;
+	private SearchConditions searchConditions;
 	private ValueSize valueSize;
 	private BigInteger value;
 
 	/**
 	 * Constructor for specific value searches
-	 * @param searchCondition The search condition
+	 * @param searchConditions The search condition
 	 * @param valueSize The value's size
 	 * @param value The value to search
 	 */
-	public SearchRefinement(SearchCondition searchCondition, ValueSize valueSize, BigInteger value)
+	public SearchRefinement(SearchConditions searchConditions, ValueSize valueSize, BigInteger value)
 	{
 		this.searchMode = SearchModes.SPECIFIC;
-		this.searchCondition = searchCondition;
+		this.searchConditions = searchConditions;
 		this.valueSize = valueSize;
 		this.value = value;
 	}
 
 	/**
 	 * Constructor for the all unknown value searches but the first
-	 * @param searchCondition The search condition
+	 * @param searchConditions The search condition
 	 * @param valueSize The value's size
 	 */
-	public SearchRefinement(SearchCondition searchCondition, ValueSize valueSize)
+	public SearchRefinement(SearchConditions searchConditions, ValueSize valueSize)
 	{
 		searchMode = SearchModes.UNKNOWN;
-		this.searchCondition = searchCondition;
+		this.searchConditions = searchConditions;
 		this.valueSize = valueSize;
 	}
 
@@ -50,14 +50,9 @@ public class SearchRefinement
 		return searchMode;
 	}
 
-	public SearchCondition getSearchCondition()
+	public SearchConditions getSearchCondition()
 	{
-		if (searchCondition == null)
-		{
-			throw new IllegalArgumentException("The search condition is undefined");
-		}
-
-		return searchCondition;
+		return searchConditions;
 	}
 
 	public ValueSize getValueSize()
@@ -67,11 +62,6 @@ public class SearchRefinement
 
 	public BigInteger getValue()
 	{
-		if (value == null)
-		{
-			throw new IllegalArgumentException("The value is undefined");
-		}
-
 		return value;
 	}
 }

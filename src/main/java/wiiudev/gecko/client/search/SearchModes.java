@@ -17,4 +17,17 @@ public enum SearchModes
 	{
 		return name;
 	}
+
+	public static SearchModes parse(String searchMode)
+	{
+		for(SearchModes mode : values())
+		{
+			if(mode.name.equals(searchMode))
+			{
+				return mode;
+			}
+		}
+
+		throw new IllegalArgumentException("Illegal search mode");
+	}
 }

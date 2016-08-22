@@ -72,7 +72,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton disconnectButton;
 	private JTextField searchStartingAddressField;
 	private JTextField searchEndingAddressField;
-	private JComboBox<SearchCondition> comparisonOperationComboBox;
+	private JComboBox<SearchConditions> searchConditionComboBox;
 	private JComboBox<SearchModes> searchModeComboBox;
 	private JTextField searchValueField;
 	private JButton searchButton;
@@ -451,7 +451,7 @@ public class JGeckoUGUI extends JFrame
 	private SearchRefinement getSearchRefinement()
 	{
 		// This can be changed during each search step
-		SearchCondition searchCondition = comparisonOperationComboBox.getItemAt(comparisonOperationComboBox.getSelectedIndex());
+		SearchConditions searchConditions = searchConditionComboBox.getItemAt(searchConditionComboBox.getSelectedIndex());
 		ValueSize valueSize = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex());
 		SearchModes searchMode = searchModeComboBox.getItemAt(searchModeComboBox.getSelectedIndex());
 
@@ -459,7 +459,7 @@ public class JGeckoUGUI extends JFrame
 		{
 			case SPECIFIC:
 				BigInteger value = new BigInteger(searchValueField.getText(), 16);
-				return new SearchRefinement(searchCondition, valueSize, value);
+				return new SearchRefinement(searchConditions, valueSize, value);
 
 			case UNKNOWN:
 				if (memorySearcher.isFirstSearch())
@@ -467,7 +467,7 @@ public class JGeckoUGUI extends JFrame
 					return new SearchRefinement(valueSize);
 				}
 
-				return new SearchRefinement(searchCondition, valueSize);
+				return new SearchRefinement(searchConditions, valueSize);
 
 			default:
 				throw new IllegalStateException("Unhandled search mode");
@@ -483,11 +483,7 @@ public class JGeckoUGUI extends JFrame
 	{
 		int searchResultsCount = searchResults.size();
 		setResultsCountLabel(searchResultsCount);
-
-		if (searchResults.size() < 99999)
-		{
-			searchResultsTableManager.populateSearchResults(searchResults);
-		}
+		searchResultsTableManager.populateSearchResults(searchResults, searchResults.size() < 99999);
 	}
 
 	private void startNewSearch()
@@ -525,8 +521,8 @@ public class JGeckoUGUI extends JFrame
 
 	private void populateSearchConditions()
 	{
-		DefaultComboBoxModel<SearchCondition> defaultComboBoxModel2 = new DefaultComboBoxModel<>(SearchCondition.values());
-		comparisonOperationComboBox.setModel(defaultComboBoxModel2);
+		DefaultComboBoxModel<SearchConditions> defaultComboBoxModel2 = new DefaultComboBoxModel<>(SearchConditions.values());
+		searchConditionComboBox.setModel(defaultComboBoxModel2);
 	}
 
 	private void populateSearchModes()
@@ -543,7 +539,7 @@ public class JGeckoUGUI extends JFrame
 		searchValueSizeComboBox.setEnabled(!searchStarted);
 		searchStartingAddressField.setEnabled(!searchStarted);
 		searchEndingAddressField.setEnabled(!searchStarted);
-		undoSearchButton.setEnabled(searchStarted && memorySearcher.canUndoSearch());
+		undoSearchButton.setEnabled(searchStarted && memorySearcher.canUndoSearch() &&!searching);
 
 		SearchModes searchMode = searchModeComboBox.getItemAt(searchModeComboBox.getSelectedIndex());
 		if (searchMode == SearchModes.UNKNOWN)
@@ -553,15 +549,15 @@ public class JGeckoUGUI extends JFrame
 			// First search?
 			if (memorySearcher == null)
 			{
-				comparisonOperationComboBox.setEnabled(false);
+				searchConditionComboBox.setEnabled(false);
 			} else
 			{
-				comparisonOperationComboBox.setEnabled(true);
+				searchConditionComboBox.setEnabled(true);
 			}
 		} else
 		{
 			searchValueField.setEnabled(true);
-			comparisonOperationComboBox.setEnabled(true);
+			searchConditionComboBox.setEnabled(true);
 		}
 
 		setSearchButtonAvailability();
@@ -1456,6 +1452,8 @@ public class JGeckoUGUI extends JFrame
 			simpleProperties.put("SEARCH_RANGE_END", searchEndingAddressField.getText());
 			simpleProperties.put("SEARCH_VALUE", searchValueField.getText());
 			simpleProperties.put("SEARCH_VALUE_SIZE", searchValueSizeComboBox.getSelectedItem().toString());
+			simpleProperties.put("SEARCH_MODE", searchModeComboBox.getSelectedItem().toString());
+			simpleProperties.put("SEARCH_CONDITION", searchConditionComboBox.getSelectedItem().toString());
 
 			simpleProperties.writeToFile();
 		}));
@@ -1562,6 +1560,20 @@ public class JGeckoUGUI extends JFrame
 		if (searchValue != null)
 		{
 			searchValueField.setText(searchValue);
+		}
+
+		String searchMode = simpleProperties.get("SEARCH_MODE");
+		if (searchMode != null)
+		{
+			SearchModes mode = SearchModes.parse(searchMode);
+			searchModeComboBox.setSelectedItem(mode);
+		}
+
+		String searchCondition = simpleProperties.get("SEARCH_CONDITION");
+		if (searchCondition != null)
+		{
+			SearchConditions condition = SearchConditions.parse(searchCondition);
+			searchConditionComboBox.setSelectedItem(condition);
 		}
 	}
 

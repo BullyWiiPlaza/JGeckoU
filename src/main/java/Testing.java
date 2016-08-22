@@ -69,9 +69,9 @@ public class Testing
 		System.out.println(Integer.toHexString(address).toUpperCase());
 		/*MemorySearch memorySearch = new MemorySearch(0x10000000, 0x1000);
 		memorySearch.dump();
-		memorySearch.dumpBytes(0x6C64206E, SearchCondition.EQUAL);
+		memorySearch.dumpBytes(0x6C64206E, SearchConditions.EQUAL);
 		memorySearch.dump();
-		// memorySearch.dumpBytes(0x20202000, SearchCondition.NOT_EQUAL);
+		// memorySearch.dumpBytes(0x20202000, SearchConditions.NOT_EQUAL);
 		// WordSearch_old wordSearchOld = new WordSearch_old(0x10000000, 0x1000);
 		// wordSearchOld.dumpBytes(0x6C64206E);
 		// wordSearchOld.dumpBytes(0x6C64206E);

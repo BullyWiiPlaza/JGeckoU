@@ -195,21 +195,6 @@ public class MemoryReader extends TCPGecko
 		}
 	}
 
-	public static String getExpectedWaitingTime(int bytesCount)
-	{
-		int bytesPerMillisecond = 61; // The network bandwidth might differ
-		return millisecondsToDateString(bytesCount / bytesPerMillisecond);
-	}
-
-	private static String millisecondsToDateString(long expectedWaitingTimeMilliseconds)
-	{
-		long seconds = (expectedWaitingTimeMilliseconds / 1000) % 60;
-		long minutes = (expectedWaitingTimeMilliseconds / (1000 * 60)) % 60;
-		long hours = (expectedWaitingTimeMilliseconds / (1000 * 60 * 60)) % 24;
-
-		return String.format("%02d hours %02d minutes and %02d seconds", hours, minutes, seconds);
-	}
-
 	public int readValue(int targetAddress, ValueSizes valueSize) throws IOException
 	{
 		reentrantLock.lock();
