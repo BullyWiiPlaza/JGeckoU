@@ -12,10 +12,10 @@ public abstract class TCPGecko
 {
 	protected DataOutputStream dataSender;
 	protected DataInputStream dataReceiver;
-	static final ReentrantLock reentrantLock = new ReentrantLock(true);
+	public static final ReentrantLock reentrantLock = new ReentrantLock(true);
 	public static final int MAXIMUM_MEMORY_CHUNK_SIZE = 0x400;
 	public static boolean enforceMemoryAccessProtection = true;
-	public static boolean isRequestingBytes = false;
+	public static boolean hasRequestedBytes = false;
 
 	public TCPGecko()
 	{

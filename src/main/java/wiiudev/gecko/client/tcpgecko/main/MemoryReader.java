@@ -306,28 +306,35 @@ public class MemoryReader extends TCPGecko
 	 */
 	public byte[] readBytes(int address, int length) throws IOException
 	{
-		requestBytes(address, length);
+		reentrantLock.lock();
 
-		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-		while (length > 0)
+		try
 		{
-			int chunkSize = length;
+			requestBytes(address, length);
 
-			if (chunkSize > MAXIMUM_MEMORY_CHUNK_SIZE)
+			ByteArrayOutputStream receiverBuffer = new ByteArrayOutputStream();
+
+			while (length > 0)
 			{
-				chunkSize = MAXIMUM_MEMORY_CHUNK_SIZE;
+				int chunkSize = length;
+
+				if (chunkSize > MAXIMUM_MEMORY_CHUNK_SIZE)
+				{
+					chunkSize = MAXIMUM_MEMORY_CHUNK_SIZE;
+				}
+
+				byte[] readBytes = readBytes(chunkSize);
+				receiverBuffer.write(readBytes);
+
+				length -= chunkSize;
 			}
 
-			byte[] readBytes = readBytes(chunkSize);
-			byteArrayOutputStream.write(readBytes);
-
-			length -= chunkSize;
+			return receiverBuffer.toByteArray();
+		} finally
+		{
+			TCPGecko.hasRequestedBytes = false;
+			reentrantLock.unlock();
 		}
-
-		TCPGecko.isRequestingBytes = false;
-
-		return byteArrayOutputStream.toByteArray();
 	}
 
 	public void requestBytes(int address, int length) throws IOException
@@ -343,7 +350,7 @@ public class MemoryReader extends TCPGecko
 			dataSender.writeInt(address + length);
 			dataSender.flush();
 
-			TCPGecko.isRequestingBytes = true;
+			TCPGecko.hasRequestedBytes = true;
 		} finally
 		{
 			reentrantLock.unlock();

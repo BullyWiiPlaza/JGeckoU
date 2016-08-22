@@ -62,28 +62,37 @@ public class GraphicalMemoryDumper
 				// Delete the target file before dumping into it
 				FileUtils.deleteQuietly(targetFile);
 
-				memoryReader.requestBytes(address, bytesCount);
+				TCPGecko.reentrantLock.lock();
 
-				// Read in chunks
-				while (bytesCount > TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
+				try
 				{
-					byte[] retrievedBytes = memoryReader.readBytes(TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
-					FileUtils.writeByteArrayToFile(targetFile, retrievedBytes, true);
+					memoryReader.requestBytes(address, bytesCount);
 
-					bytesCount -= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
-					address += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
-					bytesDumped += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
+					// Read in chunks
+					while (bytesCount > TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
+					{
+						byte[] retrievedBytes = memoryReader.readBytes(TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
+						FileUtils.writeByteArrayToFile(targetFile, retrievedBytes, true);
 
-					long progress = bytesDumped * 100 / startingBytesCount;
-					setProgress((int) progress);
-					publish(bytesDumped);
-				}
+						bytesCount -= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
+						address += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
+						bytesDumped += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
 
-				if (bytesCount <= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
+						long progress = bytesDumped * 100 / startingBytesCount;
+						setProgress((int) progress);
+						publish(bytesDumped);
+					}
+
+					// Read the last chunk
+					if (bytesCount <= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
+					{
+						byte[] retrievedBytes = memoryReader.readBytes(bytesCount);
+						FileUtils.writeByteArrayToFile(targetFile, retrievedBytes, true);
+						bytesDumped += retrievedBytes.length;
+					}
+				} finally
 				{
-					byte[] retrievedBytes = memoryReader.readBytes(bytesCount);
-					FileUtils.writeByteArrayToFile(targetFile, retrievedBytes, true);
-					bytesDumped += retrievedBytes.length;
+					TCPGecko.reentrantLock.unlock();
 				}
 
 				long progress = bytesDumped * 100 / startingBytesCount;
@@ -97,7 +106,7 @@ public class GraphicalMemoryDumper
 				StackTraceUtils.handleException(JGeckoUGUI.getInstance().getRootPane(), exception);
 			} finally
 			{
-				TCPGecko.isRequestingBytes = false;
+				TCPGecko.hasRequestedBytes = false;
 				dumpMemoryButton.setText(dumpText);
 				dumpMemoryButton.setEnabled(true);
 			}

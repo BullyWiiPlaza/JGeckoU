@@ -58,41 +58,50 @@ public class GraphicalSearcher
 				long bytesDumped = 0;
 				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
-				memoryReader.requestBytes(address, length);
+				TCPGecko.reentrantLock.lock();
 
-				// Read in chunks
-				while (length > TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
+				try
 				{
-					byte[] retrievedBytes = memoryReader.readBytes(TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
-					byteArrayOutputStream.write(retrievedBytes);
+					memoryReader.requestBytes(address, length);
 
-					length -= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
-					address += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
-					bytesDumped += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
+					// Read in chunks
+					while (length > TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
+					{
+						byte[] retrievedBytes = memoryReader.readBytes(TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
+						byteArrayOutputStream.write(retrievedBytes);
 
-					long progress = bytesDumped * 100 / startingBytesCount;
-					setProgress((int) progress);
-					publish(bytesDumped);
-				}
+						length -= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
+						address += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
+						bytesDumped += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
 
-				if (length <= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
+						long progress = bytesDumped * 100 / startingBytesCount;
+						setProgress((int) progress);
+						publish(bytesDumped);
+					}
+
+					if (length <= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
+					{
+						byte[] retrievedBytes = memoryReader.readBytes(length);
+						byteArrayOutputStream.write(retrievedBytes);
+						bytesDumped += retrievedBytes.length;
+					}
+				} finally
 				{
-					byte[] retrievedBytes = memoryReader.readBytes(length);
-					byteArrayOutputStream.write(retrievedBytes);
-					bytesDumped += retrievedBytes.length;
+					TCPGecko.reentrantLock.unlock();
 				}
 
 				long progress = bytesDumped * 100 / startingBytesCount;
 				setProgress((int) progress);
 
 				dumpedBytes = byteArrayOutputStream.toByteArray();
+
 				return bytesDumped;
 			} catch (Exception exception)
 			{
 				StackTraceUtils.handleException(JGeckoUGUI.getInstance().getRootPane(), exception);
 			} finally
 			{
-				TCPGecko.isRequestingBytes = false;
+				TCPGecko.hasRequestedBytes = false;
 			}
 
 			return null;

@@ -476,7 +476,6 @@ public class JGeckoUGUI extends JFrame
 			{
 				String searchButtonText = searchButton.getText();
 				searching = true;
-				programTabs.setEnabled(false);
 				searchButton.setText("Dumping...");
 				setConnectionButtonsAvailability();
 
@@ -498,7 +497,6 @@ public class JGeckoUGUI extends JFrame
 				} finally
 				{
 					searchButton.setText(searchButtonText);
-					programTabs.setEnabled(true);
 					searching = false;
 
 					if (searchResultsTableManager.areSearchResultsEmpty())
@@ -1198,12 +1196,6 @@ public class JGeckoUGUI extends JFrame
 		programTabs.remove(fileSystemTab);
 	}
 
-	private static boolean runningFromIntelliJ()
-	{
-		String classPath = System.getProperty("java.class.path");
-		return classPath.contains("IntelliJ IDEA");
-	}
-
 	private void monitorGeckoServerHealth()
 	{
 		Thread monitor = new Thread(() ->
@@ -1212,7 +1204,8 @@ public class JGeckoUGUI extends JFrame
 			{
 				try
 				{
-					if (!TCPGecko.isRequestingBytes && !searching && !readingThreads)
+					if (!TCPGecko.hasRequestedBytes
+							&& !searching && !readingThreads)
 					{
 						MemoryReader memoryReader = new MemoryReader();
 						boolean isRunning = memoryReader.isRunning();
@@ -2685,7 +2678,8 @@ public class JGeckoUGUI extends JFrame
 				@Override
 				protected String doInBackground() throws Exception
 				{
-					while (memoryViewerAutoUpdateCheckBox.isSelected() && TCPGecko.isConnected())
+					while (memoryViewerAutoUpdateCheckBox.isSelected()
+							&& TCPGecko.isConnected())
 					{
 						// Only update when the user is viewing the memory viewer table
 						if (memoryViewerTable.isShowing())
