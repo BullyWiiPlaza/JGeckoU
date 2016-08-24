@@ -42,7 +42,12 @@ public class SearchResult implements Cloneable, Comparable
 
 	public byte[] getPreviousValueBytes() throws IOException
 	{
-		byte[] previousValue = getPreviousValue().toByteArray();
+		return getBytes(previousValue);
+	}
+
+	private byte[] getBytes(BigInteger bigInteger) throws IOException
+	{
+		byte[] previousValue = bigInteger.toByteArray();
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 		int bytesCount = getValueSize().getBytesCount();
 		int paddingBytes = bytesCount - previousValue.length;
@@ -50,6 +55,11 @@ public class SearchResult implements Cloneable, Comparable
 		byteArrayOutputStream.write(previousValue);
 
 		return byteArrayOutputStream.toByteArray();
+	}
+
+	public byte[] getCurrentValueBytes() throws IOException
+	{
+		return getBytes(currentValue);
 	}
 
 	public int getAddress()

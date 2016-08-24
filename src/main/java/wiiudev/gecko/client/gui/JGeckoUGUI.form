@@ -872,6 +872,7 @@
                     </constraints>
                     <properties>
                       <text value="10000000"/>
+                      <toolTipText value="The starting address"/>
                     </properties>
                   </component>
                   <component id="dcd0c" class="javax.swing.JTextField" binding="searchEndingAddressField">
@@ -882,6 +883,7 @@
                     </constraints>
                     <properties>
                       <text value="10001000"/>
+                      <toolTipText value="The last address"/>
                     </properties>
                   </component>
                   <component id="f8c5e" class="javax.swing.JLabel">
@@ -916,13 +918,17 @@
                     <constraints>
                       <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
-                    <properties/>
+                    <properties>
+                      <toolTipText value="The search condition"/>
+                    </properties>
                   </component>
                   <component id="1449d" class="javax.swing.JComboBox" binding="searchModeComboBox">
                     <constraints>
                       <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
-                    <properties/>
+                    <properties>
+                      <toolTipText value="The search mode"/>
+                    </properties>
                   </component>
                   <component id="c3fb8" class="javax.swing.JTextField" binding="searchValueField">
                     <constraints>
@@ -932,6 +938,7 @@
                     </constraints>
                     <properties>
                       <text value="000003E8"/>
+                      <toolTipText value="The value to search"/>
                     </properties>
                   </component>
                   <component id="2d197" class="javax.swing.JLabel">
@@ -946,7 +953,9 @@
                     <constraints>
                       <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
-                    <properties/>
+                    <properties>
+                      <toolTipText value="The value size to use"/>
+                    </properties>
                   </component>
                   <component id="9f983" class="javax.swing.JLabel">
                     <constraints>
@@ -979,7 +988,9 @@
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                     </constraints>
-                    <properties/>
+                    <properties>
+                      <toolTipText value="The search progress"/>
+                    </properties>
                     <border type="none"/>
                     <children>
                       <component id="87b4c" class="javax.swing.JProgressBar" binding="searchProgressBar">
@@ -1012,6 +1023,7 @@
                         </constraints>
                         <properties>
                           <text value="Search"/>
+                          <toolTipText value="Starts a memory value search"/>
                         </properties>
                       </component>
                       <component id="49edb" class="javax.swing.JButton" binding="undoSearchButton">
@@ -1020,6 +1032,7 @@
                         </constraints>
                         <properties>
                           <text value="Undo"/>
+                          <toolTipText value="Restores previous search results"/>
                         </properties>
                       </component>
                       <component id="338bf" class="javax.swing.JButton" binding="restartSearchButton">
@@ -1028,6 +1041,7 @@
                         </constraints>
                         <properties>
                           <text value="Restart"/>
+                          <toolTipText value="Restarts the current search from the beginning"/>
                         </properties>
                       </component>
                     </children>
@@ -1038,6 +1052,7 @@
                     </constraints>
                     <properties>
                       <text value="Load"/>
+                      <toolTipText value="Loads saved search results"/>
                     </properties>
                   </component>
                   <component id="4c57d" class="javax.swing.JButton" binding="saveSearchButton">
@@ -1046,6 +1061,7 @@
                     </constraints>
                     <properties>
                       <text value="Save"/>
+                      <toolTipText value="Saves the current search results"/>
                     </properties>
                   </component>
                 </children>
@@ -1054,7 +1070,9 @@
                 <constraints>
                   <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
-                <properties/>
+                <properties>
+                  <toolTipText value="The search results table"/>
+                </properties>
                 <border type="none"/>
                 <children>
                   <component id="8e152" class="javax.swing.JTable" binding="searchResultsTable">
@@ -1283,6 +1301,14 @@
                     </constraints>
                     <properties>
                       <text value="System Information"/>
+                    </properties>
+                  </component>
+                  <component id="98b09" class="javax.swing.JButton" binding="memoryBoundsButton" default-binding="true">
+                    <constraints>
+                      <grid row="8" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Memory Bounds"/>
                     </properties>
                   </component>
                 </children>

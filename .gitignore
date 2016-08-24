@@ -7,6 +7,9 @@
 # Ignore the log files
 /logs
 
+# Ignore saved searches
+/searches
+
 # Ignore the titles database
 /Titles.xml
 

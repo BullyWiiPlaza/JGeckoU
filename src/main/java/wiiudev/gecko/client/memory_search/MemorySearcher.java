@@ -112,7 +112,12 @@ public class MemorySearcher
 		progressBar.setValue(100);
 		searchResults = updatedSearchResults;
 		isFirstSearch = false;
-		pushSearchResults();
+
+		// Do not smash the RAM
+		if (searchResults.size() < 99999)
+		{
+			pushSearchResults();
+		}
 
 		return searchResults;
 	}

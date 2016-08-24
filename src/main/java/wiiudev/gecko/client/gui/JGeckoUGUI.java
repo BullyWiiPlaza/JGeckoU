@@ -18,11 +18,11 @@ import wiiudev.gecko.client.gui.tabs.disassembler.DisassemblerTableManager;
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Assembler;
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerException;
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerFilesException;
+import wiiudev.gecko.client.gui.tabs.memory_search.SearchResultsTableManager;
 import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViewerTableManager;
 import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViews;
 import wiiudev.gecko.client.gui.tabs.pointer_search.DownloadingUtilities;
 import wiiudev.gecko.client.gui.tabs.pointer_search.ZipUtils;
-import wiiudev.gecko.client.gui.tabs.search.SearchResultsTableManager;
 import wiiudev.gecko.client.gui.tabs.threads.ThreadsTableManager;
 import wiiudev.gecko.client.gui.tabs.watch_list.*;
 import wiiudev.gecko.client.gui.utilities.DefaultContextMenu;
@@ -181,6 +181,7 @@ public class JGeckoUGUI extends JFrame
 	private JProgressBar searchProgressBar;
 	private JButton saveSearchButton;
 	private JButton loadSearchButton;
+	private JButton memoryBoundsButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -359,7 +360,7 @@ public class JGeckoUGUI extends JFrame
 
 			try
 			{
-				Path targetPath = setSearchResultsCurrentDirectory(fileChooser);
+				setSearchResultsCurrentDirectory(fileChooser);
 				int selectedOption = fileChooser.showSaveDialog(this);
 
 				if (selectedOption == JOptionPane.OK_OPTION)
@@ -420,7 +421,7 @@ public class JGeckoUGUI extends JFrame
 			Object[] options = {"Yes", "No"};
 
 			int selectedAnswer = JOptionPane.showOptionDialog(rootPane,
-					"Would you really like to undo the last search?",
+					"Would you really like to undo the last memory search?",
 					undoSearchButton.getText(),
 					JOptionPane.YES_NO_CANCEL_OPTION,
 					JOptionPane.QUESTION_MESSAGE,
@@ -447,7 +448,7 @@ public class JGeckoUGUI extends JFrame
 			Object[] options = {"Yes", "No"};
 
 			int selectedAnswer = JOptionPane.showOptionDialog(rootPane,
-					"Would you really like to start a new search?",
+					"Would you really like to start a new memory search?",
 					restartSearchButton.getText(),
 					JOptionPane.YES_NO_CANCEL_OPTION,
 					JOptionPane.QUESTION_MESSAGE,
@@ -506,7 +507,7 @@ public class JGeckoUGUI extends JFrame
 						Object[] options = {"Yes", "No"};
 
 						int selectedAnswer = JOptionPane.showOptionDialog(rootPane,
-								"Would you like to start a new search?",
+								"Would you like to start a new memory search?",
 								"No results found",
 								JOptionPane.YES_NO_CANCEL_OPTION,
 								JOptionPane.QUESTION_MESSAGE,
@@ -530,7 +531,7 @@ public class JGeckoUGUI extends JFrame
 
 	private void defineMemorySearcher()
 	{
-		// This can only be defined at the start of a new search
+		// This can only be defined at the start of a new memory search
 		int startingAddress = Conversions.toDecimal(searchStartingAddressField.getText());
 		int endAddress = Conversions.toDecimal(searchEndingAddressField.getText());
 		memorySearcher = new MemorySearcher(startingAddress, endAddress - startingAddress);
@@ -539,7 +540,7 @@ public class JGeckoUGUI extends JFrame
 
 	private SearchRefinement getSearchRefinement()
 	{
-		// This can be changed during each search step
+		// This can be changed during each memory search step
 		SearchConditions searchConditions = searchConditionComboBox.getItemAt(searchConditionComboBox.getSelectedIndex());
 		ValueSize valueSize = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex());
 		SearchModes searchMode = searchModeComboBox.getItemAt(searchModeComboBox.getSelectedIndex());
@@ -559,7 +560,7 @@ public class JGeckoUGUI extends JFrame
 				return new SearchRefinement(searchConditions, valueSize);
 
 			default:
-				throw new IllegalStateException("Unhandled search mode");
+				throw new IllegalStateException("Unhandled memory search mode");
 		}
 	}
 
@@ -631,15 +632,17 @@ public class JGeckoUGUI extends JFrame
 		searchStartingAddressField.setEnabled(!searchStarted);
 		searchEndingAddressField.setEnabled(!searchStarted);
 		undoSearchButton.setEnabled(searchStarted && memorySearcher.canUndoSearch() && !searching);
+		loadSearchButton.setEnabled(!searching);
 		saveSearchButton.setEnabled(searchResultsTableManager != null
 				&& searchResultsTableManager.getSearchResults() != null
-				&& !searchResultsTableManager.getSearchResults().isEmpty());
+				&& !searchResultsTableManager.getSearchResults().isEmpty()
+		&& searchResultsTableManager.getSearchResults().size() < 99999);
 		SearchModes searchMode = searchModeComboBox.getItemAt(searchModeComboBox.getSelectedIndex());
 		if (searchMode == SearchModes.UNKNOWN)
 		{
 			searchValueField.setEnabled(false);
 
-			// First search?
+			// First memory search?
 			if (memorySearcher == null)
 			{
 				searchConditionComboBox.setEnabled(false);
@@ -656,7 +659,7 @@ public class JGeckoUGUI extends JFrame
 		setSearchButtonAvailability();
 	}
 
-	private void setSearchResultsCountLabel()
+	public void setSearchResultsCountLabel()
 	{
 		int count = (searchResultsTableManager == null || searchResultsTableManager.getSearchResults() == null)
 				? 0 : searchResultsTableManager.getSearchResults().size();
@@ -1180,6 +1183,13 @@ public class JGeckoUGUI extends JFrame
 
 		remoteProcedureCallButton.addActionListener(actionEvent ->
 				setVisible(new RemoteProcedureCallDialog(), rootPane, actionEvent));
+
+		memoryBoundsButton.addActionListener(actionEvent ->
+				JOptionPane.showMessageDialog(this,
+						"App/Executable Start: " + Conversions.toHexadecimal(AddressRange.appExecutableLibraries.getStartingAddress()) + System.lineSeparator()
+								+ "MEM2 Region End: " + Conversions.toHexadecimal(AddressRange.mem2Region.getEndingAddress()),
+						memoryBoundsButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE));
 	}
 
 	private void configureMiscellaneousTab()
@@ -1196,7 +1206,7 @@ public class JGeckoUGUI extends JFrame
 		programTabs.remove(fileSystemTab);
 	}
 
-	private void monitorGeckoServerHealth()
+	private void monitorGeckoServerHealthConcurrently()
 	{
 		Thread monitor = new Thread(() ->
 		{
@@ -3148,7 +3158,10 @@ public class JGeckoUGUI extends JFrame
 			Connector.getInstance().connect(ipAddress);
 		}
 
-		monitorGeckoServerHealth();
+		AddressRange.setAppExecutableLibrariesStart();
+		AddressRange.setMEM2RegionEnd();
+
+		monitorGeckoServerHealthConcurrently();
 		String ipAddressAddition = (autoDetectCheckBox.isSelected() ? (" [" + ipAddress + "]") : "");
 		connectButton.setText(connectButtonText + "ed" + ipAddressAddition);
 		connectedIPAddress = ipAddress;
@@ -3282,6 +3295,7 @@ public class JGeckoUGUI extends JFrame
 		boolean shouldEnableConnectButton = !connected
 				&& mayConnect && !connecting && titlesInitialized;
 		connectButton.setEnabled(shouldEnableConnectButton);
+		memoryBoundsButton.setEnabled(connected);
 		processPFIDButton.setEnabled(connected);
 		systemInformationButton.setEnabled(connected);
 		setSearchButtonsAvailability();
@@ -3335,7 +3349,10 @@ public class JGeckoUGUI extends JFrame
 		ValueSize valueSize = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex());
 		boolean isRangeAlignedCorrectly = valueSize != null
 				&& (Conversions.toDecimal(searchEndingAddressField.getText()) - Conversions.toDecimal(searchStartingAddressField.getText())) % valueSize.getBytesCount() == 0;
-		searchButton.setEnabled(TCPGecko.isConnected() && !searching && !noResultsFound && isRangePositive && isRangeAlignedCorrectly);
+		boolean areAddressesValid = AddressRange.isValidAccess(Conversions.toDecimal(searchStartingAddressField.getText()), 1, MemoryAccessLevel.READ) && AddressRange.isValidAccess(Conversions.toDecimal(searchEndingAddressField.getText()), 1, MemoryAccessLevel.READ);
+		searchButton.setEnabled(TCPGecko.isConnected() && !searching
+				&& !noResultsFound && isRangePositive
+				&& isRangeAlignedCorrectly && areAddressesValid);
 	}
 
 	private void setCodeListButtonsAvailability()

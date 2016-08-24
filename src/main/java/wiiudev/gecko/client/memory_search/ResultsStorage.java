@@ -86,7 +86,7 @@ public class ResultsStorage
 
 		xMLStreamWriter.writeStartDocument();
 
-		String resultsElementTagName = "search";
+		String resultsElementTagName = "memory_search";
 		xMLStreamWriter.writeStartElement(resultsElementTagName);
 
 		xMLStreamWriter.writeStartElement("settings");

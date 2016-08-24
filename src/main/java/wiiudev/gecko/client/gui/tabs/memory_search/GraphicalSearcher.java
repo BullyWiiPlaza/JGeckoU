@@ -1,4 +1,4 @@
-package wiiudev.gecko.client.gui.tabs.search;
+package wiiudev.gecko.client.gui.tabs.memory_search;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import wiiudev.gecko.client.debugging.StackTraceUtils;

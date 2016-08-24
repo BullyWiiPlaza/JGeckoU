@@ -1,4 +1,4 @@
-package wiiudev.gecko.client.gui.tabs.search;
+package wiiudev.gecko.client.gui.tabs.memory_search;
 
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
@@ -26,6 +26,8 @@ public class SearchTableContextMenu extends JPopupMenu
 	{
 		KeyStroke memoryViewerKeyStroke = PopupMenuUtilities.addOption(this, "Memory Viewer", "control M", actionEvent -> switchToMemoryViewer());
 		KeyStroke pokePreviousKeyStroke = PopupMenuUtilities.addOption(this, "Poke Previous", "control P", actionEvent -> pokePreviousValues());
+		KeyStroke pokeCurrentKeyStroke = PopupMenuUtilities.addOption(this, "Poke Current", "control U", actionEvent -> pokeCurrentValues());
+		KeyStroke deleteSelectedKeyStroke = PopupMenuUtilities.addOption(this, "Delete", "control D", actionEvent -> deleteSelectedRows());
 
 		JTable table = tableManager.getTable();
 		table.addKeyListener(new KeyAdapter()
@@ -41,29 +43,60 @@ public class SearchTableContextMenu extends JPopupMenu
 					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, pokePreviousKeyStroke))
 					{
 						pokePreviousValues();
+					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, pokeCurrentKeyStroke))
+					{
+						pokeCurrentValues();
+					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, deleteSelectedKeyStroke))
+					{
+						deleteSelectedRows();
 					}
 				}
 			}
 		});
 	}
 
+	private void deleteSelectedRows()
+	{
+		tableManager.deleteSelectedRows();
+	}
+
+	private void pokeCurrentValues()
+	{
+		List<SearchResult> searchResults = tableManager.getSelected();
+
+		try
+		{
+			for (SearchResult searchResult : searchResults)
+			{
+				poke(searchResult, searchResult.getCurrentValueBytes());
+			}
+		} catch (IOException exception)
+		{
+			StackTraceUtils.handleException(getRootPane(), exception);
+		}
+	}
+
 	private void pokePreviousValues()
 	{
 		List<SearchResult> searchResults = tableManager.getSelected();
-		MemoryWriter memoryWriter = new MemoryWriter();
 
-		for (SearchResult searchResult : searchResults)
+		try
 		{
-			try
+			for (SearchResult searchResult : searchResults)
 			{
-				int address = searchResult.getAddress();
-				byte[] previousValue = searchResult.getPreviousValueBytes();
-				memoryWriter.writeBytes(address, previousValue);
-			} catch (IOException exception)
-			{
-				StackTraceUtils.handleException(getRootPane(), exception);
+				poke(searchResult, searchResult.getPreviousValueBytes());
 			}
+		} catch (IOException exception)
+		{
+			StackTraceUtils.handleException(getRootPane(), exception);
 		}
+	}
+
+	private void poke(SearchResult searchResult, byte[] value) throws IOException
+	{
+		MemoryWriter memoryWriter = new MemoryWriter();
+		int address = searchResult.getAddress();
+		memoryWriter.writeBytes(address, value);
 	}
 
 	private void switchToMemoryViewer()

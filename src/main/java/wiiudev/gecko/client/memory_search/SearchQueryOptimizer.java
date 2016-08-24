@@ -1,7 +1,7 @@
 package wiiudev.gecko.client.memory_search;
 
 import wiiudev.gecko.client.gui.JGeckoUGUI;
-import wiiudev.gecko.client.gui.tabs.search.GraphicalSearcher;
+import wiiudev.gecko.client.gui.tabs.memory_search.GraphicalSearcher;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;

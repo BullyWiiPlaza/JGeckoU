@@ -1,6 +1,7 @@
-package wiiudev.gecko.client.gui.tabs.search;
+package wiiudev.gecko.client.gui.tabs.memory_search;
 
 import wiiudev.gecko.client.conversions.Conversions;
+import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.utilities.JTableUtilities;
 import wiiudev.gecko.client.memory_search.SearchResult;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
@@ -69,7 +70,7 @@ public class SearchResultsTableManager
 		this.searchResults = searchResults;
 		removeAllRows();
 
-		// Do not populate the table when results are numerous
+		// Do not populate the table when results are numerous to avoid delay
 		if (searchResults.size() < 99999)
 		{
 			searchResults.forEach(this::addRow);
@@ -78,7 +79,6 @@ public class SearchResultsTableManager
 
 	private void addRow(SearchResult searchResult)
 	{
-
 		Object[] objects = new Object[]{new Hexadecimal(searchResult.getAddress(), 8),
 				Conversions.toHexadecimal(searchResult.getPreviousValue(), searchResult.getValueSize()),
 				Conversions.toHexadecimal(searchResult.getCurrentValue(), searchResult.getValueSize()),
@@ -125,5 +125,18 @@ public class SearchResultsTableManager
 	public void clearSearchResults()
 	{
 		searchResults.clear();
+	}
+
+	public void deleteSelectedRows()
+	{
+		int[] selectedRows = table.getSelectedRows();
+
+		for (int selectedRow : selectedRows)
+		{
+			searchResults.remove(selectedRow);
+		}
+
+		JTableUtilities.deleteSelectedRows(table);
+		JGeckoUGUI.getInstance().setSearchResultsCountLabel();
 	}
 }
