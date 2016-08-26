@@ -45,16 +45,15 @@ public class WatchListElement
 
 	public String readValue() throws IOException
 	{
-		long destinationAddress = addressExpression.getDestinationAddress();
+		int destinationAddress = (int) addressExpression.getDestinationAddress();
 
-		if(destinationAddress == MemoryPointerExpression.INVALID_POINTER)
+		if (destinationAddress == MemoryPointerExpression.INVALID_POINTER)
 		{
 			return "INVALID";
-		}
-		else
+		} else
 		{
 			MemoryReader memoryReader = new MemoryReader();
-			return memoryReader.readValue((int) destinationAddress, valueSize);
+			return memoryReader.readValue(destinationAddress, valueSize);
 		}
 	}
 }

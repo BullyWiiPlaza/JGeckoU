@@ -123,7 +123,7 @@ public class MemoryViewerTableManager
 		for (int rowIndex = 0; rowIndex < rowCount; rowIndex++)
 		{
 			String memoryAddress = (String) tableModel.getValueAt(rowIndex, 0);
-			int memoryViewerAddress = Integer.parseInt(memoryAddress, 16);
+			int memoryViewerAddress = Integer.parseUnsignedInt(memoryAddress, 16);
 			int difference = address - memoryViewerAddress;
 
 			if (difference <= cellAddressOffset * columnCount)

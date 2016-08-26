@@ -182,6 +182,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton saveSearchButton;
 	private JButton loadSearchButton;
 	private JButton memoryBoundsButton;
+	private JLabel threadsCountLabel;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -342,7 +343,7 @@ public class JGeckoUGUI extends JFrame
 					memorySearcher = new MemorySearcher(searchBounds);
 					searchValueSizeComboBox.setSelectedItem(searchBackup.getValueSize());
 					memorySearcher.setSetResults(searchResults);
-					setSearchIterationsLabel();
+					updateSearchIterationsLabel();
 					setSearchButtonsAvailability();
 				}
 			} catch (Exception exception)
@@ -385,8 +386,8 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		setSearchResultsCountLabel();
-		setSearchIterationsLabel();
+		updateSearchResultsCountLabel();
+		updateSearchIterationsLabel();
 		setConnectionButtonsAvailability();
 
 		addSearchButtonListener();
@@ -436,7 +437,7 @@ public class JGeckoUGUI extends JFrame
 
 				noResultsFound = false;
 				setConnectionButtonsAvailability();
-				setSearchIterationsLabel();
+				updateSearchIterationsLabel();
 			}
 		});
 	}
@@ -490,7 +491,7 @@ public class JGeckoUGUI extends JFrame
 					SearchRefinement searchRefinement = getSearchRefinement();
 					List<SearchResult> searchResults = memorySearcher.search(searchRefinement);
 					populateSearchResults(searchResults);
-					setSearchIterationsLabel();
+					updateSearchIterationsLabel();
 					setConnectionButtonsAvailability();
 				} catch (Exception exception)
 				{
@@ -564,7 +565,7 @@ public class JGeckoUGUI extends JFrame
 		}
 	}
 
-	private void setSearchIterationsLabel()
+	private void updateSearchIterationsLabel()
 	{
 		int iteration = memorySearcher == null ? 0 : memorySearcher.getSearchIterationsCount();
 		searchIterationLabel.setText("Iteration: " + iteration);
@@ -573,7 +574,7 @@ public class JGeckoUGUI extends JFrame
 	private void populateSearchResults(List<SearchResult> searchResults)
 	{
 		searchResultsTableManager.populateSearchResults(searchResults);
-		setSearchResultsCountLabel();
+		updateSearchResultsCountLabel();
 	}
 
 	private void startNewSearch()
@@ -582,8 +583,8 @@ public class JGeckoUGUI extends JFrame
 		searchResultsTableManager.clearSearchResults();
 		memorySearcher = null;
 
-		setSearchResultsCountLabel();
-		setSearchIterationsLabel();
+		updateSearchResultsCountLabel();
+		updateSearchIterationsLabel();
 		noResultsFound = false;
 		setConnectionButtonsAvailability();
 	}
@@ -636,7 +637,7 @@ public class JGeckoUGUI extends JFrame
 		saveSearchButton.setEnabled(searchResultsTableManager != null
 				&& searchResultsTableManager.getSearchResults() != null
 				&& !searchResultsTableManager.getSearchResults().isEmpty()
-		&& searchResultsTableManager.getSearchResults().size() < 99999);
+				&& searchResultsTableManager.getSearchResults().size() < 99999);
 		SearchModes searchMode = searchModeComboBox.getItemAt(searchModeComboBox.getSelectedIndex());
 		if (searchMode == SearchModes.UNKNOWN)
 		{
@@ -659,7 +660,7 @@ public class JGeckoUGUI extends JFrame
 		setSearchButtonAvailability();
 	}
 
-	public void setSearchResultsCountLabel()
+	public void updateSearchResultsCountLabel()
 	{
 		int count = (searchResultsTableManager == null || searchResultsTableManager.getSearchResults() == null)
 				? 0 : searchResultsTableManager.getSearchResults().size();
@@ -829,7 +830,7 @@ public class JGeckoUGUI extends JFrame
 	{
 		if (isDisassemblerAddressValid())
 		{
-			int address = Integer.parseInt(disassemblerAddressField.getText(), 16);
+			int address = Integer.parseUnsignedInt(disassemblerAddressField.getText(), 16);
 
 			try
 			{
@@ -863,7 +864,7 @@ public class JGeckoUGUI extends JFrame
 
 		try
 		{
-			is32Bit = Integer.parseInt(address, 16) % 4 == 0;
+			is32Bit = Integer.parseUnsignedInt(address, 16) % 4 == 0;
 		} catch (NumberFormatException ignored)
 		{
 
@@ -876,6 +877,8 @@ public class JGeckoUGUI extends JFrame
 	{
 		threadsTableManager = new ThreadsTableManager(threadsTable);
 		threadsTableManager.configure();
+
+		updateThreadsCountLabel();
 
 		DefaultCaret caret = (DefaultCaret) registersArea.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.NEVER_UPDATE); // Do not scroll when setting text
@@ -920,6 +923,7 @@ public class JGeckoUGUI extends JFrame
 						try
 						{
 							threadsTableManager.updateRows(true);
+							updateThreadsCountLabel();
 						} catch (Exception exception)
 						{
 							StackTraceUtils.handleException(rootPane, exception);
@@ -933,6 +937,12 @@ public class JGeckoUGUI extends JFrame
 						return null;
 					}
 				}.execute());
+	}
+
+	private void updateThreadsCountLabel()
+	{
+		int amount = (threadsTableManager == null) ? 0 : threadsTableManager.getThreads().size();
+		threadsCountLabel.setText("Threads: " + amount);
 	}
 
 	private void considerUpdatingRegisters()
@@ -1036,7 +1046,7 @@ public class JGeckoUGUI extends JFrame
 			{
 				try
 				{
-					int address = Integer.parseInt(suppliedInput, 16);
+					int address = Integer.parseUnsignedInt(suppliedInput, 16);
 					int physical = CoreInit.getEffectiveToPhysical(address);
 
 					JOptionPane.showMessageDialog(this,
@@ -1477,7 +1487,7 @@ public class JGeckoUGUI extends JFrame
 					}
 
 					String stringUpdateDelay = watchListUpdateDelaySpinner.getValue().toString();
-					int updateDelay = Integer.parseInt(stringUpdateDelay);
+					int updateDelay = Integer.parseUnsignedInt(stringUpdateDelay);
 					Thread.sleep(updateDelay);
 				}
 
@@ -1567,7 +1577,7 @@ public class JGeckoUGUI extends JFrame
 
 		if (tab != null)
 		{
-			int tabIndex = Integer.parseInt(tab);
+			int tabIndex = Integer.parseUnsignedInt(tab);
 			if (tabIndex > 0 && tabIndex < programTabs.getComponents().length)
 			{
 				programTabs.setSelectedIndex(tabIndex);
@@ -1603,7 +1613,7 @@ public class JGeckoUGUI extends JFrame
 		String updateDelay = simpleProperties.get("WATCH_LIST_UPDATE_DELAY_SECONDS");
 		if (updateDelay != null)
 		{
-			watchListUpdateDelaySpinner.setValue(Integer.parseInt(updateDelay));
+			watchListUpdateDelaySpinner.setValue(Integer.parseUnsignedInt(updateDelay));
 		}
 
 		String dumpStartingAddress = simpleProperties.get("DUMPING_START_ADDRESS");
@@ -1702,7 +1712,7 @@ public class JGeckoUGUI extends JFrame
 			String[] options = {"Yes", "No"};
 			int selectedAnswer = JOptionPane.showOptionDialog(rootPane,
 					messageText,
-					"",
+					hexEditorButton.getText(),
 					JOptionPane.YES_NO_CANCEL_OPTION,
 					JOptionPane.QUESTION_MESSAGE,
 					null,
@@ -1887,8 +1897,8 @@ public class JGeckoUGUI extends JFrame
 
 		dumpMemoryButton.addActionListener(actionEvent ->
 		{
-			int startingAddress = Integer.parseInt(dumpStartingAddressField.getText(), 16);
-			int endingAddress = Integer.parseInt(dumpEndingAddressField.getText(), 16);
+			int startingAddress = Integer.parseUnsignedInt(dumpStartingAddressField.getText(), 16);
+			int endingAddress = Integer.parseUnsignedInt(dumpEndingAddressField.getText(), 16);
 			int length = endingAddress - startingAddress;
 
 			String targetFilePath = dumpFilePathField.getText();
@@ -1939,8 +1949,8 @@ public class JGeckoUGUI extends JFrame
 
 		try
 		{
-			int startingAddress = Integer.parseInt(dumpStartingAddressField.getText(), 16);
-			int endingAddress = Integer.parseInt(dumpEndingAddressField.getText(), 16);
+			int startingAddress = Integer.parseUnsignedInt(dumpStartingAddressField.getText(), 16);
+			int endingAddress = Integer.parseUnsignedInt(dumpEndingAddressField.getText(), 16);
 			validMemoryAddresses = startingAddress < endingAddress;
 		} catch (NumberFormatException ignored)
 		{
@@ -1963,7 +1973,7 @@ public class JGeckoUGUI extends JFrame
 			@Override
 			protected String doInBackground() throws Exception
 			{
-				String input = JOptionPane.showInputDialog(rootPane, "Please enter the POINTER notation:", followPointerButton.getText(), JOptionPane.INFORMATION_MESSAGE);
+				String input = JOptionPane.showInputDialog(rootPane, "Please enter the pointer notation:", followPointerButton.getText(), JOptionPane.INFORMATION_MESSAGE);
 
 				if (input != null)
 				{
@@ -1987,7 +1997,7 @@ public class JGeckoUGUI extends JFrame
 					} catch (StringIndexOutOfBoundsException invalidInput)
 					{
 						JOptionPane.showMessageDialog(rootPane,
-								"Invalid POINTER expression!",
+								"Invalid pointer expression!",
 								"Error",
 								JOptionPane.ERROR_MESSAGE);
 					} catch (Exception exception)
@@ -2199,7 +2209,7 @@ public class JGeckoUGUI extends JFrame
 			return false;
 		}
 
-		int searchLengthInteger = Integer.parseInt(searchLength, 16);
+		int searchLengthInteger = Integer.parseUnsignedInt(searchLength, 16);
 		return searchLengthInteger >= 4;
 	}
 
@@ -3366,7 +3376,7 @@ public class JGeckoUGUI extends JFrame
 	{
 		int selectedAddress = getSelectedMemoryViewerAddress();
 		selectedAddress += offset;
-		String destinationAddressHexadecimal = Long.toHexString(selectedAddress).toUpperCase();
+		String destinationAddressHexadecimal = Conversions.toHexadecimal(selectedAddress, 8);
 		memoryViewerAddressField.setText(destinationAddressHexadecimal);
 		updateMemoryViewer();
 	}

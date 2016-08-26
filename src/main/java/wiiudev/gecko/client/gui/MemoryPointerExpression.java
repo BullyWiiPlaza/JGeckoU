@@ -112,6 +112,11 @@ public class MemoryPointerExpression
 		setOffsets(offsets);
 	}
 
+	public boolean isAddress()
+	{
+		return offsets == null;
+	}
+
 	public long getBaseAddress()
 	{
 		return baseAddress;

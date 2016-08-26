@@ -1,7 +1,25 @@
+import wiiudev.gecko.client.tcpgecko.main.Connector;
+
 public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
+		Connector.getInstance().connect("192.168.178.35");
+
+		/*RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol exportedSymbol = new ExportedSymbol(0x0249EEE0);
+		int result = remoteProcedureCall.call32(exportedSymbol);
+		System.out.println(Conversions.toHexadecimal(result, 8));*/
+		/*ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("t6mp_cafef_rpl.rpl", "Party_IsPrivateOnlineGame");
+		System.out.println(Conversions.toHexadecimal(exportedSymbol.getAddress(), 8));*/
+		/*MemoryRange memoryRange = new MemoryRange(0xA0000000, 0xB0000000);
+		memoryRange.updateMemoryRange(false);
+		System.out.println(Conversions.toHexadecimal(memoryRange.getEndingAddress(), 8));*/
+		/*byte[] bytes = RandomUtils.nextBytes(0x900);
+		MemoryWriter memoryWriter = new MemoryWriter();
+		memoryWriter.writeBytes(0x1FFFFFF0, bytes);*/
+
+		Connector.getInstance().closeConnection();
 		// IDAProFunctionsDumpParser idaProFunctionsDumpParser = new IDAProFunctionsDumpParser();
 		// Connector.getInstance().connect("192.168.178.35");
 		// MemoryReader memoryReader = new MemoryReader();
@@ -77,5 +95,4 @@ public class Testing
 		// wordSearchOld.dumpBytes(0x6C64206E);
 		Connector.getInstance().closeConnection();*/
 	}
-
 }

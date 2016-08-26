@@ -1,8 +1,10 @@
 package wiiudev.gecko.client.gui.dialogs;
 
+import wiiudev.gecko.client.conversions.Conversions;
 import wiiudev.gecko.client.conversions.Validation;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.IDAProFunctionsDumpParser;
+import wiiudev.gecko.client.gui.input_filters.HexadecimalInputFilter;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.rpl.ExportedSymbol;
@@ -27,6 +29,7 @@ public class RemoteProcedureCallDialog extends JDialog
 	private JTextField functionResultField;
 	private JTextField functionAddressField;
 	private JButton coreInitDocumentationButton;
+	private JCheckBox callAddressCheckBox;
 	private IDAProFunctionsDumpParser coreInitFunctionsParser;
 
 	public RemoteProcedureCallDialog()
@@ -69,18 +72,28 @@ public class RemoteProcedureCallDialog extends JDialog
 
 		coreInitDocumentationButton.addActionListener(actionEvent ->
 				openURL("http://wiiubrew.org/wiki/Coreinit.rpl"));
+
+		HexadecimalInputFilter.setHexadecimalInputFilter(functionAddressField);
+		functionAddressField.setText("");
+
+		callAddressCheckBox.addItemListener(itemEvent ->
+		{
+			boolean checked = callAddressCheckBox.isSelected();
+			rplNameField.setEnabled(!checked);
+			symbolNameField.setEnabled(!checked);
+			functionAddressField.setEditable(checked);
+		});
 	}
 
 	private void setSymbolNameFieldColor()
 	{
-		if(rplNameField.getText().startsWith("coreinit"))
+		if (rplNameField.getText().startsWith("coreinit"))
 		{
 			String symbolText = symbolNameField.getText();
 			boolean containsSymbol = coreInitFunctionsParser.contains(symbolText);
 			symbolNameField.setBackground(containsSymbol ? Color.GREEN : Color.RED);
 			callFunctionButton.setEnabled(containsSymbol);
-		}
-		else
+		} else
 		{
 			symbolNameField.setBackground(Color.WHITE);
 			callFunctionButton.setEnabled(true);
@@ -119,55 +132,65 @@ public class RemoteProcedureCallDialog extends JDialog
 	{
 		callFunctionButton.addActionListener(actionEvent ->
 		{
-			String rplName = rplNameField.getText();
+			RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 
-			String forcedSuffix = ".rpl";
-			if (!rplName.endsWith(forcedSuffix))
+			try
 			{
-				rplName += forcedSuffix;
-			}
-
-			String symbolName = symbolNameField.getText();
-			String parametersString = parametersTextArea.getText();
-
-			if (parametersString.equals(""))
-			{
-				call(rplName, symbolName);
-			} else
-			{
-				String[] parametersArray = parametersString.split("\n");
-				int[] parameters = new int[parametersArray.length];
-
-				for (int parametersIndex = 0; parametersIndex < parameters.length; parametersIndex++)
+				if (callAddressCheckBox.isSelected())
 				{
-					parameters[parametersIndex] = Integer.parseInt(parametersArray[parametersIndex], 16);
+					int address = Conversions.toDecimal(functionAddressField.getText());
+					ExportedSymbol exportedSymbol = new ExportedSymbol(address);
+					int[] parameters = getParameters();
+					long returnValue = remoteProcedureCall.call64(exportedSymbol, parameters);
+					functionResultField.setText(new Hexadecimal(returnValue, 16).toString());
+				} else
+				{
+					String rplName = getRPLName();
+					String symbolName = symbolNameField.getText();
+					int parameters[] = getParameters();
+					ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(rplName, symbolName);
+					functionAddressField.setText(new Hexadecimal(exportedSymbol.getAddress(), 8).toString());
+					long returnValue = remoteProcedureCall.call64(exportedSymbol, parameters);
+					functionResultField.setText(new Hexadecimal(returnValue, 16).toString());
 				}
-
-				call(rplName, symbolName, parameters);
+			} catch (Exception exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
 			}
 		});
 	}
 
-	private void call(String rplName, String symbolName, int... parameters)
+	private String getRPLName()
 	{
-		try
+		String rplName = rplNameField.getText();
+
+		String forcedSuffix = ".rpl";
+		if (!rplName.endsWith(forcedSuffix))
 		{
-			RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-			ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(rplName, symbolName);
-			functionAddressField.setText(new Hexadecimal(exportedSymbol.getAddress(), 8).toString());
-			long returnValue = remoteProcedureCall.call64(exportedSymbol, parameters);
-			functionResultField.setText(new Hexadecimal(returnValue, 16).toString());
-		} catch (Exception exception)
-		{
-			StackTraceUtils.handleException(rootPane, exception);
+			rplName += forcedSuffix;
 		}
+		return rplName;
+	}
+
+	private int[] getParameters()
+	{
+		String parametersString = parametersTextArea.getText();
+
+		String[] parametersArray = parametersString.split("\n");
+		int[] parameters = new int[parametersArray.length];
+
+		for (int parametersIndex = 0; parametersIndex < parameters.length; parametersIndex++)
+		{
+			parameters[parametersIndex] = Conversions.toDecimal(parametersArray[parametersIndex]);
+		}
+		return parameters;
 	}
 
 	public void setParameters(int[] parameters)
 	{
 		StringBuilder parametersBuilder = new StringBuilder();
 
-		for(int parameter : parameters)
+		for (int parameter : parameters)
 		{
 			String hexadecimalParameter = new Hexadecimal(parameter, 8).toString();
 			parametersBuilder.append(hexadecimalParameter);

@@ -11,9 +11,14 @@ public class ExportedSymbol
 	private String rplName;
 	private String symbolName;
 
-	public ExportedSymbol(int address, String rplName, String symbolName)
+	public ExportedSymbol(int address)
 	{
 		this.address = address;
+	}
+
+	public ExportedSymbol(int address, String rplName, String symbolName)
+	{
+		this(address);
 		this.rplName = rplName;
 		this.symbolName = symbolName;
 	}

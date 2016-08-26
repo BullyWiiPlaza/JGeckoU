@@ -6,7 +6,8 @@ import javax.swing.text.*;
 import java.awt.*;
 
 /**
- * An input filter for the code text field to make sure only valid input is given. Also, lowercase letters will be converted to uppercase automatically.
+ * An input filter for a text field to make sure only valid input is given.
+ * Also, lowercase letters will be converted to uppercase automatically.
  */
 public class HexadecimalInputFilter extends DocumentFilter
 {

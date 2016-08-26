@@ -33,7 +33,7 @@ public class Disassembler
 	private static DisassembledInstruction parse(String disassembledLine)
 	{
 		String[] addressAndValueInstruction = disassembledLine.split(":");
-		int instructionAddress = Integer.parseInt(addressAndValueInstruction[0], 16);
+		int instructionAddress = Integer.parseUnsignedInt(addressAndValueInstruction[0], 16);
 		String valuePart = addressAndValueInstruction[1].trim();
 		int spaceIndex = valuePart.indexOf("\t");
 		int value = Integer.parseUnsignedInt(valuePart.substring(0, spaceIndex), 16);

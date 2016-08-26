@@ -1,5 +1,7 @@
 package wiiudev.gecko.client.gui.tabs.watch_list;
 
+import wiiudev.gecko.client.conversions.Conversions;
+import wiiudev.gecko.client.gui.MemoryPointerExpression;
 import wiiudev.gecko.client.gui.utilities.JTableUtilities;
 
 import javax.swing.*;
@@ -45,8 +47,16 @@ public class WatchListManager
 			Vector watchListRow = (Vector) tableModel.getDataVector().elementAt(rowIndex);
 			WatchListElement watchListElement = new WatchListElement(watchListRow);
 			String readValue = watchListElement.readValue();
-			Thread.sleep(10);
-			tableModel.setValueAt(readValue, rowIndex, watchListRow.size() - 1);
+			MemoryPointerExpression addressExpression = watchListElement.getAddressExpression();
+			String address = Conversions.toHexadecimal((int) addressExpression.getDestinationAddress(), 8);
+
+			String valueFieldText = readValue;
+			if (!addressExpression.isAddress())
+			{
+				valueFieldText = "[" + address + "] = " + valueFieldText;
+			}
+
+			tableModel.setValueAt(valueFieldText, rowIndex, watchListRow.size() - 1);
 		}
 	}
 

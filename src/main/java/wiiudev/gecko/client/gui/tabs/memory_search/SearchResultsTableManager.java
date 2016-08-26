@@ -137,6 +137,6 @@ public class SearchResultsTableManager
 		}
 
 		JTableUtilities.deleteSelectedRows(table);
-		JGeckoUGUI.getInstance().setSearchResultsCountLabel();
+		JGeckoUGUI.getInstance().updateSearchResultsCountLabel();
 	}
 }

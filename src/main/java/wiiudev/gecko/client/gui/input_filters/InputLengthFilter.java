@@ -11,11 +11,6 @@ public class InputLengthFilter extends PlainDocument
 {
 	private int maximumInputLength;
 
-	public InputLengthFilter()
-	{
-		this(8);
-	}
-
 	public InputLengthFilter(int maximumInputLength)
 	{
 		super();

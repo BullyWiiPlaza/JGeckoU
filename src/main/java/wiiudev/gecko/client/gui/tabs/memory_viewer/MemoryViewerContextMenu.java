@@ -198,7 +198,7 @@ public class MemoryViewerContextMenu extends JPopupMenu
 				Path selectedFile = fileChooser.getSelectedFile().toPath();
 				MemoryWriter memoryWriter = new MemoryWriter();
 				int selectedAddress = JGeckoUGUI.getInstance().getSelectedMemoryViewerAddress();
-				memoryWriter.upload(selectedAddress, selectedFile);
+				memoryWriter.uploadFile(selectedAddress, selectedFile);
 				JGeckoUGUI.getInstance().updateMemoryViewer();
 			}
 		} catch (IOException exception)

@@ -105,24 +105,13 @@ public class MemoryWriter extends TCPGecko
 	 * Writes a null-terminated String <code>value</code> to the memory starting at <code>address</code>
 	 *
 	 * @param address The address to write to
-	 * @param text   The value to write
+	 * @param text    The value to write
 	 */
 	public void writeString(int address, String text) throws IOException
 	{
-		byte[] textBytes = getNullTerminatedBytes(text);
+		byte[] textBytes = ByteUtilities.getNullTerminatedBytes(text);
 
 		writeBytes(address, textBytes);
-	}
-
-	private byte[] getNullTerminatedBytes(String text)
-	{
-		byte[] textBytes = text.getBytes(StandardCharsets.UTF_8);
-		byte[] nullTerminatedTextBytes = new byte[textBytes.length + 1];
-
-		System.arraycopy(textBytes, 0, nullTerminatedTextBytes, 0, textBytes.length);
-		nullTerminatedTextBytes[nullTerminatedTextBytes.length - 1] = 0; // TODO Needed?
-
-		return nullTerminatedTextBytes;
 	}
 
 	/**
@@ -144,31 +133,9 @@ public class MemoryWriter extends TCPGecko
 		writeString(address, value);
 	}
 
-	/**
-	 * Writes an entire local <code>sourcePath</code> to the memory starting at <code>address</code>
-	 *
-	 * @param address    The address to write to
-	 * @param sourcePath The file to write
-	 */
-	public void upload(int address, Path sourcePath) throws IOException
-	{
-		List<byte[]> partitionedBytes = ByteUtilities.readPartitionedBytes(sourcePath, MAXIMUM_MEMORY_CHUNK_SIZE);
-		writePartitionedBytes(address, partitionedBytes);
-	}
-
-	private void writePartitionedBytes(int address, List<byte[]> partitionedBytes) throws IOException
-	{
-		for (byte[] bytesChunk : partitionedBytes)
-		{
-			// The end address is the next starting address
-			address = uploadBytes(address, bytesChunk);
-		}
-	}
-
-	private int uploadBytes(int address, byte[] bytes) throws IOException
+	private void sendUploadRequest(int address, byte[] bytes) throws IOException
 	{
 		AddressRange.assertValidAccess(address, bytes.length, MemoryAccessLevel.WRITE);
-		int endAddress = address + bytes.length;
 
 		reentrantLock.lock();
 
@@ -176,42 +143,64 @@ public class MemoryWriter extends TCPGecko
 		{
 			sendCommand(Commands.MEMORY_UPLOAD);
 			dataSender.writeInt(address);
-			dataSender.writeInt(endAddress);
-			dataSender.write(bytes);
+			dataSender.writeInt(address + bytes.length);
 			dataSender.flush();
+		} finally
+		{
+			reentrantLock.unlock();
+		}
+	}
 
-			// No need to check the status but we need to read it at least
+	/**
+	 * Writes an entire local <code>file</code> to the memory starting at <code>address</code>
+	 *
+	 * @param address The address to write to
+	 * @param file    The file to write
+	 */
+	public void uploadFile(int address, Path file) throws IOException
+	{
+		byte[] bytes = Files.readAllBytes(file);
+		writeBytes(address, bytes);
+	}
+
+	public void writeBytes(int address, byte[] bytes) throws IOException
+	{
+		reentrantLock.lock();
+
+		try
+		{
+			sendUploadRequest(address, bytes);
+
+			List<byte[]> partitionedBytes = ByteUtilities.partition(bytes, MAXIMUM_MEMORY_CHUNK_SIZE);
+			for (byte[] bytesChunk : partitionedBytes)
+			{
+				sendBytes(bytesChunk);
+			}
+
 			readStatus();
 		} finally
 		{
 			reentrantLock.unlock();
 		}
-
-		return endAddress;
 	}
 
-	/**
-	 * Writes <code>bytes</code> to the memory starting at <code>address</code>
-	 *
-	 * @param address The address to write to
-	 * @param bytes   The value to write
-	 */
-	public void writeBytes(int address, byte[] bytes) throws IOException
+	private void sendBytes(byte[] bytes) throws IOException
 	{
-		List<byte[]> partitionedBytes = ByteUtilities.partition(bytes, MAXIMUM_MEMORY_CHUNK_SIZE);
-		writePartitionedBytes(address, partitionedBytes);
-	}
+		reentrantLock.lock();
 
-	public static class ByteUtilities
-	{
-		public static List<byte[]> readPartitionedBytes(Path sourcePath, int chunkSize) throws IOException
+		try
 		{
-			byte[] fileBytes = Files.readAllBytes(sourcePath);
-
-			return partition(fileBytes, chunkSize);
+			dataSender.write(bytes);
+			dataSender.flush();
+		} finally
+		{
+			reentrantLock.unlock();
 		}
+	}
 
-		public static List<byte[]> partition(byte[] bytes, int chunkSize)
+	private static class ByteUtilities
+	{
+		static List<byte[]> partition(byte[] bytes, int chunkSize)
 		{
 			List<byte[]> byteArrayChunks = new ArrayList<>();
 			int startingIndex = 0;
@@ -224,6 +213,15 @@ public class MemoryWriter extends TCPGecko
 			}
 
 			return byteArrayChunks;
+		}
+
+		static byte[] getNullTerminatedBytes(String text)
+		{
+			byte[] textBytes = text.getBytes(StandardCharsets.UTF_8);
+			byte[] nullTerminatedTextBytes = new byte[textBytes.length + 1];
+			System.arraycopy(textBytes, 0, nullTerminatedTextBytes, 0, textBytes.length);
+
+			return nullTerminatedTextBytes;
 		}
 	}
 }
