@@ -254,6 +254,11 @@ public class Conversions
 	{
 		String hexadecimal = DatatypeConverter.printHexBinary(bytes);
 
+		while(hexadecimal.length() > valueSize.getBytesCount() * 2)
+		{
+			hexadecimal = hexadecimal.substring(2);
+		}
+
 		while(hexadecimal.length() < valueSize.getBytesCount() * 2)
 		{
 			hexadecimal = "0" + hexadecimal;

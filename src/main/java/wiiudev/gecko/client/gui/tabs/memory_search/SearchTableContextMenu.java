@@ -25,6 +25,7 @@ public class SearchTableContextMenu extends JPopupMenu
 	public void addContextMenu()
 	{
 		KeyStroke memoryViewerKeyStroke = PopupMenuUtilities.addOption(this, "Memory Viewer", "control M", actionEvent -> switchToMemoryViewer());
+		KeyStroke disassemblerKeyStroke = PopupMenuUtilities.addOption(this, "Disassembler", "control D", actionEvent -> switchToDisassembler());
 		KeyStroke pokePreviousKeyStroke = PopupMenuUtilities.addOption(this, "Poke Previous", "control P", actionEvent -> pokePreviousValues());
 		KeyStroke pokeCurrentKeyStroke = PopupMenuUtilities.addOption(this, "Poke Current", "control U", actionEvent -> pokeCurrentValues());
 		KeyStroke deleteSelectedKeyStroke = PopupMenuUtilities.addOption(this, "Delete", "control D", actionEvent -> deleteSelectedRows());
@@ -40,6 +41,9 @@ public class SearchTableContextMenu extends JPopupMenu
 					if (PopupMenuUtilities.keyEventPressed(pressedEvent, memoryViewerKeyStroke))
 					{
 						switchToMemoryViewer();
+					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, disassemblerKeyStroke))
+					{
+						switchToDisassembler();
 					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, pokePreviousKeyStroke))
 					{
 						pokePreviousValues();
@@ -53,6 +57,13 @@ public class SearchTableContextMenu extends JPopupMenu
 				}
 			}
 		});
+	}
+
+	private void switchToDisassembler()
+	{
+		SearchResult searchResult = tableManager.getSelected().get(0);
+		int address = searchResult.getAddress();
+		JGeckoUGUI.selectInDisassembler(address);
 	}
 
 	private void deleteSelectedRows()

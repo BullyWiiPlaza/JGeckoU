@@ -178,7 +178,21 @@ public class MemorySearcher
 			byteBuffer.position(currentPosition - additionalBytes);
 		}
 
-		return new BigInteger(retrieved);
+		return getUnsigned(retrieved);
+	}
+
+	private static BigInteger getUnsigned(byte[] bytes)
+	{
+		int byteSize = 8;
+		BigInteger twosComplement = BigInteger.ONE.shiftLeft(bytes.length * byteSize);
+		BigInteger bigInteger = new BigInteger(bytes);
+
+		if (bigInteger.compareTo(BigInteger.ZERO) < 0)
+		{
+			bigInteger = bigInteger.add(twosComplement);
+		}
+
+		return bigInteger;
 	}
 
 	public boolean isFirstSearch()

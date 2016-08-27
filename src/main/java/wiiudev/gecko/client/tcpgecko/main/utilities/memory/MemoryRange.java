@@ -1,5 +1,6 @@
 package wiiudev.gecko.client.tcpgecko.main.utilities.memory;
 
+import wiiudev.gecko.client.conversions.Conversions;
 import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
 
 import java.io.IOException;
@@ -9,6 +10,7 @@ import java.io.IOException;
  */
 public class MemoryRange
 {
+	public static String MEMORY_RANGE_SEPARATOR = " - ";
 	private int startingAddress;
 	private int endingAddress;
 
@@ -78,5 +80,12 @@ public class MemoryRange
 	public void setStartingAddress(int startingAddress)
 	{
 		this.startingAddress = startingAddress;
+	}
+
+	@Override
+	public String toString()
+	{
+		return Conversions.toHexadecimal(startingAddress, 8)
+				+ MEMORY_RANGE_SEPARATOR + Conversions.toHexadecimal(endingAddress, 8);
 	}
 }

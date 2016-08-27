@@ -29,9 +29,29 @@ public class DisassemblerTableManager
 		this.table = table;
 		disassembledInstructions = new ArrayList<>();
 
+		addDoubleClickListener();
+
 		int rowsCount = 100;
 		int integerBytesCount = 4;
 		length = rowsCount * integerBytesCount;
+	}
+
+	private void addDoubleClickListener()
+	{
+		table.addMouseListener(new MouseAdapter()
+		{
+			public void mousePressed(MouseEvent mouseEvent)
+			{
+				JTable table = (JTable) mouseEvent.getSource();
+				Point point = mouseEvent.getPoint();
+				int rowIndex = table.rowAtPoint(point);
+
+				if (rowIndex != -1 && mouseEvent.getClickCount() == 2)
+				{
+					DisassemblerContextMenu.followBranch(DisassemblerTableManager.this);
+				}
+			}
+		});
 	}
 
 	public List<DisassembledInstruction> getDisassembledInstructions()

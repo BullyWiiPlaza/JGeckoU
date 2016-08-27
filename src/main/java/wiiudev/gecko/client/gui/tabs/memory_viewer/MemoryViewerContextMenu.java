@@ -80,14 +80,17 @@ public class MemoryViewerContextMenu extends JPopupMenu
 		rpcOption.addActionListener(actionEvent -> performRemoteProcedureCall());
 		add(rpcOption);
 
-		JMenuItem dereferenceOption = new JMenuItem("Dereference");
-		KeyStroke dereferenceKeyStroke = KeyStroke.getKeyStroke("control E");
-		dereferenceOption.setAccelerator(dereferenceKeyStroke);
-		dereferenceOption.addActionListener(actionEvent -> dereferenceAddress());
 		int value = JGeckoUGUI.getInstance().getSelectedMemoryViewerValue();
-		boolean validAccess = AddressRange.isValidAccess(value, 4, MemoryAccessLevel.READ);
-		dereferenceOption.setEnabled(validAccess);
-		add(dereferenceOption);
+		boolean isValidAccess = AddressRange.isValidAccess(value, 4, MemoryAccessLevel.READ);
+		KeyStroke dereferenceKeyStroke = KeyStroke.getKeyStroke("control E");
+
+		if (isValidAccess)
+		{
+			JMenuItem dereferenceOption = new JMenuItem("Dereference");
+			dereferenceOption.setAccelerator(dereferenceKeyStroke);
+			dereferenceOption.addActionListener(actionEvent -> dereferenceAddress());
+			add(dereferenceOption);
+		}
 
 		table.addKeyListener(new KeyAdapter()
 		{
@@ -145,12 +148,12 @@ public class MemoryViewerContextMenu extends JPopupMenu
 		});
 	}
 
-	private void dereferenceAddress()
+	public static void dereferenceAddress()
 	{
 		JGeckoUGUI instance = JGeckoUGUI.getInstance();
 		int value = instance.getSelectedMemoryViewerValue();
 
-		if(AddressRange.isValidAccess(value, 4, MemoryAccessLevel.READ))
+		if (AddressRange.isValidAccess(value, 4, MemoryAccessLevel.READ))
 		{
 			instance.setMemoryViewerAddress(value);
 			instance.updateMemoryViewer();

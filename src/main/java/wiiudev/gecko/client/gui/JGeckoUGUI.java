@@ -402,7 +402,7 @@ public class JGeckoUGUI extends JFrame
 		if (TCPGecko.isConnected())
 		{
 			TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
-			Title title = titleDatabaseManager.getTitle();
+			Title title = titleDatabaseManager.readTitle();
 			String parentFolderName = title.getGameId();
 			targetDirectory += File.separator + parentFolderName;
 		}
@@ -1274,10 +1274,11 @@ public class JGeckoUGUI extends JFrame
 	public void selectDumpingTab()
 	{
 		int selectedAddress = getSelectedMemoryViewerAddress();
-		dumpStartingAddressField.setText(Long.toHexString(selectedAddress).toUpperCase());
-		dumpEndingAddressField.setText(Long.toHexString(selectedAddress + 0x1000).toUpperCase());
+		dumpStartingAddressField.setText(Conversions.toHexadecimal(selectedAddress, 8));
+		dumpEndingAddressField.setText(Conversions.toHexadecimal(selectedAddress + 0x10));
 		dumpFilePathField.setText("dumped.bin");
 		programTabs.setSelectedComponent(dumpingTab);
+
 		handleDumpMemoryButtonAvailability();
 	}
 
@@ -3168,9 +3169,8 @@ public class JGeckoUGUI extends JFrame
 			Connector.getInstance().connect(ipAddress);
 		}
 
-		AddressRange.setAppExecutableLibrariesStart();
-		AddressRange.setMEM2RegionEnd();
-
+		MemoryRangeAdjustment memoryRangeAdjustment = new MemoryRangeAdjustment(titleDatabaseManager);
+		memoryRangeAdjustment.setAdjustedMemoryRanges();
 		monitorGeckoServerHealthConcurrently();
 		String ipAddressAddition = (autoDetectCheckBox.isSelected() ? (" [" + ipAddress + "]") : "");
 		connectButton.setText(connectButtonText + "ed" + ipAddressAddition);
@@ -3229,7 +3229,7 @@ public class JGeckoUGUI extends JFrame
 
 			if (gameId == null)
 			{
-				title = titleDatabaseManager.getTitle();
+				title = titleDatabaseManager.readTitle();
 				gameId = title.getGameId();
 				updateCodeDatabaseDownloadButtonAvailability();
 			} else
@@ -3428,7 +3428,6 @@ public class JGeckoUGUI extends JFrame
 	{
 		JGeckoUGUI geckoUGUI = getInstance();
 		geckoUGUI.setMemoryViewerAddress(address);
-		geckoUGUI.updateMemoryViewer();
 		geckoUGUI.switchToMemoryViewer();
 	}
 
@@ -3437,6 +3436,13 @@ public class JGeckoUGUI extends JFrame
 		String address = memoryViewerAddressField.getText();
 		disassemblerAddressField.setText(address);
 		programTabs.setSelectedComponent(disassemblerTab);
+	}
+
+	public static void selectInDisassembler(int address)
+	{
+		JGeckoUGUI jGeckoUGUI = JGeckoUGUI.getInstance();
+		jGeckoUGUI.selectDisassemblerTab();
+		jGeckoUGUI.updateDisassembler(address);
 	}
 
 	public void updateDisassembler(int address)
@@ -3463,5 +3469,17 @@ public class JGeckoUGUI extends JFrame
 	public JProgressBar getSearchProgressBar()
 	{
 		return searchProgressBar;
+	}
+
+	public void setupSearch(DisassembledInstruction disassembledInstruction)
+	{
+		searchStartingAddressField.setText(Conversions.toHexadecimal(disassembledInstruction.getAddress(), 8));
+		searchValueField.setText(Conversions.toHexadecimal(disassembledInstruction.getValue()));
+		switchToSearchTab();
+	}
+
+	private void switchToSearchTab()
+	{
+		programTabs.setSelectedComponent(searchTab);
 	}
 }

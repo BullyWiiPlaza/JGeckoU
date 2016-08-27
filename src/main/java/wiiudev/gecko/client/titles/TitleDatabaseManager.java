@@ -52,7 +52,7 @@ public class TitleDatabaseManager
 	/**
 	 * @return The {@link Title} object from the title database
 	 */
-	public Title getTitle() throws IOException
+	public Title readTitle() throws IOException
 	{
 		String dashedTitleId = TitleIdentifierUtilities.readDashedTitleID();
 		return getTitle(dashedTitleId);

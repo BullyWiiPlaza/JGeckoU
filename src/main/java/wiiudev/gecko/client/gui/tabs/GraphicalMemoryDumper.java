@@ -1,6 +1,6 @@
 package wiiudev.gecko.client.gui.tabs;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
@@ -9,6 +9,7 @@ import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Files;
 
 public class GraphicalMemoryDumper
 {
@@ -56,44 +57,42 @@ public class GraphicalMemoryDumper
 
 			try
 			{
-				MemoryReader memoryReader = new MemoryReader();
 				long bytesDumped = 0;
-
-				// Delete the target file before dumping into it
-				FileUtils.deleteQuietly(targetFile);
-
-				TCPGecko.reentrantLock.lock();
+				MemoryReader memoryReader = new MemoryReader();
+				ByteArrayOutputStream memoryDumpBuffer = new ByteArrayOutputStream();
 
 				try
 				{
+					TCPGecko.reentrantLock.lock();
+
 					memoryReader.requestBytes(address, bytesCount);
 
 					// Read in chunks
-					while (bytesCount > TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
+					while (true)
 					{
-						byte[] retrievedBytes = memoryReader.readBytes(TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
-						FileUtils.writeByteArrayToFile(targetFile, retrievedBytes, true);
+						int bytesToDump = Math.min(bytesCount, TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
+						byte[] retrievedBytes = memoryReader.readBytes(bytesToDump);
+						memoryDumpBuffer.write(retrievedBytes);
 
-						bytesCount -= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
-						address += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
-						bytesDumped += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
+						bytesCount -= bytesToDump;
+						address += bytesToDump;
+						bytesDumped += bytesToDump;
 
 						long progress = bytesDumped * 100 / startingBytesCount;
 						setProgress((int) progress);
 						publish(bytesDumped);
-					}
 
-					// Read the last chunk
-					if (bytesCount <= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
-					{
-						byte[] retrievedBytes = memoryReader.readBytes(bytesCount);
-						FileUtils.writeByteArrayToFile(targetFile, retrievedBytes, true);
-						bytesDumped += retrievedBytes.length;
+						if(bytesCount == 0)
+						{
+							break;
+						}
 					}
 				} finally
 				{
 					TCPGecko.reentrantLock.unlock();
 				}
+
+				Files.write(targetFile.toPath(), memoryDumpBuffer.toByteArray());
 
 				long progress = bytesDumped * 100 / startingBytesCount;
 				setProgress((int) progress);

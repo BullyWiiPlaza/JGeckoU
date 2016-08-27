@@ -22,7 +22,7 @@ public class HexadecimalInputFilter extends DocumentFilter
 	public void insertString(FilterBypass filterBypass, int offset, String text,
 	                         AttributeSet attributeSet) throws BadLocationException
 	{
-		text = text.toUpperCase().trim();
+		text = text.toUpperCase().trim().replaceAll(" ", "");
 		Document document = filterBypass.getDocument();
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append(document.getText(0, document.getLength()));
@@ -41,7 +41,7 @@ public class HexadecimalInputFilter extends DocumentFilter
 	public void replace(DocumentFilter.FilterBypass filterBypass, int offset, int length, String text,
 	                    AttributeSet attributeSet) throws BadLocationException
 	{
-		text = text.toUpperCase().trim();
+		text = text.toUpperCase().trim().replaceAll(" ", "");
 		Document document = filterBypass.getDocument();
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append(document.getText(0, document.getLength()));
@@ -67,6 +67,7 @@ public class HexadecimalInputFilter extends DocumentFilter
 		plainDocument.setDocumentFilter(new HexadecimalInputFilter(maximumInputLength));
 
 		String text = textComponent.getText();
+		text = text.replaceAll(" ", "");
 
 		if (text.length() > maximumInputLength)
 		{

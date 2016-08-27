@@ -22,15 +22,19 @@ public class DisassemblerContextMenu extends JPopupMenu
 	public void addContextMenu()
 	{
 		KeyStroke memoryViewerKeyStroke = PopupMenuUtilities.addOption(this, "Memory Viewer", "control M", actionEvent -> switchToMemoryViewer());
+		KeyStroke searchKeyStroke = PopupMenuUtilities.addOption(this, "Search", "control S", actionEvent -> switchToSearchTab());
 		KeyStroke copyCellsKeyStroke = PopupMenuUtilities.addOption(this, "Copy Cells", "control C", actionEvent -> copyCells());
 
-		JMenuItem option = new JMenuItem("Follow Branch");
 		KeyStroke followBranchKeyStroke = KeyStroke.getKeyStroke("control F");
-		option.setAccelerator(followBranchKeyStroke);
-		option.addActionListener(actionEvent -> followBranch());
 		DisassembledInstruction disassembledInstruction = tableManager.getSelectedInstruction();
-		option.setEnabled(disassembledInstruction.isBranchWithDestination());
-		add(option);
+
+		if (disassembledInstruction.isBranchWithDestination())
+		{
+			JMenuItem option = new JMenuItem("Follow Branch");
+			option.setAccelerator(followBranchKeyStroke);
+			option.addActionListener(actionEvent -> followBranch(tableManager));
+			add(option);
+		}
 
 		JTable table = tableManager.getTable();
 		table.addKeyListener(new KeyAdapter()
@@ -43,19 +47,29 @@ public class DisassemblerContextMenu extends JPopupMenu
 					if (PopupMenuUtilities.keyEventPressed(pressedEvent, memoryViewerKeyStroke))
 					{
 						switchToMemoryViewer();
+					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, searchKeyStroke))
+					{
+						switchToSearchTab();
 					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, copyCellsKeyStroke))
 					{
 						copyCells();
 					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, followBranchKeyStroke))
 					{
-						followBranch();
+						followBranch(tableManager);
 					}
 				}
 			}
 		});
 	}
 
-	private void followBranch()
+	private void switchToSearchTab()
+	{
+		JGeckoUGUI jGeckoUGUI = JGeckoUGUI.getInstance();
+		DisassembledInstruction disassembledInstruction = tableManager.getSelectedInstruction();
+		jGeckoUGUI.setupSearch(disassembledInstruction);
+	}
+
+	public static void followBranch(DisassemblerTableManager tableManager)
 	{
 		DisassembledInstruction disassembledInstruction = tableManager.getSelectedInstruction();
 

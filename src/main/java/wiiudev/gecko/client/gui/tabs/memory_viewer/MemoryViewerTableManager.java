@@ -10,6 +10,7 @@ import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -59,8 +60,26 @@ public class MemoryViewerTableManager
 		tableHeader.setResizingAllowed(false);
 		JTableUtilities.setCellsAlignment(table, SwingConstants.CENTER);
 		selectFirstCell();
-
+		addDoubleClickListener();
 		addContextMenuListener();
+	}
+
+	private void addDoubleClickListener()
+	{
+		table.addMouseListener(new MouseAdapter()
+		{
+			public void mousePressed(MouseEvent mouseEvent)
+			{
+				JTable table = (JTable) mouseEvent.getSource();
+				Point point = mouseEvent.getPoint();
+				int rowIndex = table.rowAtPoint(point);
+
+				if (rowIndex != -1 && mouseEvent.getClickCount() == 2)
+				{
+					MemoryViewerContextMenu.dereferenceAddress();
+				}
+			}
+		});
 	}
 
 	private void addContextMenuListener()
