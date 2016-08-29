@@ -2952,7 +2952,7 @@ public class JGeckoUGUI extends JFrame
 
 		if (selectedAnswer == JOptionPane.YES_OPTION)
 		{
-			openURL("http://cosmocortney.ddns.net/enzy/cafe_code_types_en.php");
+			openURL("http://gbatemp.net/threads/post-your-wiiu-cheat-codes-here.395443/");
 		}
 	}
 
@@ -3429,6 +3429,12 @@ public class JGeckoUGUI extends JFrame
 		JGeckoUGUI geckoUGUI = getInstance();
 		geckoUGUI.setMemoryViewerAddress(address);
 		geckoUGUI.switchToMemoryViewer();
+		geckoUGUI.selectMemoryViewerCell(address);
+	}
+
+	private void selectMemoryViewerCell(int address)
+	{
+		memoryViewerTableManager.selectAddress(address);
 	}
 
 	public void selectDisassemblerTab()

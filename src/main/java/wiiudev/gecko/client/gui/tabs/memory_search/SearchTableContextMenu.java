@@ -26,6 +26,7 @@ public class SearchTableContextMenu extends JPopupMenu
 	{
 		KeyStroke memoryViewerKeyStroke = PopupMenuUtilities.addOption(this, "Memory Viewer", "control M", actionEvent -> switchToMemoryViewer());
 		KeyStroke disassemblerKeyStroke = PopupMenuUtilities.addOption(this, "Disassembler", "control D", actionEvent -> switchToDisassembler());
+		KeyStroke pokeKeyStroke = PopupMenuUtilities.addOption(this, "Poke", "control K", actionEvent -> pokeValues());
 		KeyStroke pokePreviousKeyStroke = PopupMenuUtilities.addOption(this, "Poke Previous", "control P", actionEvent -> pokePreviousValues());
 		KeyStroke pokeCurrentKeyStroke = PopupMenuUtilities.addOption(this, "Poke Current", "control U", actionEvent -> pokeCurrentValues());
 		KeyStroke deleteSelectedKeyStroke = PopupMenuUtilities.addOption(this, "Delete", "control D", actionEvent -> deleteSelectedRows());
@@ -44,6 +45,9 @@ public class SearchTableContextMenu extends JPopupMenu
 					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, disassemblerKeyStroke))
 					{
 						switchToDisassembler();
+					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, pokeKeyStroke))
+					{
+						pokeValues();
 					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, pokePreviousKeyStroke))
 					{
 						pokePreviousValues();
@@ -57,6 +61,32 @@ public class SearchTableContextMenu extends JPopupMenu
 				}
 			}
 		});
+	}
+
+	private void pokeValues()
+	{
+		List<SearchResult> searchResults = tableManager.getSelected();
+		SearchResult firstSearchResult = searchResults.get(0);
+		PokeValueDialog pokeValueDialog = new PokeValueDialog(firstSearchResult.getCurrentValue(),
+				firstSearchResult.getValueSize());
+		pokeValueDialog.setLocationRelativeTo(JGeckoUGUI.getInstance());
+		pokeValueDialog.setVisible(true);
+
+		if (pokeValueDialog.shouldPoke())
+		{
+			byte[] valueBytes = pokeValueDialog.getValueBytes();
+
+			try
+			{
+				for (SearchResult searchResult : searchResults)
+				{
+					poke(searchResult, valueBytes);
+				}
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(getRootPane(), exception);
+			}
+		}
 	}
 
 	private void switchToDisassembler()

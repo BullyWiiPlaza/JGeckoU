@@ -91,6 +91,16 @@ public class Conversions
 		return floatValue.toString();
 	}
 
+	public static String prependPadding(String hexadecimalString, int targetLength)
+	{
+		while (hexadecimalString.length() < targetLength)
+		{
+			hexadecimalString = "0" + hexadecimalString;
+		}
+
+		return hexadecimalString;
+	}
+
 	public static String floatingPointToHexadecimal(String floatingPoint)
 	{
 		float floating = Float.parseFloat(floatingPoint);
@@ -129,7 +139,7 @@ public class Conversions
 	 */
 	public static int toDecimal(String hexadecimal)
 	{
-		if(hexadecimal.equals(""))
+		if (hexadecimal.equals(""))
 		{
 			hexadecimal = "0";
 		}
@@ -148,11 +158,7 @@ public class Conversions
 	{
 		String hexadecimal = Integer.toHexString(decimal);
 		hexadecimal = hexadecimal.toUpperCase();
-
-		while (hexadecimal.length() < length)
-		{
-			hexadecimal = "0" + hexadecimal;
-		}
+		hexadecimal = prependPadding(hexadecimal, length);
 
 		return hexadecimal;
 	}
@@ -253,16 +259,15 @@ public class Conversions
 	public static String toHexadecimal(byte[] bytes, ValueSize valueSize)
 	{
 		String hexadecimal = DatatypeConverter.printHexBinary(bytes);
+		int length = valueSize.getBytesCount() * 2;
 
-		while(hexadecimal.length() > valueSize.getBytesCount() * 2)
+		// Cut off null bytes
+		while (hexadecimal.length() > length)
 		{
 			hexadecimal = hexadecimal.substring(2);
 		}
 
-		while(hexadecimal.length() < valueSize.getBytesCount() * 2)
-		{
-			hexadecimal = "0" + hexadecimal;
-		}
+		hexadecimal = prependPadding(hexadecimal, length);
 
 		return hexadecimal;
 	}
@@ -272,5 +277,19 @@ public class Conversions
 		byte[] bytes = bigInteger.toByteArray();
 
 		return toHexadecimal(bytes, valueSize);
+	}
+
+	public static byte[] hexStringToByteArray(String string)
+	{
+		int length = string.length();
+		byte[] bytes = new byte[length / 2];
+
+		for (int lengthIndex = 0; lengthIndex < length; lengthIndex += 2)
+		{
+			bytes[lengthIndex / 2] = (byte) ((Character.digit(string.charAt(lengthIndex), 16) << 4)
+					+ Character.digit(string.charAt(lengthIndex + 1), 16));
+		}
+
+		return bytes;
 	}
 }
