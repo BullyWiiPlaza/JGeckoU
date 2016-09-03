@@ -6,6 +6,7 @@ import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -196,6 +197,30 @@ public class MemoryWriter extends TCPGecko
 		{
 			reentrantLock.unlock();
 		}
+	}
+
+	public void serialWrite(int address, int value, int writesCount) throws IOException
+	{
+		serialWrite(address, value, writesCount, 0);
+	}
+
+	public void serialWrite(int address, int value, int writesCount, int increment) throws IOException
+	{
+		byte[] bytes = getBytes(value, writesCount, increment);
+		writeBytes(address, bytes);
+	}
+
+	private byte[] getBytes(int value, int writesCount, int increment)
+	{
+		ByteBuffer byteBuffer = ByteBuffer.allocate(4 * writesCount);
+
+		for (int writesIndex = 0; writesIndex < writesCount; writesIndex++)
+		{
+			byteBuffer.putInt(value);
+			value += increment;
+		}
+
+		return byteBuffer.array();
 	}
 
 	private static class ByteUtilities

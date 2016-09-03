@@ -1239,7 +1239,12 @@ public class JGeckoUGUI extends JFrame
 					Thread.sleep(100);
 				} catch (Exception exception)
 				{
-					connectionReset();
+					exception.printStackTrace();
+
+					if (TCPGecko.isConnected())
+					{
+						connectionReset();
+					}
 				}
 			}
 		});
