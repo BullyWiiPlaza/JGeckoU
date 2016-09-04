@@ -85,11 +85,14 @@ public class MemorySearcher
 		} else
 		{
 			int searchResultsIndex = 0;
+			int startingAddress = searchResults.get(0).getAddress();
 
 			for (SearchResult searchResult : searchResults)
 			{
 				int currentAddress = searchResult.getAddress();
-				valuesReader.position(currentAddress - address);
+				int position = currentAddress - startingAddress;
+				valuesReader.position(position);
+
 				BigInteger currentValue = getValue(valuesReader, valueSizeBytesCount);
 				SearchConditions searchCondition = searchRefinement.getSearchCondition();
 
@@ -102,14 +105,13 @@ public class MemorySearcher
 					updatedSearchResults.add(searchResult);
 				}
 
-				int progress = searchResultsIndex * 100 / searchResults.size();
+				int progress = (searchResultsIndex + 1) * 100 / searchResults.size();
 				progressBar.setValue(progress);
 
 				searchResultsIndex++;
 			}
 		}
 
-		progressBar.setValue(100);
 		searchResults = updatedSearchResults;
 		isFirstSearch = false;
 
@@ -166,7 +168,14 @@ public class MemorySearcher
 	private BigInteger getValue(ByteBuffer byteBuffer, int bytesCount)
 	{
 		byte[] retrieved = new byte[bytesCount];
-		byteBuffer.get(retrieved);
+
+		try
+		{
+			byteBuffer.get(retrieved);
+		} catch (Exception exception)
+		{
+			exception.printStackTrace();
+		}
 
 		// For bigger value sizes still go in 32-bit steps
 		int additionalBytes = bytesCount - ValueSize.THIRTY_TWO_BIT.getBytesCount();

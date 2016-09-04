@@ -191,7 +191,7 @@ public class SearchTableContextMenu extends JPopupMenu
 
 	private List<SearchResult> getSelectedSearchResults()
 	{
-		return tableManager.getSelected();
+		return tableManager.getSelectedSearchResults();
 	}
 
 	private void pokePreviousValues()

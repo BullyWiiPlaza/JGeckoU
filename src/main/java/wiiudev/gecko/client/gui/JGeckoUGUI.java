@@ -5,6 +5,7 @@ import org.apache.commons.lang3.SystemUtils;
 import wiiudev.gecko.client.codes.*;
 import wiiudev.gecko.client.conversions.ConversionType;
 import wiiudev.gecko.client.conversions.Conversions;
+import wiiudev.gecko.client.conversions.Validation;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.dialogs.*;
 import wiiudev.gecko.client.gui.input_filters.HexadecimalInputFilter;
@@ -19,6 +20,7 @@ import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Assembler;
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerException;
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerFilesException;
 import wiiudev.gecko.client.gui.tabs.memory_search.SearchResultsTableManager;
+import wiiudev.gecko.client.gui.tabs.memory_search.SearchValueConversionContextMenu;
 import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViewerTableManager;
 import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViews;
 import wiiudev.gecko.client.gui.tabs.pointer_search.DownloadingUtilities;
@@ -243,6 +245,9 @@ public class JGeckoUGUI extends JFrame
 
 		searchProgressBar.setStringPainted(true);
 
+		SearchValueConversionContextMenu searchValueConversionContextMenu = new SearchValueConversionContextMenu(searchValueField);
+		searchValueConversionContextMenu.addMouseListener();
+
 		searchValueField.addKeyListener(new KeyAdapter()
 		{
 			public void keyReleased(KeyEvent keyEvent)
@@ -263,6 +268,28 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
+		searchValueField.getDocument().addDocumentListener(new DocumentListener()
+		{
+			@Override
+			public void insertUpdate(DocumentEvent documentEvent)
+			{
+				setSearchValueBackgroundColor();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent documentEvent)
+			{
+				setSearchValueBackgroundColor();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent documentEvent)
+			{
+				setSearchValueBackgroundColor();
+			}
+		});
+
+		setSearchValueBackgroundColor();
 		setSearchInputFilter();
 
 		HexadecimalInputFilter.setHexadecimalInputFilter(searchStartingAddressField);
@@ -393,6 +420,22 @@ public class JGeckoUGUI extends JFrame
 		addSearchButtonListener();
 		addNewSearchButtonListener();
 		addUndoButtonListener();
+	}
+
+	private void setSearchValueBackgroundColor()
+	{
+		boolean valueOkay = isSearchValueOkay();
+		searchValueField.setBackground(valueOkay ? Color.GREEN : Color.RED);
+		setSearchButtonAvailability();
+	}
+
+	private boolean isSearchValueOkay()
+	{
+		String value = searchValueField.getText();
+		boolean isHexadecimal = Validation.isHexadecimal(value);
+		int valueSizeBytesCount = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex()).getBytesCount() * 2;
+		boolean isLengthOkay = value.length() <= valueSizeBytesCount;
+		return isHexadecimal && isLengthOkay;
 	}
 
 	private Path setSearchResultsCurrentDirectory(JFileChooser fileChooser) throws Exception
@@ -591,15 +634,15 @@ public class JGeckoUGUI extends JFrame
 
 	private void setSearchInputFilter()
 	{
-		ValueSize valueSize = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex());
+		/*ValueSize valueSize = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex());
 		int charactersLength = valueSize.getBytesCount() * 2;
-		HexadecimalInputFilter.setHexadecimalInputFilter(searchValueField, charactersLength);
+		HexadecimalInputFilter.setHexadecimalInputFilter(searchValueField, charactersLength);*/
 	}
 
 	private void populateSearchValueSizes()
 	{
-		DefaultComboBoxModel<ValueSize> defaultComboBoxModel3 = new DefaultComboBoxModel<>(ValueSize.values());
-		searchValueSizeComboBox.setModel(defaultComboBoxModel3);
+		DefaultComboBoxModel<ValueSize> defaultComboBoxModel = new DefaultComboBoxModel<>(ValueSize.values());
+		searchValueSizeComboBox.setModel(defaultComboBoxModel);
 		searchValueSizeComboBox.setSelectedItem(ValueSize.THIRTY_TWO_BIT);
 
 		searchValueSizeComboBox.addItemListener(itemEvent ->
@@ -608,6 +651,7 @@ public class JGeckoUGUI extends JFrame
 			{
 				setConnectionButtonsAvailability();
 				setSearchInputFilter();
+				setSearchValueBackgroundColor();
 			}
 		});
 	}
@@ -3367,7 +3411,8 @@ public class JGeckoUGUI extends JFrame
 		boolean areAddressesValid = AddressRange.isValidAccess(Conversions.toDecimal(searchStartingAddressField.getText()), 1, MemoryAccessLevel.READ) && AddressRange.isValidAccess(Conversions.toDecimal(searchEndingAddressField.getText()), 1, MemoryAccessLevel.READ);
 		searchButton.setEnabled(TCPGecko.isConnected() && !searching
 				&& !noResultsFound && isRangePositive
-				&& isRangeAlignedCorrectly && areAddressesValid);
+				&& isRangeAlignedCorrectly && areAddressesValid
+				&& isSearchValueOkay());
 	}
 
 	private void setCodeListButtonsAvailability()

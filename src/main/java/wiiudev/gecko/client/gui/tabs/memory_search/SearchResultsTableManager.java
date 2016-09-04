@@ -11,6 +11,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -97,7 +98,7 @@ public class SearchResultsTableManager
 		return searchResults.isEmpty();
 	}
 
-	public List<SearchResult> getSelected()
+	public List<SearchResult> getSelectedSearchResults()
 	{
 		int[] selectedRows = table.getSelectedRows();
 
@@ -129,14 +130,25 @@ public class SearchResultsTableManager
 
 	public void deleteSelectedRows()
 	{
-		int[] selectedRows = table.getSelectedRows();
-
-		for (int selectedRow : selectedRows)
-		{
-			searchResults.remove(selectedRow);
-		}
-
+		List<SearchResult> removedSearchResults = getRemovedSearchResults();
+		searchResults.removeAll(removedSearchResults);
 		JTableUtilities.deleteSelectedRows(table);
 		JGeckoUGUI.getInstance().updateSearchResultsCountLabel();
+	}
+
+	private List<SearchResult> getRemovedSearchResults()
+	{
+		int[] selectedRows = table.getSelectedRows();
+
+		List<SearchResult> removedSearchResults = new ArrayList<>();
+
+		for (int selectedRowsIndex = 0; selectedRowsIndex < selectedRows.length; selectedRowsIndex++)
+		{
+			int selectedRow = selectedRows[selectedRowsIndex];
+			SearchResult removedSelectedRow = searchResults.get(selectedRow);
+			removedSearchResults.add(removedSelectedRow);
+		}
+
+		return removedSearchResults;
 	}
 }
