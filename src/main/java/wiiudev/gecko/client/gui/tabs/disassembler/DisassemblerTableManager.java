@@ -2,7 +2,6 @@ package wiiudev.gecko.client.gui.tabs.disassembler;
 
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Disassembler;
 import wiiudev.gecko.client.gui.utilities.JTableUtilities;
-import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 
@@ -103,9 +102,7 @@ public class DisassemblerTableManager
 		// int selectedRow = table.getSelectedRow();
 		disassembledInstructions.clear();
 
-		MemoryReader memoryReader = new MemoryReader();
-		byte[] values = memoryReader.readBytes(address, length);
-		disassembledInstructions = Disassembler.disassemble(values, address);
+		disassembledInstructions = Disassembler.disassemble(address, length);
 		JTableUtilities.deleteAllRows(table);
 		disassembledInstructions.forEach(this::addRow);
 

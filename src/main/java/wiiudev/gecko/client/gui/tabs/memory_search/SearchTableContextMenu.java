@@ -4,6 +4,7 @@ import wiiudev.gecko.client.conversions.Conversions;
 import wiiudev.gecko.client.conversions.SystemClipboard;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
+import wiiudev.gecko.client.gui.utilities.JTableUtilities;
 import wiiudev.gecko.client.gui.utilities.PopupMenuUtilities;
 import wiiudev.gecko.client.memory_search.SearchResult;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
@@ -36,6 +37,7 @@ public class SearchTableContextMenu extends JPopupMenu
 		KeyStroke deleteSelectedKeyStroke = PopupMenuUtilities.addOption(this, "Delete", "control D", actionEvent -> deleteSelectedRows());
 
 		JTable table = tableManager.getTable();
+		JTableUtilities.removeAllKeyListeners(table);
 		table.addKeyListener(new KeyAdapter()
 		{
 			@Override
@@ -89,46 +91,7 @@ public class SearchTableContextMenu extends JPopupMenu
 		if (pokeValueDialog.shouldPoke())
 		{
 			byte[] valueBytes = pokeValueDialog.getValueBytes();
-
-			try
-			{
-				for (int searchResultIndex = 0; searchResultIndex < searchResults.size(); searchResultIndex++)
-				{
-					SearchResult searchResult = searchResults.get(searchResultIndex);
-
-					int address = searchResult.getAddress();
-					ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-					byteArrayOutputStream.write(valueBytes);
-
-					if (searchResultIndex < searchResults.size() - 1)
-					{
-						SearchResult nextSearchResult = searchResults.get(searchResultIndex + 1);
-
-						// Optimize poking by reducing the amount of queries sent
-						while (searchResult.getAddress()
-								+ searchResult.getValueSize().getBytesCount()
-								== nextSearchResult.getAddress())
-						{
-							byteArrayOutputStream.write(valueBytes);
-							searchResult = nextSearchResult;
-							searchResultIndex++;
-
-							if (searchResultIndex == searchResults.size() - 1)
-							{
-								break;
-							}
-
-							nextSearchResult = searchResults.get(searchResultIndex + 1);
-						}
-					}
-
-					MemoryPoke memoryPoke = new MemoryPoke(address, byteArrayOutputStream);
-					memoryPoke.poke();
-				}
-			} catch (IOException exception)
-			{
-				StackTraceUtils.handleException(getRootPane(), exception);
-			}
+			pokeValues(valueBytes);
 		}
 	}
 
@@ -146,6 +109,21 @@ public class SearchTableContextMenu extends JPopupMenu
 
 	private void pokeCurrentValues()
 	{
+		pokeValues(SearchResult::getCurrentValueBytes);
+	}
+
+	private List<SearchResult> getSelectedSearchResults()
+	{
+		return tableManager.getSelectedSearchResults();
+	}
+
+	private void pokePreviousValues()
+	{
+		pokeValues(SearchResult::getPreviousValueBytes);
+	}
+
+	private void pokeValues(byte[] valueBytes)
+	{
 		List<SearchResult> searchResults = getSelectedSearchResults();
 
 		try
@@ -155,8 +133,8 @@ public class SearchTableContextMenu extends JPopupMenu
 				SearchResult searchResult = searchResults.get(searchResultIndex);
 
 				int address = searchResult.getAddress();
-				ByteArrayOutputStream valueBytes = new ByteArrayOutputStream();
-				valueBytes.write(searchResult.getCurrentValueBytes());
+				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+				byteArrayOutputStream.write(valueBytes);
 
 				if (searchResultIndex < searchResults.size() - 1)
 				{
@@ -167,7 +145,7 @@ public class SearchTableContextMenu extends JPopupMenu
 							+ searchResult.getValueSize().getBytesCount()
 							== nextSearchResult.getAddress())
 					{
-						valueBytes.write(nextSearchResult.getCurrentValueBytes());
+						byteArrayOutputStream.write(valueBytes);
 						searchResult = nextSearchResult;
 						searchResultIndex++;
 
@@ -180,7 +158,7 @@ public class SearchTableContextMenu extends JPopupMenu
 					}
 				}
 
-				MemoryPoke memoryPoke = new MemoryPoke(address, valueBytes);
+				MemoryPoke memoryPoke = new MemoryPoke(address, byteArrayOutputStream);
 				memoryPoke.poke();
 			}
 		} catch (IOException exception)
@@ -189,12 +167,7 @@ public class SearchTableContextMenu extends JPopupMenu
 		}
 	}
 
-	private List<SearchResult> getSelectedSearchResults()
-	{
-		return tableManager.getSelectedSearchResults();
-	}
-
-	private void pokePreviousValues()
+	private void pokeValues(ValueBytesGetter valueBytesGetter)
 	{
 		List<SearchResult> searchResults = getSelectedSearchResults();
 
@@ -206,7 +179,7 @@ public class SearchTableContextMenu extends JPopupMenu
 
 				int address = searchResult.getAddress();
 				ByteArrayOutputStream valueBytes = new ByteArrayOutputStream();
-				valueBytes.write(searchResult.getPreviousValueBytes());
+				valueBytes.write(valueBytesGetter.getValueBytes(searchResult));
 
 				if (searchResultIndex < searchResults.size() - 1)
 				{
@@ -217,7 +190,7 @@ public class SearchTableContextMenu extends JPopupMenu
 							+ searchResult.getValueSize().getBytesCount()
 							== nextSearchResult.getAddress())
 					{
-						valueBytes.write(nextSearchResult.getPreviousValueBytes());
+						valueBytes.write(valueBytesGetter.getValueBytes(searchResult));
 						searchResult = nextSearchResult;
 						searchResultIndex++;
 
@@ -267,5 +240,11 @@ public class SearchTableContextMenu extends JPopupMenu
 			MemoryWriter memoryWriter = new MemoryWriter();
 			memoryWriter.writeBytes(address, bytes);
 		}
+	}
+
+	@FunctionalInterface
+	private interface ValueBytesGetter
+	{
+		byte[] getValueBytes(SearchResult searchResult) throws IOException;
 	}
 }

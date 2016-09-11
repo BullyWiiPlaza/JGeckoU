@@ -2,7 +2,7 @@ package wiiudev.gecko.client.memory_search;
 
 import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.memory_search.enumerations.SearchConditions;
-import wiiudev.gecko.client.memory_search.enumerations.SearchModes;
+import wiiudev.gecko.client.memory_search.enumerations.SearchMode;
 import wiiudev.gecko.client.memory_search.enumerations.ValueSize;
 
 import javax.swing.*;
@@ -40,8 +40,8 @@ public class MemorySearcher
 
 	public List<SearchResult> search(SearchRefinement searchRefinement) throws IOException, ExecutionException, InterruptedException
 	{
-		SearchModes searchMode = searchRefinement.getSearchMode();
-		boolean isUnknownValueSearch = searchMode == SearchModes.UNKNOWN;
+		SearchMode searchMode = searchRefinement.getSearchMode();
+		boolean isUnknownValueSearch = searchMode == SearchMode.UNKNOWN;
 		ValueSize valueSize = searchRefinement.getValueSize();
 		SearchQueryOptimizer searchQueryOptimizer = new SearchQueryOptimizer(address, length);
 		ByteBuffer valuesReader = searchQueryOptimizer.dumpBytes(searchResults);

@@ -1,6 +1,7 @@
 package wiiudev.gecko.client.gui.tabs.disassembler.assembler;
 
 import wiiudev.gecko.client.gui.tabs.disassembler.DisassembledInstruction;
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -13,6 +14,14 @@ import java.util.List;
 
 public class Disassembler
 {
+	public static List<DisassembledInstruction> disassemble(int address, int length) throws Exception
+	{
+		MemoryReader memoryReader = new MemoryReader();
+		byte[] values = memoryReader.readBytes(address, length);
+
+		return Disassembler.disassemble(values, address);
+	}
+
 	public static List<DisassembledInstruction> disassemble(byte[] values, int address) throws Exception
 	{
 		Path tempFile = Files.createTempFile("machine-instructions", ".bin");

@@ -33,7 +33,7 @@ import wiiudev.gecko.client.gui.utilities.JTableUtilities;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
 import wiiudev.gecko.client.memory_search.*;
 import wiiudev.gecko.client.memory_search.enumerations.SearchConditions;
-import wiiudev.gecko.client.memory_search.enumerations.SearchModes;
+import wiiudev.gecko.client.memory_search.enumerations.SearchMode;
 import wiiudev.gecko.client.memory_search.enumerations.ValueSize;
 import wiiudev.gecko.client.memory_viewer.ValueOperations;
 import wiiudev.gecko.client.network_scanner.WiiUFinder;
@@ -78,7 +78,7 @@ public class JGeckoUGUI extends JFrame
 	private JTextField searchStartingAddressField;
 	private JTextField searchEndingAddressField;
 	private JComboBox<SearchConditions> searchConditionComboBox;
-	private JComboBox<SearchModes> searchModeComboBox;
+	private JComboBox<SearchMode> searchModeComboBox;
 	private JTextField searchValueField;
 	private JButton searchButton;
 	private JButton restartSearchButton;
@@ -185,6 +185,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton loadSearchButton;
 	private JButton memoryBoundsButton;
 	private JLabel threadsCountLabel;
+	private JButton speedCrunchButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -587,7 +588,7 @@ public class JGeckoUGUI extends JFrame
 		// This can be changed during each memory search step
 		SearchConditions searchConditions = searchConditionComboBox.getItemAt(searchConditionComboBox.getSelectedIndex());
 		ValueSize valueSize = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex());
-		SearchModes searchMode = searchModeComboBox.getItemAt(searchModeComboBox.getSelectedIndex());
+		SearchMode searchMode = searchModeComboBox.getItemAt(searchModeComboBox.getSelectedIndex());
 
 		switch (searchMode)
 		{
@@ -664,9 +665,9 @@ public class JGeckoUGUI extends JFrame
 
 	private void populateSearchModes()
 	{
-		DefaultComboBoxModel<SearchModes> defaultComboBoxModel = new DefaultComboBoxModel<>(SearchModes.values());
+		DefaultComboBoxModel<SearchMode> defaultComboBoxModel = new DefaultComboBoxModel<>(SearchMode.values());
 		searchModeComboBox.setModel(defaultComboBoxModel);
-		searchModeComboBox.setSelectedItem(SearchModes.SPECIFIC);
+		searchModeComboBox.setSelectedItem(SearchMode.SPECIFIC);
 	}
 
 	private void setSearchButtonsAvailability()
@@ -682,8 +683,8 @@ public class JGeckoUGUI extends JFrame
 				&& searchResultsTableManager.getSearchResults() != null
 				&& !searchResultsTableManager.getSearchResults().isEmpty()
 				&& searchResultsTableManager.getSearchResults().size() < 99999);
-		SearchModes searchMode = searchModeComboBox.getItemAt(searchModeComboBox.getSelectedIndex());
-		if (searchMode == SearchModes.UNKNOWN)
+		SearchMode searchMode = searchModeComboBox.getItemAt(searchModeComboBox.getSelectedIndex());
+		if (searchMode == SearchMode.UNKNOWN)
 		{
 			searchValueField.setEnabled(false);
 
@@ -1725,7 +1726,7 @@ public class JGeckoUGUI extends JFrame
 		String searchMode = simpleProperties.get("SEARCH_MODE");
 		if (searchMode != null)
 		{
-			SearchModes mode = SearchModes.parse(searchMode);
+			SearchMode mode = SearchMode.parse(searchMode);
 			searchModeComboBox.setSelectedItem(mode);
 		}
 
@@ -1741,28 +1742,53 @@ public class JGeckoUGUI extends JFrame
 	{
 		powerPCAssemblyCompilerButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/PowerPC-Assembly-Compiler/blob/master/PowerPC-Assembly-Compiler.jar?raw=true", actionEvent));
 		pointerSearchApplicationButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/Universal-Pointer-Searcher/blob/master/Universal-Pointer-Searcher.jar?raw=true", actionEvent));
-		hexEditorButton.setVisible(SystemUtils.IS_OS_WINDOWS); // So far Windows only
-		hexEditorButton.addActionListener(actionEvent -> downloadAndExecuteHexEditor());
+		addStartHexEditorButtonListener();
+		addStartScientificCalculatorListener();
 	}
 
-	private void downloadAndExecuteHexEditor()
+	private void addStartScientificCalculatorListener()
 	{
-		String localExecutablePath = "C:\\Program Files (x86)\\HxD\\HxD.exe";
-		Path path = Paths.get(localExecutablePath);
-		boolean exists = Files.exists(path);
+		ApplicationLauncher applicationLauncher = new ApplicationLauncher("C:\\Program Files (x86)\\SpeedCrunch\\SpeedCrunch.exe",
+				"https://bitbucket.org/heldercorreia/speedcrunch/downloads/SpeedCrunch-0.11.exe",
+				"SpeedCrunch", false);
+		speedCrunchButton.addActionListener(actionEvent ->
+				startApplication(actionEvent, applicationLauncher));
+		speedCrunchButton.setVisible(SystemUtils.IS_OS_WINDOWS);
+	}
 
-		if (isFileLocked("setup.exe"))
-		{
-			return;
-		}
+	private void addStartHexEditorButtonListener()
+	{
+		ApplicationLauncher applicationLauncher = new ApplicationLauncher("C:\\Program Files (x86)\\HxD\\HxD.exe",
+				"https://mh-nexus.de/downloads/HxDSetupEN.zip", "HxD", true);
+		hexEditorButton.addActionListener(actionEvent -> startApplication(actionEvent, applicationLauncher));
+		hexEditorButton.setVisible(SystemUtils.IS_OS_WINDOWS);
+	}
+
+	private void startApplication(ActionEvent actionEvent, ApplicationLauncher applicationLauncher)
+	{
+		JButton startButton = (JButton) actionEvent.getSource();
+		Path installedExecutablePath = applicationLauncher.getInstalledExecutablePath();
+		String fileName = applicationLauncher.getSetupFileName();
 
 		try
 		{
-			String messageText = exists ? "Would you like to start HxD?" : "Would you like to download and run the HxD installation setup?";
+			if (isRunning(applicationLauncher.getName()))
+			{
+				return;
+			}
+
+			if (isRunning(fileName))
+			{
+				return;
+			}
+
+			boolean installed = Files.exists(installedExecutablePath);
+			String messageText = installed ? "Would you like to start " + applicationLauncher.getName() + "?"
+					: "Would you like to download and run the " + applicationLauncher.getName() + " installation setup?";
 			String[] options = {"Yes", "No"};
 			int selectedAnswer = JOptionPane.showOptionDialog(rootPane,
 					messageText,
-					hexEditorButton.getText(),
+					startButton.getText(),
 					JOptionPane.YES_NO_CANCEL_OPTION,
 					JOptionPane.QUESTION_MESSAGE,
 					null,
@@ -1771,13 +1797,13 @@ public class JGeckoUGUI extends JFrame
 
 			if (selectedAnswer == JOptionPane.YES_OPTION)
 			{
-				String buttonText = hexEditorButton.getText();
+				String buttonText = startButton.getText();
 
-				if (exists)
+				if (installed)
 				{
-					hexEditorButton.setText("Starting...");
-					Desktop.getDesktop().open(path.toFile());
-					hexEditorButton.setText(buttonText);
+					startButton.setText("Starting...");
+					Desktop.getDesktop().open(installedExecutablePath.toFile());
+					startButton.setText(buttonText);
 				} else
 				{
 					new SwingWorker<String, String>()
@@ -1787,17 +1813,26 @@ public class JGeckoUGUI extends JFrame
 						{
 							try
 							{
-								hexEditorButton.setEnabled(false);
-								hexEditorButton.setText("Downloading...");
+								startButton.setEnabled(false);
+								startButton.setText("Downloading...");
 								DownloadingUtilities.trustAllCertificates();
-								String downloadURL = "https://mh-nexus.de/downloads/HxDSetupEN.zip";
-								DownloadingUtilities.download(downloadURL);
-								String fileName = DownloadingUtilities.getFileName(downloadURL);
-								hexEditorButton.setText("Unzipping...");
-								File unzippedFile = ZipUtils.unZipFile(fileName);
-								Files.delete(Paths.get(fileName));
-								hexEditorButton.setText("Executing...");
-								Desktop.getDesktop().open(unzippedFile);
+								DownloadingUtilities.download(applicationLauncher.getDownloadURL());
+
+								File executeFile;
+
+								if (applicationLauncher.shouldUnZip())
+								{
+									startButton.setText("Unzipping...");
+									File unzippedFile = ZipUtils.unZipFile(fileName);
+									Files.delete(Paths.get(fileName));
+									executeFile = unzippedFile;
+								} else
+								{
+									executeFile = new File(fileName);
+								}
+
+								startButton.setText("Executing...");
+								Desktop.getDesktop().open(executeFile);
 							} catch (Exception exception)
 							{
 								StackTraceUtils.handleException(rootPane, exception);
@@ -1809,16 +1844,38 @@ public class JGeckoUGUI extends JFrame
 						@Override
 						protected void done()
 						{
-							hexEditorButton.setEnabled(true);
-							hexEditorButton.setText(buttonText);
+							startButton.setEnabled(true);
+							startButton.setText(buttonText);
 						}
 					}.execute();
 				}
 			}
 		} catch (Exception exception)
 		{
-			StackTraceUtils.handleException(rootPane, exception);
+			exception.printStackTrace();
 		}
+	}
+
+	private boolean isRunning(String applicationName) throws IOException
+	{
+		String forcedExtension = ".exe";
+
+		if (!applicationName.endsWith(forcedExtension))
+		{
+			applicationName += forcedExtension;
+		}
+
+		if (ApplicationUtilities.isProcessRunning(applicationName))
+		{
+			JOptionPane.showMessageDialog(rootPane,
+					applicationName + " is running already",
+					"Error",
+					JOptionPane.ERROR_MESSAGE);
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private boolean isFileLocked(String fileName)
@@ -1826,7 +1883,7 @@ public class JGeckoUGUI extends JFrame
 		if (!DownloadingUtilities.canDownload(fileName))
 		{
 			JOptionPane.showMessageDialog(rootPane,
-					"The application seems to be running already.",
+					"The setup seems to be running already.",
 					"Error",
 					JOptionPane.ERROR_MESSAGE);
 
@@ -1861,7 +1918,7 @@ public class JGeckoUGUI extends JFrame
 
 		int selectedAnswer = JOptionPane.showConfirmDialog(
 				rootPane,
-				"Would you like to download and start this application?",
+				"Would you like to download and start " + downloadButton.getText() + "?",
 				"Download and launch?",
 				JOptionPane.YES_NO_OPTION);
 
@@ -3531,6 +3588,7 @@ public class JGeckoUGUI extends JFrame
 	{
 		searchStartingAddressField.setText(Conversions.toHexadecimal(disassembledInstruction.getAddress(), 8));
 		searchValueField.setText(Conversions.toHexadecimal(disassembledInstruction.getValue()));
+		searchModeComboBox.setSelectedItem(SearchMode.SPECIFIC);
 		switchToSearchTab();
 	}
 

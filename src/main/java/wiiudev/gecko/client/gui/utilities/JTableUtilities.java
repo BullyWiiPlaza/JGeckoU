@@ -7,6 +7,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableModel;
+import java.awt.event.KeyListener;
 
 public class JTableUtilities
 {
@@ -77,6 +78,16 @@ public class JTableUtilities
 	public static void setSingleSelection(JTable table)
 	{
 		table.setSelectionModel(new ForcedListSelectionModel());
+	}
+
+	public static void removeAllKeyListeners(JTable table)
+	{
+		KeyListener[] keyListeners = table.getKeyListeners();
+
+		for (KeyListener keyListener : keyListeners)
+		{
+			table.removeKeyListener(keyListener);
+		}
 	}
 
 	private static class ForcedListSelectionModel extends DefaultListSelectionModel

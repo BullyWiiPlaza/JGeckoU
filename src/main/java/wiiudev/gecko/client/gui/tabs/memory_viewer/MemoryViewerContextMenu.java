@@ -5,6 +5,7 @@ import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.dialogs.RemoteProcedureCallDialog;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CodeWizardDialog;
 import wiiudev.gecko.client.gui.utilities.JFileChooserUtilities;
+import wiiudev.gecko.client.gui.utilities.JTableUtilities;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
@@ -92,6 +93,7 @@ public class MemoryViewerContextMenu extends JPopupMenu
 			add(dereferenceOption);
 		}
 
+		JTableUtilities.removeAllKeyListeners(table);
 		table.addKeyListener(new KeyAdapter()
 		{
 			@Override

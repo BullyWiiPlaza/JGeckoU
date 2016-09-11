@@ -29,9 +29,8 @@ public class DownloadingUtilities
 
 	/**
 	 * Allows all SSL certificates for downloading files.
+	 *
 	 * @see <a href="http://stackoverflow.com/a/2893932/3764804" StackOverflow></a>
-	 * @throws NoSuchAlgorithmException
-	 * @throws KeyManagementException
 	 */
 	public static void trustAllCertificates() throws NoSuchAlgorithmException, KeyManagementException
 	{
@@ -42,13 +41,11 @@ public class DownloadingUtilities
 				return new X509Certificate[0];
 			}
 
-			public void checkClientTrusted(
-					X509Certificate[] certs, String authType)
+			public void checkClientTrusted(X509Certificate[] certs, String authType)
 			{
 			}
 
-			public void checkServerTrusted(
-					X509Certificate[] certs, String authType)
+			public void checkServerTrusted(X509Certificate[] certs, String authType)
 			{
 			}
 		}};
@@ -63,14 +60,13 @@ public class DownloadingUtilities
 		try
 		{
 			// Cause an exception if the program is already running
-			if(new File(filePath).exists())
+			if (new File(filePath).exists())
 			{
 				Files.delete(Paths.get(filePath));
 			}
 
 			return true;
-		}
-		catch(IOException ignored)
+		} catch (IOException ignored)
 		{
 			return false;
 		}
@@ -104,7 +100,7 @@ public class DownloadingUtilities
 		return fileName;
 	}
 
-	public static void executeApplication(String filePath) throws IOException
+	private static void executeApplication(String filePath) throws IOException
 	{
 		ProcessBuilder processBuilder = new ProcessBuilder();
 		processBuilder.command("java", "-jar", filePath);

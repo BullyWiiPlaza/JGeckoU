@@ -2,6 +2,7 @@ package wiiudev.gecko.client.gui.tabs.threads;
 
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
+import wiiudev.gecko.client.gui.utilities.JTableUtilities;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
 
@@ -45,6 +46,7 @@ public class ThreadsTableContextMenu extends JPopupMenu
 		add(setNameOption);
 
 		JTable table = threadsTableManager.getTable();
+		JTableUtilities.removeAllKeyListeners(table);
 		table.addKeyListener(new KeyAdapter()
 		{
 			@Override
@@ -55,12 +57,10 @@ public class ThreadsTableContextMenu extends JPopupMenu
 					if (keyEventPressed(pressedEvent, memoryViewerKeyStroke.getKeyCode()))
 					{
 						switchToMemoryViewer();
-					}
-					else if(keyEventPressed(pressedEvent, toggleStateKeyStroke.getKeyCode()))
+					} else if (keyEventPressed(pressedEvent, toggleStateKeyStroke.getKeyCode()))
 					{
 						toggleThreadStateConcurrently();
-					}
-					else if(keyEventPressed(pressedEvent, setNameKeyStroke.getKeyCode()))
+					} else if (keyEventPressed(pressedEvent, setNameKeyStroke.getKeyCode()))
 					{
 						displayChangeThreadNameDialog();
 					}
@@ -77,7 +77,7 @@ public class ThreadsTableContextMenu extends JPopupMenu
 		changeThreadNameDialog.setLocationRelativeTo(jGeckoUGUI.getRootPane());
 		changeThreadNameDialog.setVisible(true);
 
-		if(changeThreadNameDialog.isConfirmed())
+		if (changeThreadNameDialog.isConfirmed())
 		{
 			String name = changeThreadNameDialog.getName();
 

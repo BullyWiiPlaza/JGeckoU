@@ -1,14 +1,14 @@
 package wiiudev.gecko.client.memory_search;
 
 import wiiudev.gecko.client.memory_search.enumerations.SearchConditions;
-import wiiudev.gecko.client.memory_search.enumerations.SearchModes;
+import wiiudev.gecko.client.memory_search.enumerations.SearchMode;
 import wiiudev.gecko.client.memory_search.enumerations.ValueSize;
 
 import java.math.BigInteger;
 
 public class SearchRefinement
 {
-	private SearchModes searchMode;
+	private SearchMode searchMode;
 	private SearchConditions searchConditions;
 	private ValueSize valueSize;
 	private BigInteger value;
@@ -21,7 +21,7 @@ public class SearchRefinement
 	 */
 	public SearchRefinement(SearchConditions searchConditions, ValueSize valueSize, BigInteger value)
 	{
-		this.searchMode = SearchModes.SPECIFIC;
+		this.searchMode = SearchMode.SPECIFIC;
 		this.searchConditions = searchConditions;
 		this.valueSize = valueSize;
 		this.value = value;
@@ -34,7 +34,7 @@ public class SearchRefinement
 	 */
 	public SearchRefinement(SearchConditions searchConditions, ValueSize valueSize)
 	{
-		searchMode = SearchModes.UNKNOWN;
+		searchMode = SearchMode.UNKNOWN;
 		this.searchConditions = searchConditions;
 		this.valueSize = valueSize;
 	}
@@ -45,11 +45,11 @@ public class SearchRefinement
 	 */
 	public SearchRefinement(ValueSize valueSize)
 	{
-		searchMode = SearchModes.UNKNOWN;
+		searchMode = SearchMode.UNKNOWN;
 		this.valueSize = valueSize;
 	}
 
-	public SearchModes getSearchMode()
+	public SearchMode getSearchMode()
 	{
 		return searchMode;
 	}

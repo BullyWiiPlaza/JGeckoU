@@ -1,13 +1,13 @@
 package wiiudev.gecko.client.memory_search.enumerations;
 
-public enum SearchModes
+public enum SearchMode
 {
 	UNKNOWN("Unknown"),
 	SPECIFIC("Specific");
 
 	private String name;
 
-	SearchModes(String name)
+	SearchMode(String name)
 	{
 		this.name = name;
 	}
@@ -18,9 +18,9 @@ public enum SearchModes
 		return name;
 	}
 
-	public static SearchModes parse(String searchMode)
+	public static SearchMode parse(String searchMode)
 	{
-		for(SearchModes mode : values())
+		for(SearchMode mode : values())
 		{
 			if(mode.name.equals(searchMode))
 			{

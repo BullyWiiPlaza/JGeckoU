@@ -39,7 +39,7 @@ public class DisassembledInstruction
 
 	public int getBranchDestination()
 	{
-		if(!isBranchWithDestination())
+		if (!isBranchWithDestination())
 		{
 			throw new IllegalArgumentException("Not a branch instruction with destination");
 		}
@@ -54,5 +54,10 @@ public class DisassembledInstruction
 	{
 		char firstCharacter = instruction.charAt(0);
 		return firstCharacter == 'b' && instruction.contains("0x");
+	}
+
+	public boolean isLoadImmediateShifted()
+	{
+		return instruction.startsWith("lis");
 	}
 }
