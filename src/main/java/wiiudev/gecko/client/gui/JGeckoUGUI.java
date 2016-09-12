@@ -112,7 +112,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton searchMemoryViewerButton;
 	private JTextField searchMemoryViewerValueField;
 	private JTextField searchLengthField;
-	private JButton pokeValueButton;
+	private JButton pokeMemoryViewerValueButton;
 	private JTextField memoryViewerValueField;
 	private JComboBox<ValueSizes> valueSizePokeComboBox;
 	private JButton hexadecimalUnicodeButton;
@@ -186,6 +186,9 @@ public class JGeckoUGUI extends JFrame
 	private JButton memoryBoundsButton;
 	private JLabel threadsCountLabel;
 	private JButton speedCrunchButton;
+	private JButton readKernelIntegerButton;
+	private JTextField kernelReadAddressField;
+	private JCheckBox kernelWriteCheckBox;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -815,7 +818,7 @@ public class JGeckoUGUI extends JFrame
 					MemoryWriter memoryWriter = new MemoryWriter();
 					int address = disassembledInstruction.getAddress();
 					int value = Integer.parseUnsignedInt(assembled, 16);
-					memoryWriter.writeInt(address, value);
+					memoryWriter.writeKernelInt(address, value);
 
 					updateDisassembler();
 				} catch (AssemblerFilesException | AssemblerException exception)
@@ -1180,7 +1183,7 @@ public class JGeckoUGUI extends JFrame
 		{
 			try
 			{
-				long osID = CoreInit.getOSID();
+				long osID = CoreInit.getOSIdentifier();
 				JOptionPane.showMessageDialog(this,
 						new Hexadecimal(osID, 16),
 						osIDButton.getText(),
@@ -1241,8 +1244,9 @@ public class JGeckoUGUI extends JFrame
 
 		memoryBoundsButton.addActionListener(actionEvent ->
 				JOptionPane.showMessageDialog(this,
-						"App/Executable Start: " + Conversions.toHexadecimal(AddressRange.appExecutableLibraries.getStartingAddress()) + System.lineSeparator()
-								+ "MEM2 Region End: " + Conversions.toHexadecimal(AddressRange.mem2Region.getEndingAddress()),
+						"App/Executable: " + AddressRange.appExecutableLibraries
+								+ System.lineSeparator()
+								+ "MEM2 Region: " + AddressRange.mem2Region,
 						memoryBoundsButton.getText(),
 						JOptionPane.INFORMATION_MESSAGE));
 	}
@@ -2209,6 +2213,7 @@ public class JGeckoUGUI extends JFrame
 			{
 				ValueSizes valueSize = valueSizePokeComboBox.getItemAt(valueSizePokeComboBox.getSelectedIndex());
 				changePokeValueSize(valueSize.getSize());
+				kernelWriteCheckBox.setEnabled(valueSize == ValueSizes.THIRTY_TWO_BIT);
 			}
 		});
 
@@ -2240,6 +2245,26 @@ public class JGeckoUGUI extends JFrame
 
 		configureMemoryViewerSearchListeners();
 		followPointerButton.addActionListener(actionEvent -> followPointer());
+
+		readKernelIntegerButton.addActionListener(actionEvent ->
+		{
+			int address = Conversions.toDecimal(kernelReadAddressField.getText());
+
+			try
+			{
+				MemoryReader memoryReader = new MemoryReader();
+				int value = memoryReader.readKernelInt(address);
+				JOptionPane.showMessageDialog(rootPane,
+						Conversions.toHexadecimal(value, 8),
+						readKernelIntegerButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		HexadecimalInputFilter.setHexadecimalInputFilter(kernelReadAddressField);
 	}
 
 	private void configureMemoryViewerSearchListeners()
@@ -2608,7 +2633,7 @@ public class JGeckoUGUI extends JFrame
 
 	private void addPokeButtonListener()
 	{
-		pokeValueButton.addActionListener(actionEvent ->
+		pokeMemoryViewerValueButton.addActionListener(actionEvent ->
 				pokeMemoryViewerMemory());
 	}
 
@@ -2633,7 +2658,13 @@ public class JGeckoUGUI extends JFrame
 					break;
 
 				case THIRTY_TWO_BIT:
-					memoryWriter.writeInt(targetAddress, newValue);
+					if (kernelWriteCheckBox.isSelected())
+					{
+						memoryWriter.writeKernelInt(targetAddress, newValue);
+					} else
+					{
+						memoryWriter.writeInt(targetAddress, newValue);
+					}
 			}
 
 			pokeMemoryViewerUpdate();
@@ -2888,15 +2919,12 @@ public class JGeckoUGUI extends JFrame
 
 	private boolean isAddressInputValid(String input, int length)
 	{
-		boolean isValid = false;
+		boolean isValid;
 
 		try
 		{
-			if (input.length() == 8)
-			{
-				int address = Conversions.toDecimal(input);
-				isValid = AddressRange.isValidAccess(address, length, MemoryAccessLevel.READ);
-			}
+			int address = Conversions.toDecimal(input);
+			isValid = AddressRange.isValidAccess(address, length, MemoryAccessLevel.READ);
 		} catch (NumberFormatException exception)
 		{
 			isValid = false;
@@ -3413,6 +3441,7 @@ public class JGeckoUGUI extends JFrame
 		connectButton.setEnabled(shouldEnableConnectButton);
 		memoryBoundsButton.setEnabled(connected);
 		processPFIDButton.setEnabled(connected);
+		readKernelIntegerButton.setEnabled(connected);
 		systemInformationButton.setEnabled(connected);
 		setSearchButtonsAvailability();
 		tcpGeckoThreadButton.setEnabled(connected);
@@ -3438,7 +3467,7 @@ public class JGeckoUGUI extends JFrame
 		memoryViewerAutoUpdateCheckBox.setEnabled(connected);
 		firmwareVersionButton.setEnabled(connected);
 		memoryViewerViews.setEnabled(connected);
-		pokeValueButton.setEnabled(connected);
+		pokeMemoryViewerValueButton.setEnabled(connected);
 		followPointerButton.setEnabled(connected);
 		addWatchButton.setEnabled(connected);
 		addAddressExpressionsButton.setEnabled(connected);
@@ -3496,7 +3525,7 @@ public class JGeckoUGUI extends JFrame
 		programName = "JGecko U";
 		setTitle(programName);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		setSize(850, 350);
+		setSize(900, 450);
 		setLocationRelativeTo(null);
 		WindowUtilities.setIconImage(this);
 	}

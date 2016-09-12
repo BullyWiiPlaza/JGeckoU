@@ -164,6 +164,23 @@ public class MemoryWriter extends TCPGecko
 		writeBytes(address, bytes);
 	}
 
+	public void writeKernelInt(int address, int value) throws IOException
+	{
+		// No bounds checking on purpose
+		reentrantLock.lock();
+
+		try
+		{
+			sendCommand(Commands.MEMORY_KERNEL_WRITE);
+			dataSender.writeInt(address);
+			dataSender.writeInt(value);
+			dataSender.flush();
+		} finally
+		{
+			reentrantLock.unlock();
+		}
+	}
+
 	public void writeBytes(int address, byte[] bytes) throws IOException
 	{
 		reentrantLock.lock();

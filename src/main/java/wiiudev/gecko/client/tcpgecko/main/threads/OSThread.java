@@ -35,12 +35,15 @@ public class OSThread
 		int threadAddress = memoryReader.readInt(0xFFFFFFE0);
 		int temporaryThreadAddress;
 
-		while ((temporaryThreadAddress = memoryReader.readInt(threadAddress + 0x390)) != 0)
+		while ((temporaryThreadAddress =
+				memoryReader.readInt(threadAddress + 0x390)) != 0)
 		{
 			threadAddress = temporaryThreadAddress;
 		}
 
-		while ((temporaryThreadAddress = memoryReader.readInt(threadAddress + OSThreadStruct.LINK_ACTIVE.getOffset())) != 0)
+		while ((temporaryThreadAddress =
+				memoryReader.readInt(threadAddress
+						+ OSThreadStruct.LINK_ACTIVE.getOffset())) != 0)
 		{
 			OSThread osThread = new OSThread(threadAddress);
 			osThreads.add(osThread);

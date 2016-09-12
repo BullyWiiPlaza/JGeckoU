@@ -7,8 +7,9 @@ import java.io.IOException;
 public class AddressRange
 {
 	// Use default values at first
-	public static MemoryRange appExecutableLibraries = new MemoryRange(0x01800000, 0x10000000);
+	public static MemoryRange appExecutableLibraries = new MemoryRange(0x01800000, 0x10000000 - 1);
 	public static MemoryRange mem2Region = new MemoryRange(0x10000000, 0x50000000);
+	public static MemoryRange kernelMapping = new MemoryRange(0xA0000000, 0xB0000000);
 
 	public static void assertValidAccess(int address, int length, MemoryAccessLevel memoryAccessLevel)
 	{
@@ -54,22 +55,36 @@ public class AddressRange
 		} else if (isInRange(address, endAddress, mem2Region)) // Not fully till the end
 		{
 			return true;
-		} else if (isInRange(address, endAddress, new MemoryRange(0xA0000000, 0xB0000000))) // With kernel mapping enabled
+		} else if (isInRange(address, endAddress, kernelMapping)) // With kernel mapping enabled
 		{
 			return true;
+			/*if (TCPGecko.isConnected())
+			{
+				try
+				{
+					// Let us know if it's mapped
+					return CoreInit.isAddressMapped(address);
+				} catch (Exception exception)
+				{
+					StackTraceUtils.handleException(null, exception);
+				}
+			}
+
+			// We're defensive so not allowed
+			return false;*/
 		} else if (isInRange(address, endAddress, new MemoryRange(0xE0000000, 0xE4000000)))
 		{
 			return memoryAccessLevel == MemoryAccessLevel.READ;
 		} else if (isInRange(address, endAddress, new MemoryRange(0xE8000000, 0xEA000000)))
 		{
 			return memoryAccessLevel == MemoryAccessLevel.READ;
-		} else if (isInRange(address, endAddress, new MemoryRange(0xF4000000, 0xF6000000)))
+		} else if (isInRange(address, endAddress, new MemoryRange(0xF4000000, 0xF6000000 - 1)))
 		{
 			return memoryAccessLevel == MemoryAccessLevel.READ;
 		} else if (isInRange(address, endAddress, new MemoryRange(0xF6000000, 0xF6800000)))
 		{
 			return memoryAccessLevel == MemoryAccessLevel.READ;
-		} else if (isInRange(address, endAddress, new MemoryRange(0xF8000000, 0xFB000000)))
+		} else if (isInRange(address, endAddress, new MemoryRange(0xF8000000, 0xFB000000 - 1)))
 		{
 			return memoryAccessLevel == MemoryAccessLevel.READ;
 		} else if (isInRange(address, endAddress, new MemoryRange(0xFB000000, 0xFB800000)))

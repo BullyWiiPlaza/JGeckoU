@@ -1,14 +1,14 @@
 import wiiudev.gecko.client.tcpgecko.main.Connector;
-import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryRange;
 
 public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
 		Connector.getInstance().connect("192.168.178.35");
-		MemoryRange memoryRange = new MemoryRange(0x01800000, 0x10000000);
+
+		/*MemoryRange memoryRange = new MemoryRange(0x01800000, 0x10000000);
 		memoryRange.updateMemoryRange(false);
-		System.out.println(memoryRange.getEndingAddress());
+		System.out.println(memoryRange.getEndingAddress());*/
 
 		/*RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 		ExportedSymbol exportedSymbol = new ExportedSymbol(0x0249EEE0);

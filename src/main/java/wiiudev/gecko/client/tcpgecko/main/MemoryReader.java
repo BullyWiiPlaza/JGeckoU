@@ -263,34 +263,22 @@ public class MemoryReader extends TCPGecko
 		}
 	}
 
-	/* // Freezes
 	public int readKernelInt(int address) throws IOException
 	{
 		reentrantLock.lock();
 
 		try
 		{
-			AddressRange.assertValidAccess(address, 4, MemoryAccessLevel.READ);
-
 			sendCommand(Commands.MEMORY_KERNEL_READ);
 			dataSender.writeInt(address);
 			dataSender.flush();
 
-			Status status = readStatus();
-
-			if (status == Status.OK)
-			{
-				return dataReceiver.readInt();
-			}
-			else
-			{
-				throw new IllegalStateException("Unexpected status: " + status);
-			}
+			return dataReceiver.readInt();
 		} finally
 		{
 			reentrantLock.unlock();
 		}
-	}*/
+	}
 
 	public static int dereference(int address) throws IOException
 	{

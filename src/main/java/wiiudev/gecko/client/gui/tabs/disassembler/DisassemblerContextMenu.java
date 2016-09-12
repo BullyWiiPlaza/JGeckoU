@@ -152,7 +152,9 @@ public class DisassemblerContextMenu extends JPopupMenu
 			String selectedInstruction = currentDisassembledInstruction.getInstruction();
 
 			if (selectedInstruction.contains(addiOriSearchTarget)
-					&& (selectedInstruction.startsWith("addi") || selectedInstruction.startsWith("ori")))
+					&& (selectedInstruction.startsWith("addi")
+					|| selectedInstruction.startsWith("ori")
+					|| selectedInstruction.startsWith("subi")))
 			{
 				int searchTargetIndex = selectedInstruction.indexOf(addiOriSearchTarget)
 						+ addiOriSearchTarget.length();
@@ -172,7 +174,15 @@ public class DisassemblerContextMenu extends JPopupMenu
 			if (lowerAddressBitsFound)
 			{
 				int lowerBits = Integer.parseInt(selectedInstruction);
-				higherBits += lowerBits;
+
+				if (currentDisassembledInstruction.getInstruction().startsWith("subi"))
+				{
+					higherBits -= lowerBits;
+				} else
+				{
+					higherBits += lowerBits;
+				}
+
 				String value = Conversions.toHexadecimal(higherBits, 8);
 				SystemClipboard.copy(value);
 				JOptionPane.showMessageDialog(this,

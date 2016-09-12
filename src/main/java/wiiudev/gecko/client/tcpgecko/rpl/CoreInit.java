@@ -133,7 +133,7 @@ public class CoreInit
 		return getEffectiveToPhysical(address) != 0;
 	}
 
-	public static long getOSID() throws IOException
+	public static long getOSIdentifier() throws IOException
 	{
 		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "OSGetOSID");
