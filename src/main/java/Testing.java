@@ -1,10 +1,18 @@
-import wiiudev.gecko.client.tcpgecko.main.Connector;
+import java.math.BigDecimal;
 
 public class Testing
 {
+	public static String removeScientificNotation(String value)
+	{
+		return new BigDecimal(value).toPlainString();
+	}
+
 	public static void main(String[] arguments) throws Exception
 	{
-		Connector.getInstance().connect("192.168.178.35");
+		System.out.println(removeScientificNotation("3.0103E-7"));
+	}
+	// System.out.println(decimalToHex(-20f));
+	// Connector.getInstance().connect("192.168.178.35");
 
 		/*MemoryRange memoryRange = new MemoryRange(0x01800000, 0x10000000);
 		memoryRange.updateMemoryRange(false);
@@ -23,10 +31,10 @@ public class Testing
 		MemoryWriter memoryWriter = new MemoryWriter();
 		memoryWriter.writeBytes(0x1FFFFFF0, bytes);*/
 
-		Connector.getInstance().closeConnection();
-		// IDAProFunctionsDumpParser idaProFunctionsDumpParser = new IDAProFunctionsDumpParser();
-		// Connector.getInstance().connect("192.168.178.35");
-		// MemoryReader memoryReader = new MemoryReader();
+	// Connector.getInstance().closeConnection();
+	// IDAProFunctionsDumpParser idaProFunctionsDumpParser = new IDAProFunctionsDumpParser();
+	// Connector.getInstance().connect("192.168.178.35");
+	// MemoryReader memoryReader = new MemoryReader();
 		/*Connector.getInstance().connect("192.168.178.35");
 		MemoryReader memoryReader = new MemoryReader();
 		int physical = memoryReader.getEffectiveToPhysical(0x10000000);
@@ -47,8 +55,8 @@ public class Testing
 		memoryWriter.upload(0x3FD00000, Paths.get("binary.bin"));
 		Connector.getInstance().closeConnection();*/
 
-		// String waitingTime = MemoryReader.getExpectedWaitingTime(0x49000000 - 0x3A000000);
-		// System.out.println(waitingTime);
+	// String waitingTime = MemoryReader.getExpectedWaitingTime(0x49000000 - 0x3A000000);
+	// System.out.println(waitingTime);
 		/*Field field = System.class.getDeclaredField("lineSeparator");
 		field.setAccessible(true);
 		field.set(System.class, "\n");
@@ -60,10 +68,10 @@ public class Testing
 				"10000000 50000000\n" +
 				"000002E8 41000000", false);
 		System.out.println(formatted);*/
-		// String s = "FFFFF160";
-		// System.out.println();
-		// MemoryPointerExpression memoryPointerExpression = new MemoryPointerExpression("[0x4443BB4C]");
-		// System.out.println();
+	// String s = "FFFFF160";
+	// System.out.println();
+	// MemoryPointerExpression memoryPointerExpression = new MemoryPointerExpression("[0x4443BB4C]");
+	// System.out.println();
 
 		/*try
 		{
@@ -84,7 +92,7 @@ public class Testing
 		Title title = titleDatabaseManager.getTitleFromGameId("AGMP01");
 		System.out.println(title.getTitleID().replace("-", ""));*/
 
-		// System.out.println();
+	// System.out.println();
 
 		/*Connector.getInstance().connect("192.168.178.35");
 		int address = new MemoryReader().search_old(0x10000000, 0x2A0A0000, 0x1000);
@@ -98,5 +106,4 @@ public class Testing
 		// wordSearchOld.dumpBytes(0x6C64206E);
 		// wordSearchOld.dumpBytes(0x6C64206E);
 		Connector.getInstance().closeConnection();*/
-	}
 }

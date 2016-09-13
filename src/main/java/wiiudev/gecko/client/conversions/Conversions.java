@@ -3,6 +3,7 @@ package wiiudev.gecko.client.conversions;
 import wiiudev.gecko.client.memory_search.enumerations.ValueSize;
 
 import javax.xml.bind.DatatypeConverter;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -77,20 +78,6 @@ public class Conversions
 		return hexadecimalBuilder.toString().toUpperCase();
 	}
 
-	/**
-	 * Converts a hexadecimal value to its single precision floating point representation
-	 *
-	 * @param hexadecimal The <code>hexadecimal</code> to convert
-	 * @return The converted value
-	 */
-	public static String hexadecimalToFloatingPoint(String hexadecimal)
-	{
-		Long longValue = Long.parseLong(hexadecimal, 16);
-		Float floatValue = Float.intBitsToFloat(longValue.intValue());
-
-		return floatValue.toString();
-	}
-
 	public static String prependPadding(String hexadecimalString, int targetLength)
 	{
 		while (hexadecimalString.length() < targetLength)
@@ -104,7 +91,8 @@ public class Conversions
 	public static String floatingPointToHexadecimal(String floatingPoint)
 	{
 		float floating = Float.parseFloat(floatingPoint);
-		return decimalToHexadecimal(Integer.toString(Float.floatToRawIntBits(floating)));
+
+		return decimalToHexadecimal(Float.floatToRawIntBits(floating));
 	}
 
 	public static String decimalToHexadecimalMemoryAddress(int integer)
@@ -291,5 +279,29 @@ public class Conversions
 		}
 
 		return bytes;
+	}
+
+	private static String decimalToHexadecimal(int value)
+	{
+		return String.format("%8s", Integer.toHexString(value)).replace(' ', '0').toUpperCase();
+	}
+
+	private static String removeScientificNotation(float value)
+	{
+		return new BigDecimal(Float.toString(value)).toPlainString();
+	}
+
+	/**
+	 * Converts a hexadecimal value to its single precision floating point representation
+	 *
+	 * @param hexadecimal The <code>hexadecimal</code> to convert
+	 * @return The converted value
+	 */
+	public static String hexadecimalToFloatingPoint(String hexadecimal)
+	{
+		Long longBits = Long.parseLong(hexadecimal, 16);
+		Float floatValue = Float.intBitsToFloat(longBits.intValue());
+
+		return removeScientificNotation(floatValue);
 	}
 }
