@@ -98,7 +98,8 @@ public class SearchQueryOptimizer
 		int maximumChunksSize = (updatedLength / TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE) + 1;
 
 		// Decide whether to use the optimized chunks or dump everything again
-		if (memoryDumpingChunksSize / maximumChunksSize <= 0.3)
+		// if (memoryDumpingChunksSize / maximumChunksSize <= 0.3)
+		if(false)
 		{
 			GraphicalRefiner graphicalRefiner = new GraphicalRefiner(updatedAddress, updatedLength, memoryDumpingChunks,
 					bytesToDump, searchProgressBar);
