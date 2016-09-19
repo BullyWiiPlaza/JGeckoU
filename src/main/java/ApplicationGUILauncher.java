@@ -4,6 +4,7 @@ import javax.swing.*;
 
 public class ApplicationGUILauncher
 {
+	// TODO Search flag for all value sizes
 	// TODO File system access (extract and replace files)
 	// TODO Move up and down buttons for codes and watch list
 	// TODO When code or watch modified, put it back at its original spot

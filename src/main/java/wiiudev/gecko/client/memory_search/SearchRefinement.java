@@ -15,9 +15,9 @@ public class SearchRefinement
 
 	/**
 	 * Constructor for specific value searches
-	 * @param searchConditions The memory_search condition
+	 * @param searchConditions The memory search condition
 	 * @param valueSize The value's size
-	 * @param value The value to memory_search
+	 * @param value The value to search
 	 */
 	public SearchRefinement(SearchConditions searchConditions, ValueSize valueSize, BigInteger value)
 	{
@@ -29,7 +29,7 @@ public class SearchRefinement
 
 	/**
 	 * Constructor for the all unknown value searches but the first
-	 * @param searchConditions The memory_search condition
+	 * @param searchConditions The memory search condition
 	 * @param valueSize The value's size
 	 */
 	public SearchRefinement(SearchConditions searchConditions, ValueSize valueSize)
@@ -40,7 +40,7 @@ public class SearchRefinement
 	}
 
 	/**
-	 * Constructor for the first unknown value memory_search
+	 * Constructor for the first unknown value memory search
 	 * @param valueSize The value's size
 	 */
 	public SearchRefinement(ValueSize valueSize)

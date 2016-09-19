@@ -288,7 +288,7 @@ public class Conversions
 
 	private static String removeScientificNotation(float value)
 	{
-		return new BigDecimal(Float.toString(value)).toPlainString();
+		return new BigDecimal(value).toPlainString();
 	}
 
 	/**

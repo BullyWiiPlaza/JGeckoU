@@ -58,7 +58,7 @@ public class MemorySearcher
 
 		if (isFirstSearch)
 		{
-			while (valuesReader.position() + valueSizeBytesCount < byteBufferLimit)
+			while (valuesReader.position() < byteBufferLimit)
 			{
 				BigInteger currentValue = getValue(valuesReader, valueSizeBytesCount);
 				int searchResultAddress = address + valuesReader.position() - valueSize.getBytesCount();
@@ -79,24 +79,26 @@ public class MemorySearcher
 					}
 				}
 
-				int progress = valuesReader.position() * 100 / byteBufferLimit;
+				int position = valuesReader.position();
+				setLabelProgress(position, byteBufferLimit);
+				int progress = position * 100 / byteBufferLimit;
 				progressBar.setValue(progress);
 			}
 		} else
 		{
 			int searchResultsIndex = 0;
-			int startingAddress = searchResults.get(0).getAddress();
 
 			for (SearchResult searchResult : searchResults)
 			{
 				int currentAddress = searchResult.getAddress();
-				int position = currentAddress - startingAddress;
+				int position = currentAddress - address;
 				valuesReader.position(position);
 
 				BigInteger currentValue = getValue(valuesReader, valueSizeBytesCount);
 				SearchConditions searchCondition = searchRefinement.getSearchCondition();
 
-				BigInteger targetValue = isUnknownValueSearch ? searchResult.getCurrentValue() : searchRefinement.getValue();
+				BigInteger targetValue = isUnknownValueSearch ?
+						searchResult.getCurrentValue() : searchRefinement.getValue();
 				boolean isSearchConditionTrue = searchCondition.isTrue(targetValue, currentValue);
 
 				if (isSearchConditionTrue)
@@ -105,23 +107,38 @@ public class MemorySearcher
 					updatedSearchResults.add(searchResult);
 				}
 
-				int progress = (searchResultsIndex + 1) * 100 / searchResults.size();
+				searchResultsIndex++;
+
+				setLabelProgress(searchResultsIndex, searchResults.size());
+				int progress = searchResultsIndex * 100 / searchResults.size();
 				progressBar.setValue(progress);
 
-				searchResultsIndex++;
+				if (JGeckoUGUI.getInstance().isDumpingCanceled())
+				{
+					return null;
+				}
 			}
 		}
+
+		JLabel addressProgressLabel = JGeckoUGUI.getInstance().getAddressProgressLabel();
+		addressProgressLabel.setText("");
 
 		searchResults = updatedSearchResults;
 		isFirstSearch = false;
 
 		// Do not smash the RAM
-		if (searchResults.size() < 99999)
+		if (searchResults.size() < 9999)
 		{
 			pushSearchResults();
 		}
 
 		return searchResults;
+	}
+
+	private void setLabelProgress(int currentIndex, int size)
+	{
+		JLabel addressProgressLabel = JGeckoUGUI.getInstance().getAddressProgressLabel();
+		addressProgressLabel.setText("Evaluated: " + currentIndex + "/" + size);
 	}
 
 	private void pushSearchResults()
@@ -140,7 +157,7 @@ public class MemorySearcher
 
 	public List<SearchResult> undoSearchResults()
 	{
-		// Discard current memory_search
+		// Discard current memory search
 		searchResultsStack.pop();
 
 		// Return empty results
@@ -209,7 +226,7 @@ public class MemorySearcher
 		return isFirstSearch;
 	}
 
-	public void setSetResults(List<SearchResult> searchResults)
+	public void loadSearchResults(List<SearchResult> searchResults)
 	{
 		this.searchResults = searchResults;
 		pushSearchResults();

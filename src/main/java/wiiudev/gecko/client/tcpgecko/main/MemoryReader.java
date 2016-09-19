@@ -255,7 +255,8 @@ public class MemoryReader extends TCPGecko
 			sendCommand(Commands.GET_STATUS);
 			dataSender.flush();
 
-			Status receivedStatus = Status.getStatus(dataReceiver.readByte());
+			Status receivedStatus = readStatus();
+
 			return receivedStatus == Status.RUNNING;
 		} finally
 		{

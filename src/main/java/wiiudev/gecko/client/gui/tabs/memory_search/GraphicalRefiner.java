@@ -75,6 +75,11 @@ public class GraphicalRefiner
 					long progress = bytesDumped * 100 / bytesToDump;
 					setProgress((int) progress);
 					publish(bytesDumped);
+
+					if (JGeckoUGUI.getInstance().isDumpingCanceled())
+					{
+						return null;
+					}
 				}
 
 				dumpedBytes = dumpedBytesBuffer.array();

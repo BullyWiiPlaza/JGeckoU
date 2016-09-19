@@ -189,6 +189,9 @@ public class JGeckoUGUI extends JFrame
 	private JButton readKernelIntegerButton;
 	private JTextField kernelReadAddressField;
 	private JCheckBox kernelWriteCheckBox;
+	private JLabel addressProgressLabel;
+	private JButton cancelSearchButton;
+	private JButton cancelDumpButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -212,6 +215,8 @@ public class JGeckoUGUI extends JFrame
 	private boolean noResultsFound;
 	private SearchResultsTableManager searchResultsTableManager;
 	private static JGeckoUGUI instance;
+	private boolean dumpingCanceled;
+	private boolean dumpingMemory;
 
 	private JGeckoUGUI()
 	{
@@ -235,7 +240,33 @@ public class JGeckoUGUI extends JFrame
 		configureSearchTab();
 
 		restorePersistentSettings();
+		setSearchValueBackgroundColor();
+		setSearchInputFilter();
 		addSettingsBackupShutdownHook();
+
+		addCancelActionListener(cancelSearchButton, "search");
+		addCancelActionListener(cancelDumpButton, "memory dump");
+	}
+
+	private void addCancelActionListener(JButton button, String text)
+	{
+		button.addActionListener(actionEvent ->
+		{
+			Object[] options = {"Yes", "No"};
+			int selectedAnswer = JOptionPane.showOptionDialog(this,
+					"Would you really like to cancel the current " + text + "?",
+					"Cancel?",
+					JOptionPane.YES_NO_CANCEL_OPTION,
+					JOptionPane.QUESTION_MESSAGE,
+					null,
+					options,
+					null);
+
+			if (selectedAnswer == JOptionPane.YES_OPTION)
+			{
+				dumpingCanceled = true;
+			}
+		});
 	}
 
 	private void configureSearchTab()
@@ -293,9 +324,6 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		setSearchValueBackgroundColor();
-		setSearchInputFilter();
-
 		HexadecimalInputFilter.setHexadecimalInputFilter(searchStartingAddressField);
 		HexadecimalInputFilter.setHexadecimalInputFilter(searchEndingAddressField);
 
@@ -345,6 +373,7 @@ public class JGeckoUGUI extends JFrame
 		{
 			if (itemEvent.getStateChange() == ItemEvent.SELECTED)
 			{
+				updateSearchConditionsComboBox();
 				setConnectionButtonsAvailability();
 			}
 		});
@@ -373,7 +402,8 @@ public class JGeckoUGUI extends JFrame
 					searchEndingAddressField.setText(Conversions.toHexadecimal(searchBounds.getAddress() + searchBounds.getLength()));
 					memorySearcher = new MemorySearcher(searchBounds);
 					searchValueSizeComboBox.setSelectedItem(searchBackup.getValueSize());
-					memorySearcher.setSetResults(searchResults);
+					memorySearcher.loadSearchResults(searchResults);
+
 					updateSearchIterationsLabel();
 					setSearchButtonsAvailability();
 				}
@@ -439,6 +469,7 @@ public class JGeckoUGUI extends JFrame
 		boolean isHexadecimal = Validation.isHexadecimal(value);
 		int valueSizeBytesCount = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex()).getBytesCount() * 2;
 		boolean isLengthOkay = value.length() <= valueSizeBytesCount;
+
 		return isHexadecimal && isLengthOkay;
 	}
 
@@ -539,16 +570,19 @@ public class JGeckoUGUI extends JFrame
 					List<SearchResult> searchResults = memorySearcher.search(searchRefinement);
 					populateSearchResults(searchResults);
 					updateSearchIterationsLabel();
-					setConnectionButtonsAvailability();
 				} catch (Exception exception)
 				{
-					StackTraceUtils.handleException(rootPane, exception);
+					if (!dumpingCanceled)
+					{
+						StackTraceUtils.handleException(rootPane, exception);
+					}
 				} finally
 				{
 					searchButton.setText(searchButtonText);
 					searching = false;
 
-					if (searchResultsTableManager.areSearchResultsEmpty())
+					if (!dumpingCanceled &&
+							searchResultsTableManager.areSearchResultsEmpty())
 					{
 						noResultsFound = true;
 
@@ -567,6 +601,14 @@ public class JGeckoUGUI extends JFrame
 						{
 							startNewSearch();
 						}
+					}
+
+					if (dumpingCanceled)
+					{
+						dumpingCanceled = false;
+
+						// Essential to avoid corrupting the data returned by the server
+						reconnect();
 					}
 
 					setConnectionButtonsAvailability();
@@ -660,10 +702,30 @@ public class JGeckoUGUI extends JFrame
 		});
 	}
 
+	private void updateSearchConditionsComboBox()
+	{
+		int selectedSearchConditionIndex = searchConditionComboBox.getSelectedIndex();
+		populateSearchConditions();
+
+		// Remove the bit flag options when doing an unknown value search
+		if (searchModeComboBox.getSelectedItem() == SearchMode.UNKNOWN)
+		{
+			searchConditionComboBox.removeItem(SearchConditions.FLAG_SET);
+			searchConditionComboBox.removeItem(SearchConditions.FLAG_UNSET);
+		}
+
+		if (selectedSearchConditionIndex >= searchConditionComboBox.getItemCount())
+		{
+			selectedSearchConditionIndex = 0;
+		}
+
+		searchConditionComboBox.setSelectedIndex(selectedSearchConditionIndex);
+	}
+
 	private void populateSearchConditions()
 	{
-		DefaultComboBoxModel<SearchConditions> defaultComboBoxModel2 = new DefaultComboBoxModel<>(SearchConditions.values());
-		searchConditionComboBox.setModel(defaultComboBoxModel2);
+		DefaultComboBoxModel<SearchConditions> defaultComboBoxModel = new DefaultComboBoxModel<>(SearchConditions.values());
+		searchConditionComboBox.setModel(defaultComboBoxModel);
 	}
 
 	private void populateSearchModes()
@@ -682,6 +744,7 @@ public class JGeckoUGUI extends JFrame
 		searchEndingAddressField.setEnabled(!searchStarted);
 		undoSearchButton.setEnabled(searchStarted && memorySearcher.canUndoSearch() && !searching);
 		loadSearchButton.setEnabled(!searching);
+		cancelSearchButton.setEnabled(searching);
 		saveSearchButton.setEnabled(searchResultsTableManager != null
 				&& searchResultsTableManager.getSearchResults() != null
 				&& !searchResultsTableManager.getSearchResults().isEmpty()
@@ -2011,13 +2074,41 @@ public class JGeckoUGUI extends JFrame
 			int startingAddress = Integer.parseUnsignedInt(dumpStartingAddressField.getText(), 16);
 			int endingAddress = Integer.parseUnsignedInt(dumpEndingAddressField.getText(), 16);
 			int length = endingAddress - startingAddress;
+			dumpingCanceled = false;
 
 			String targetFilePath = dumpFilePathField.getText();
 			File targetFile = new File(targetFilePath);
 
 			GraphicalMemoryDumper graphicalMemoryDumper = new GraphicalMemoryDumper(startingAddress,
 					length, targetFile, memoryDumpingProgressBar, dumpMemoryButton);
+			dumpingMemory = true;
+			handleDumpMemoryButtonAvailability();
 			graphicalMemoryDumper.dumpMemory();
+
+			Thread cancelReconnectThread = new Thread(() ->
+			{
+				while (!graphicalMemoryDumper.isDone())
+				{
+					try
+					{
+						Thread.sleep(100);
+					} catch (InterruptedException exception)
+					{
+						exception.printStackTrace();
+					}
+				}
+
+				dumpingMemory = false;
+				handleDumpMemoryButtonAvailability();
+
+				if (dumpingCanceled)
+				{
+					dumpingCanceled = false;
+					reconnect();
+				}
+			});
+
+			cancelReconnectThread.start();
 		});
 
 		chooseFilePathButton.addActionListener(actionEvent ->
@@ -2074,7 +2165,9 @@ public class JGeckoUGUI extends JFrame
 		boolean validEndingAddress = isAddressInputValid(dumpEndingAddressField.getText());
 		dumpStartingAddressField.setBackground(validStartingAddress ? Color.GREEN : Color.RED);
 		dumpEndingAddressField.setBackground(validEndingAddress ? Color.GREEN : Color.RED);
-		dumpMemoryButton.setEnabled(TCPGecko.isConnected() && validMemoryAddresses && validStartingAddress && validEndingAddress && validTargetFile);
+		dumpMemoryButton.setEnabled(TCPGecko.isConnected() && validMemoryAddresses
+				&& validStartingAddress && validEndingAddress && validTargetFile && !dumpingMemory);
+		cancelDumpButton.setEnabled(dumpingMemory);
 	}
 
 	private void followPointer()
@@ -3305,7 +3398,7 @@ public class JGeckoUGUI extends JFrame
 
 		MemoryRangeAdjustment memoryRangeAdjustment = new MemoryRangeAdjustment(titleDatabaseManager);
 		memoryRangeAdjustment.setAdjustedMemoryRanges();
-		monitorGeckoServerHealthConcurrently();
+		// monitorGeckoServerHealthConcurrently();
 		String ipAddressAddition = (autoDetectCheckBox.isSelected() ? (" [" + ipAddress + "]") : "");
 		connectButton.setText(connectButtonText + "ed" + ipAddressAddition);
 		connectedIPAddress = ipAddress;
@@ -3498,7 +3591,7 @@ public class JGeckoUGUI extends JFrame
 		searchButton.setEnabled(TCPGecko.isConnected() && !searching
 				&& !noResultsFound && isRangePositive
 				&& isRangeAlignedCorrectly && areAddressesValid
-				&& isSearchValueOkay());
+				&& (isSearchValueOkay() || !searchValueField.isEnabled()));
 	}
 
 	private void setCodeListButtonsAvailability()
@@ -3624,5 +3717,15 @@ public class JGeckoUGUI extends JFrame
 	private void switchToSearchTab()
 	{
 		programTabs.setSelectedComponent(searchTab);
+	}
+
+	public JLabel getAddressProgressLabel()
+	{
+		return addressProgressLabel;
+	}
+
+	public boolean isDumpingCanceled()
+	{
+		return dumpingCanceled;
 	}
 }

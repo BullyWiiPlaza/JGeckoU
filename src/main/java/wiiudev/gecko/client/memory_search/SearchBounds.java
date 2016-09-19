@@ -30,14 +30,12 @@ public class SearchBounds
 			return new SearchBounds(address, length);
 		}
 
-		// Optimize by decreasing the search_old interval according to the search_old results
+		// Optimize by decreasing the search interval according to the search results
 		SearchResult firstSearchResult = searchResults.get(0);
-		int firstSearchResultAddress = firstSearchResult.getAddress();
-		int updatedAddress = address + (firstSearchResultAddress - address);
-		int updatedLength = length - (firstSearchResultAddress - address);
-		SearchResult lastSearchResult = searchResults.get(searchResults.size() - 1);
-		int lastSearchResultAddress = lastSearchResult.getAddress();
-		updatedLength = updatedLength - (address + length - firstSearchResult.getValueSize().getBytesCount() - lastSearchResultAddress);
+		int updatedAddress = firstSearchResult.getAddress();
+		int bytesCount = firstSearchResult.getValueSize().getBytesCount();
+		int lastAddress = searchResults.get(searchResults.size() - 1).getAddress();
+		int updatedLength = lastAddress - updatedAddress + bytesCount;
 
 		return new SearchBounds(updatedAddress, updatedLength);
 	}

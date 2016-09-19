@@ -136,7 +136,7 @@
                     <properties>
                       <selected value="true"/>
                       <text value="Auto Save"/>
-                      <toolTipText value="Automatically saves the code list when modified"/>
+                      <toolTipText value="Whether to automatically save the code list when modified"/>
                     </properties>
                   </component>
                 </children>
@@ -889,7 +889,7 @@
               </component>
               <component id="1cc18" class="javax.swing.JButton" binding="dumpMemoryButton">
                 <constraints>
-                  <grid row="4" column="0" row-span="1" col-span="4" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text value="Dump"/>
@@ -920,6 +920,14 @@
                   </component>
                 </children>
               </grid>
+              <component id="b1782" class="javax.swing.JButton" binding="cancelDumpButton">
+                <constraints>
+                  <grid row="4" column="2" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Cancel"/>
+                </properties>
+              </component>
             </children>
           </grid>
           <grid id="cae6e" binding="searchTab" layout-manager="GridLayoutManager" row-count="5" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -959,7 +967,7 @@
                     </constraints>
                     <properties>
                       <text value="10001000"/>
-                      <toolTipText value="The last address"/>
+                      <toolTipText value="The end address"/>
                     </properties>
                   </component>
                   <component id="f8c5e" class="javax.swing.JLabel">
@@ -1059,7 +1067,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <grid id="3a55" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                  <grid id="3a55" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -1071,21 +1079,29 @@
                     <children>
                       <component id="87b4c" class="javax.swing.JProgressBar" binding="searchProgressBar">
                         <constraints>
-                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties/>
                       </component>
                       <component id="7e58c" class="javax.swing.JLabel">
                         <constraints>
-                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
                           <text value="Progress:"/>
                         </properties>
                       </component>
+                      <component id="26b59" class="javax.swing.JLabel" binding="addressProgressLabel">
+                        <constraints>
+                          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <text value=""/>
+                        </properties>
+                      </component>
                     </children>
                   </grid>
-                  <grid id="9d207" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                  <grid id="9d207" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
                       <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -1113,11 +1129,19 @@
                       </component>
                       <component id="338bf" class="javax.swing.JButton" binding="restartSearchButton">
                         <constraints>
-                          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                          <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
                           <text value="Restart"/>
                           <toolTipText value="Restarts the current search from the beginning"/>
+                        </properties>
+                      </component>
+                      <component id="acf29" class="javax.swing.JButton" binding="cancelSearchButton">
+                        <constraints>
+                          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                        </constraints>
+                        <properties>
+                          <text value="Cancel"/>
                         </properties>
                       </component>
                     </children>
@@ -1261,7 +1285,7 @@
                     </constraints>
                     <properties>
                       <text value="Arbitrary Remote Procedure Call"/>
-                      <toolTipText value="Allows you to perform an arbitrary remote procedure call"/>
+                      <toolTipText value="Allows you to perform a remote procedure call with custom input"/>
                     </properties>
                   </component>
                   <component id="e7327" class="javax.swing.JButton" binding="osTimeButton" default-binding="true">
@@ -1270,6 +1294,7 @@
                     </constraints>
                     <properties>
                       <text value="System Time"/>
+                      <toolTipText value="Shows the system's time in nanoseconds"/>
                     </properties>
                   </component>
                   <grid id="57e3a" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -1286,6 +1311,7 @@
                         </constraints>
                         <properties>
                           <text value="Remote Disassembler"/>
+                          <toolTipText value="Asks the Wii U to disassemble an opcode"/>
                         </properties>
                       </component>
                       <component id="2678e" class="javax.swing.JButton" binding="displayMessageButton" default-binding="true">
@@ -1294,6 +1320,7 @@
                         </constraints>
                         <properties>
                           <text value="Display Message"/>
+                          <toolTipText value="Shows a message on-screen"/>
                         </properties>
                       </component>
                       <component id="f8550" class="javax.swing.JButton" binding="convertEffectiveToPhysicalButton" default-binding="true">
@@ -1313,6 +1340,7 @@
                     </constraints>
                     <properties>
                       <text value="SDK Version"/>
+                      <toolTipText value="Shows the current SDK version"/>
                     </properties>
                   </component>
                   <component id="57d2c" class="javax.swing.JButton" binding="titleIDButton" default-binding="true">
@@ -1321,6 +1349,7 @@
                     </constraints>
                     <properties>
                       <text value="Title ID"/>
+                      <toolTipText value="Shows the current title identifier"/>
                     </properties>
                   </component>
                   <component id="aadaf" class="javax.swing.JButton" binding="osIDButton" default-binding="true">
@@ -1329,6 +1358,7 @@
                     </constraints>
                     <properties>
                       <text value="OS ID"/>
+                      <toolTipText value="Shows the operating system's identifier"/>
                     </properties>
                   </component>
                   <component id="3b725" class="javax.swing.JButton" binding="processPFIDButton" default-binding="true">
@@ -1337,6 +1367,7 @@
                     </constraints>
                     <properties>
                       <text value="Process PFID/UPID"/>
+                      <toolTipText value="Shows the process' identifier"/>
                     </properties>
                   </component>
                   <component id="275b2" class="javax.swing.JButton" binding="appFlagsButton" default-binding="true">
@@ -1345,6 +1376,7 @@
                     </constraints>
                     <properties>
                       <text value="App Flags"/>
+                      <toolTipText value="Shows the applied app flags"/>
                     </properties>
                   </component>
                   <component id="ed5ce" class="javax.swing.JLabel">
@@ -1369,14 +1401,7 @@
                     </constraints>
                     <properties>
                       <text value="TCP Gecko Thread"/>
-                    </properties>
-                  </component>
-                  <component id="ab9f7" class="javax.swing.JButton" binding="systemInformationButton" default-binding="true">
-                    <constraints>
-                      <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <text value="System Information"/>
+                      <toolTipText value="Displays information about the TCP Gecko thread"/>
                     </properties>
                   </component>
                   <component id="98b09" class="javax.swing.JButton" binding="memoryBoundsButton" default-binding="true">
@@ -1385,6 +1410,16 @@
                     </constraints>
                     <properties>
                       <text value="Memory Bounds"/>
+                      <toolTipText value="Shows the game's dynamic memory bounds"/>
+                    </properties>
+                  </component>
+                  <component id="ab9f7" class="javax.swing.JButton" binding="systemInformationButton" default-binding="true">
+                    <constraints>
+                      <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="System Information"/>
+                      <toolTipText value="Displays Wii U system information"/>
                     </properties>
                   </component>
                 </children>
@@ -1543,7 +1578,7 @@
             </constraints>
             <properties>
               <horizontalAlignment value="0"/>
-              <toolTipText value="The Wii U's IP addressExpression"/>
+              <toolTipText value="The Wii U's IP address"/>
             </properties>
           </component>
           <component id="eaf9b" class="javax.swing.JCheckBox" binding="autoDetectCheckBox" default-binding="true">

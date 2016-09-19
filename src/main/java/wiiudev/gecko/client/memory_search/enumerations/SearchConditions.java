@@ -5,11 +5,13 @@ import java.math.BigInteger;
 public enum SearchConditions
 {
 	EQUAL("Equal"),
-	NOT_EQUAL ("Not Equal"),
-	GREATER_THAN ("Greater Than"),
-	LESS_THAN ("Less Than"),
-	GREATER_OR_EQUAL ("Greater or Equal"),
-	LESS_OR_EQUAL ("Less or Equal");
+	NOT_EQUAL("Not Equal"),
+	GREATER_THAN("Greater Than"),
+	LESS_THAN("Less Than"),
+	GREATER_OR_EQUAL("Greater or Equal"),
+	LESS_OR_EQUAL("Less or Equal"),
+	FLAG_SET("Flag Set"),
+	FLAG_UNSET("Flag Unset");
 
 	private String name;
 
@@ -48,21 +50,32 @@ public enum SearchConditions
 			case LESS_OR_EQUAL:
 				return comparisonResult <= 0;
 
+			case FLAG_SET:
+				return isFlagSet(retrievedValue, targetValue);
+
+			case FLAG_UNSET:
+				return isFlagSet(retrievedValue, targetValue);
+
 			default:
-				throw new IllegalArgumentException("Unhandled memory_search condition");
+				throw new IllegalArgumentException("Unhandled memory search condition");
 		}
+	}
+
+	private boolean isFlagSet(BigInteger existingFlags, BigInteger flagToCheck)
+	{
+		return (existingFlags.and(flagToCheck)).equals(flagToCheck);
 	}
 
 	public static SearchConditions parse(String searchCondition)
 	{
-		for(SearchConditions condition : values())
+		for (SearchConditions condition : values())
 		{
-			if(condition.name.equals(searchCondition))
+			if (condition.name.equals(searchCondition))
 			{
 				return condition;
 			}
 		}
 
-		throw new IllegalArgumentException("Illegal memory_search condition");
+		throw new IllegalArgumentException("Illegal memory search condition");
 	}
 }

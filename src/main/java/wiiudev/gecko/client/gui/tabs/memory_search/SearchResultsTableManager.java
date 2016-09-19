@@ -125,7 +125,10 @@ public class SearchResultsTableManager
 
 	public void clearSearchResults()
 	{
-		searchResults.clear();
+		if (searchResults != null)
+		{
+			searchResults.clear();
+		}
 	}
 
 	public void deleteSelectedRows()

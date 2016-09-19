@@ -54,8 +54,8 @@ public class GraphicalSearcher
 
 			try
 			{
-				MemoryReader memoryReader = new MemoryReader();
 				long bytesDumped = 0;
+				MemoryReader memoryReader = new MemoryReader();
 				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
 				TCPGecko.reentrantLock.lock();
@@ -71,12 +71,17 @@ public class GraphicalSearcher
 						byteArrayOutputStream.write(retrievedBytes);
 
 						length -= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
-						address += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
+						setDumpLabelProgress(bytesDumped, startingBytesCount);
 						bytesDumped += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
 
 						long progress = bytesDumped * 100 / startingBytesCount;
 						setProgress((int) progress);
 						publish(bytesDumped);
+
+						if (JGeckoUGUI.getInstance().isDumpingCanceled())
+						{
+							return null;
+						}
 					}
 
 					if (length <= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
@@ -84,7 +89,11 @@ public class GraphicalSearcher
 						byte[] retrievedBytes = memoryReader.readBytes(length);
 						byteArrayOutputStream.write(retrievedBytes);
 						bytesDumped += retrievedBytes.length;
+						setDumpLabelProgress(bytesDumped, startingBytesCount);
 					}
+
+					JLabel addressProgressLabel = JGeckoUGUI.getInstance().getAddressProgressLabel();
+					addressProgressLabel.setText("");
 				} finally
 				{
 					TCPGecko.reentrantLock.unlock();
@@ -106,5 +115,12 @@ public class GraphicalSearcher
 
 			return null;
 		}
+	}
+
+	private void setDumpLabelProgress(long bytesDumped, long totalBytes)
+	{
+		JLabel addressProgressLabel = JGeckoUGUI.getInstance().getAddressProgressLabel();
+		addressProgressLabel.setText("Dumped: " + Integer.toHexString((int) (address + bytesDumped)).toUpperCase()
+				+ "/" + Integer.toHexString((int) (address + totalBytes)).toUpperCase());
 	}
 }

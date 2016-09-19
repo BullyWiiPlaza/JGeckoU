@@ -19,6 +19,8 @@ public class GraphicalMemoryDumper
 	private JProgressBar progressBar;
 	private JButton dumpMemoryButton;
 
+	private boolean isDone;
+
 	public GraphicalMemoryDumper(int address, int bytesCount, File targetFile, JProgressBar progressBar, JButton dumpMemoryButton)
 	{
 		this.address = address;
@@ -42,6 +44,11 @@ public class GraphicalMemoryDumper
 		});
 
 		task.execute();
+	}
+
+	public boolean isDone()
+	{
+		return isDone;
 	}
 
 	private class MemoryDumpingTask extends SwingWorker<Long, Object>
@@ -82,7 +89,12 @@ public class GraphicalMemoryDumper
 						setProgress((int) progress);
 						publish(bytesDumped);
 
-						if(bytesCount == 0)
+						if (JGeckoUGUI.getInstance().isDumpingCanceled())
+						{
+							return null;
+						}
+
+						if (bytesCount == 0)
 						{
 							break;
 						}
@@ -108,6 +120,7 @@ public class GraphicalMemoryDumper
 				TCPGecko.hasRequestedBytes = false;
 				dumpMemoryButton.setText(dumpText);
 				dumpMemoryButton.setEnabled(true);
+				isDone = true;
 			}
 
 			return null;

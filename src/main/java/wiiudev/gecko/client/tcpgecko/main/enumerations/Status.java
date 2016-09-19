@@ -22,7 +22,7 @@ public enum Status
 	/**
 	 * Returns the status corresponding to the provided byte
 	 *
-	 * @return The FileSystemStatus, null if unknown
+	 * @return The status, null if unknown
 	 */
 	public static Status getStatus(byte statusByte)
 	{
@@ -34,6 +34,6 @@ public enum Status
 			}
 		}
 
-		return null;
+		throw new IllegalStateException("Illegal status received: " + statusByte);
 	}
 }

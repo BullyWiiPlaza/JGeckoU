@@ -4,13 +4,16 @@ import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.tabs.memory_search.GraphicalRefiner;
 import wiiudev.gecko.client.gui.tabs.memory_search.GraphicalSearcher;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 public class SearchQueryOptimizer
 {
@@ -34,49 +37,88 @@ public class SearchQueryOptimizer
 
 		if (searchResults.isEmpty())
 		{
-			// Dump all bytes for the first search
-			GraphicalSearcher graphicalSearcher = new GraphicalSearcher(updatedAddress, updatedLength, searchProgressBar);
-			byte[] dumpedBytes = graphicalSearcher.dumpMemory();
-			byte[] dumpedMemory = new byte[length]; // Initialize with null bytes
-			System.arraycopy(dumpedBytes, 0, dumpedMemory, updatedAddress - address, dumpedBytes.length);
-
-			return ByteBuffer.wrap(dumpedMemory);
+			return dumpAllBytes(searchProgressBar, updatedAddress, updatedLength);
 		}
 
 		// Only dump the bytes that are still in the results
 		int bytesToDump = 0;
 		List<MemoryDumpingChunk> memoryDumpingChunks = new LinkedList<>();
 
-		for (int searchResultsIndex = 0; searchResultsIndex < searchResults.size(); searchResultsIndex++)
+		// For performance optimization, use this set
+		Set<Integer> addressesMap = searchResults.stream().map(searchResult -> searchBounds.getAddress()).collect(Collectors.toSet());
+
+		int bytesCount = searchResults.get(0).getValueSize().getBytesCount();
+
+		for (int searchResultAddress = updatedAddress;
+		     searchResultAddress < updatedAddress + updatedLength;
+		     searchResultAddress += bytesCount)
 		{
-			SearchResult searchResult = searchResults.get(searchResultsIndex);
-			int address = searchResult.getAddress();
-
-			if (searchResultsIndex < searchResults.size() - 1)
+			if (!addressesMap.contains(searchResultAddress))
 			{
-				// Combine this into one chunk
-				while (searchResults.get(searchResultsIndex + 1).getAddress() - address
-						<= MemoryReader.MAXIMUM_MEMORY_CHUNK_SIZE)
-				{
-					searchResultsIndex++;
+				// Not a search result
+				continue;
+			}
 
-					if (searchResultsIndex == searchResults.size() - 1)
-					{
-						break;
-					}
+			int nextSearchResultAddress = searchResultAddress + bytesCount;
+			int endAddress = nextSearchResultAddress;
+
+			// Does this fit into one chunk?
+			while (nextSearchResultAddress - searchResultAddress
+					<= MemoryReader.MAXIMUM_MEMORY_CHUNK_SIZE)
+			{
+				nextSearchResultAddress += bytesCount;
+
+				if (addressesMap.contains(nextSearchResultAddress - bytesCount))
+				{
+					endAddress = nextSearchResultAddress;
+				}
+
+				// We hit the end of the search results
+				if (nextSearchResultAddress >= updatedAddress + updatedLength)
+				{
+					endAddress = nextSearchResultAddress;
+					break;
 				}
 			}
 
-			int chunkLength = searchResults.get(searchResultsIndex).getAddress() - address + searchResults.get(searchResultsIndex).getValueSize().getBytesCount();
+			int chunkLength = endAddress - searchResultAddress - bytesCount;
 
-			MemoryDumpingChunk memoryDumpingChunk = new MemoryDumpingChunk(address, chunkLength);
+			if (chunkLength == 0)
+			{
+				chunkLength += bytesCount;
+			}
+
+			MemoryDumpingChunk memoryDumpingChunk = new MemoryDumpingChunk(searchResultAddress, chunkLength);
 			memoryDumpingChunks.add(memoryDumpingChunk);
 			bytesToDump += chunkLength;
+			searchResultAddress += chunkLength - bytesCount;
 		}
 
-		GraphicalRefiner graphicalRefiner = new GraphicalRefiner(updatedAddress, updatedLength, memoryDumpingChunks,
-				bytesToDump, searchProgressBar);
-		return ByteBuffer.wrap(graphicalRefiner.dumpMemory());
+		int memoryDumpingChunksSize = memoryDumpingChunks.size();
+		int maximumChunksSize = (updatedLength / TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE) + 1;
+
+		// Decide whether to use the optimized chunks or dump everything again
+		if (memoryDumpingChunksSize / maximumChunksSize <= 0.3)
+		{
+			GraphicalRefiner graphicalRefiner = new GraphicalRefiner(updatedAddress, updatedLength, memoryDumpingChunks,
+					bytesToDump, searchProgressBar);
+
+			return ByteBuffer.wrap(graphicalRefiner.dumpMemory());
+		} else
+		{
+			return dumpAllBytes(searchProgressBar, updatedAddress, updatedLength);
+		}
+	}
+
+	private ByteBuffer dumpAllBytes(JProgressBar searchProgressBar, int updatedAddress, int updatedLength) throws ExecutionException, InterruptedException
+	{
+		// Dump all bytes for the first search
+		GraphicalSearcher graphicalSearcher = new GraphicalSearcher(updatedAddress, updatedLength, searchProgressBar);
+		byte[] dumpedBytes = graphicalSearcher.dumpMemory();
+		byte[] dumpedMemory = new byte[length]; // Initialize with null bytes
+		System.arraycopy(dumpedBytes, 0, dumpedMemory, updatedAddress - address, dumpedBytes.length);
+
+		return ByteBuffer.wrap(dumpedMemory);
 	}
 
 	public static class MemoryDumpingChunk
@@ -84,7 +126,7 @@ public class SearchQueryOptimizer
 		private int address;
 		private int length;
 
-		public MemoryDumpingChunk(int address, int length)
+		MemoryDumpingChunk(int address, int length)
 		{
 			this.address = address;
 			this.length = length;

@@ -110,8 +110,8 @@ public class SearchResult implements Cloneable, Comparable
 	}
 
 	@Override
-	public int compareTo(Object o)
+	public int compareTo(Object object)
 	{
-		return new Integer(address).compareTo(((SearchResult) o).getAddress());
+		return new Integer(address).compareTo(((SearchResult) object).getAddress());
 	}
 }
