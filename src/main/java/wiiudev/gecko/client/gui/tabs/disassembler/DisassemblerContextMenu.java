@@ -116,8 +116,7 @@ public class DisassemblerContextMenu extends JPopupMenu
 					if (instruction.equals("blr"))
 					{
 						// The follow-on instruction is the start of the function
-						DisassembledInstruction functionStartInstruction = disassembledInstructions.get(currentInstructionIndex + 1);
-						JGeckoUGUI.selectInDisassembler(functionStartInstruction.getAddress());
+						JGeckoUGUI.selectInDisassembler(currentInstruction.getAddress() + 4);
 
 						// Done, We found the function start
 						return;

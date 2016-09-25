@@ -30,7 +30,7 @@ public class AddressRange
 	}
 
 	/**
-	 * Shamelessly derived from <a href="https://github.com/wiiudev/pyGecko/blob/master/tcpgecko.py#L266-L297">NWPlayer's Python TCP Gecko implementation</a>.
+	 * Shamelessly derived from <a href="https://github.com/wiiudev/pyGecko/blob/master/tcpgecko.py#L266-L297">NWPlayer's Python TCP Gecko dialogs</a>.
 	 *
 	 * @param address           The starting address
 	 * @param length            The request length

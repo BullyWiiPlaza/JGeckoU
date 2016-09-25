@@ -22,8 +22,9 @@ public enum CodeTypes
 	FILL_MEMORY(0x20, "Fill Memory"),
 	LOAD_POINTER(0x30, "Load Pointer"),
 	ADD_POINTER_OFFSET(0x31, "Add Offset To Pointer"),
-	TERMINATION(0xD0, "Termination"),
-	NO_OPERATION(0xD1, "No Operation");
+	TERMINATOR(0xD0, "Termination"),
+	NO_OPERATION(0xD1, "No Operation"),
+	CORRUPTER(0xF0, "Corruptor");
 
 	private short value;
 	private String text;

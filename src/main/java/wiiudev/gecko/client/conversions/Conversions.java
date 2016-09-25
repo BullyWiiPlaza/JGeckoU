@@ -288,7 +288,13 @@ public class Conversions
 
 	private static String removeScientificNotation(float value)
 	{
-		return new BigDecimal(value).toPlainString();
+		try
+		{
+			return new BigDecimal(value).toPlainString();
+		} catch (NumberFormatException numberFormatException)
+		{
+			return "NaN";
+		}
 	}
 
 	/**
@@ -303,5 +309,46 @@ public class Conversions
 		Float floatValue = Float.intBitsToFloat(longBits.intValue());
 
 		return removeScientificNotation(floatValue);
+	}
+
+	public static String coordinatesToHexadecimal(String coordinates)
+	{
+		String[] coordinatesArray = coordinates.split(",");
+		StringBuilder hexadecimalBuilder = new StringBuilder();
+
+		for (String coordinate : coordinatesArray)
+		{
+			coordinate = coordinate.trim();
+			coordinate = coordinate.replace("[", "");
+			coordinate = coordinate.replace("]", "");
+
+			String hexadecimal = floatingPointToHexadecimal(coordinate);
+			hexadecimalBuilder.append(hexadecimal);
+		}
+
+		return hexadecimalBuilder.toString();
+	}
+
+	public static String hexadecimalToCoordinates(String hexadecimal)
+	{
+		StringBuilder coordinatesBuilder = new StringBuilder("[");
+		int valueSize = ValueSize.THIRTY_TWO_BIT.getBytesCount() * 2;
+
+		for (int hexadecimalIndex = 0;
+		     hexadecimalIndex < hexadecimal.length();
+		     hexadecimalIndex += valueSize)
+		{
+			String value = hexadecimal.substring(hexadecimalIndex, hexadecimalIndex + valueSize);
+			String floating = hexadecimalToFloatingPoint(value);
+			coordinatesBuilder.append(floating);
+
+			if (hexadecimalIndex != hexadecimal.length() - valueSize)
+			{
+				coordinatesBuilder.append(", ");
+			}
+		}
+
+		coordinatesBuilder.append("]");
+		return coordinatesBuilder.toString();
 	}
 }

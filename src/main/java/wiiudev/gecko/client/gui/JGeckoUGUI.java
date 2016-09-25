@@ -20,7 +20,7 @@ import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Assembler;
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerException;
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerFilesException;
 import wiiudev.gecko.client.gui.tabs.memory_search.SearchResultsTableManager;
-import wiiudev.gecko.client.gui.tabs.memory_search.SearchValueConversionContextMenu;
+import wiiudev.gecko.client.gui.tabs.memory_search.ValueConversionContextMenu;
 import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViewerTableManager;
 import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViews;
 import wiiudev.gecko.client.gui.tabs.pointer_search.DownloadingUtilities;
@@ -280,8 +280,8 @@ public class JGeckoUGUI extends JFrame
 
 		searchProgressBar.setStringPainted(true);
 
-		SearchValueConversionContextMenu searchValueConversionContextMenu = new SearchValueConversionContextMenu(searchValueField);
-		searchValueConversionContextMenu.addMouseListener();
+		ValueConversionContextMenu searchValueConversionContextMenu = new ValueConversionContextMenu(searchValueField);
+		searchValueConversionContextMenu.addContextMenu();
 
 		searchValueField.addKeyListener(new KeyAdapter()
 		{
@@ -3585,8 +3585,9 @@ public class JGeckoUGUI extends JFrame
 		boolean isRangePositive = Conversions.toDecimal(searchEndingAddressField.getText())
 				- Conversions.toDecimal(searchStartingAddressField.getText()) > 0;
 		ValueSize valueSize = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex());
-		boolean isRangeAlignedCorrectly = valueSize != null
-				&& (Conversions.toDecimal(searchEndingAddressField.getText()) - Conversions.toDecimal(searchStartingAddressField.getText())) % valueSize.getBytesCount() == 0;
+		boolean isRangeAlignedCorrectly = true;
+		/*boolean isRangeAlignedCorrectly = valueSize != null
+				&& (Conversions.toDecimal(searchEndingAddressField.getText()) - Conversions.toDecimal(searchStartingAddressField.getText())) % valueSize.getBytesCount() == 0;*/
 		boolean areAddressesValid = AddressRange.isValidAccess(Conversions.toDecimal(searchStartingAddressField.getText()), 1, MemoryAccessLevel.READ) && AddressRange.isValidAccess(Conversions.toDecimal(searchEndingAddressField.getText()), 1, MemoryAccessLevel.READ);
 		searchButton.setEnabled(TCPGecko.isConnected() && !searching
 				&& !noResultsFound && isRangePositive

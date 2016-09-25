@@ -1,3 +1,5 @@
+import wiiudev.gecko.client.conversions.Conversions;
+
 import java.math.BigDecimal;
 
 public class Testing
@@ -9,7 +11,10 @@ public class Testing
 
 	public static void main(String[] arguments) throws Exception
 	{
-		System.out.println(removeScientificNotation("3.0103E-7"));
+		String hexadecimal = "42FE5555C334000043B40000";
+		String coordinates = Conversions.hexadecimalToCoordinates(hexadecimal);
+		System.out.println(coordinates);
+		// System.out.println(removeScientificNotation("3.0103E-7"));
 	}
 	// System.out.println(decimalToHex(-20f));
 	// Connector.getInstance().connect("192.168.178.35");

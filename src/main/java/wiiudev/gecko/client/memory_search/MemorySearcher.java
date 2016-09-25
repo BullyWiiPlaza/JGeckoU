@@ -58,10 +58,10 @@ public class MemorySearcher
 
 		if (isFirstSearch)
 		{
-			while (valuesReader.position() < byteBufferLimit)
+			while (valuesReader.position() + valueSizeBytesCount <= byteBufferLimit)
 			{
 				BigInteger currentValue = getValue(valuesReader, valueSizeBytesCount);
-				int searchResultAddress = address + valuesReader.position() - valueSize.getBytesCount();
+				int searchResultAddress = address + valuesReader.position() - Math.min(valueSize.getBytesCount(), 4);
 				SearchResult searchResult = new SearchResult(searchResultAddress, currentValue, currentValue, valueSize);
 
 				if (isUnknownValueSearch)

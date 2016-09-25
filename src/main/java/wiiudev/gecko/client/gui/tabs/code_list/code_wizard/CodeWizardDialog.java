@@ -6,6 +6,9 @@ import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.MemoryPointerExpression;
 import wiiudev.gecko.client.gui.input_filters.HexadecimalInputFilter;
 import wiiudev.gecko.client.gui.input_filters.InputLengthFilter;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs.CorrupterDialog;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs.LoadPointerDialog;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs.PointerAddOffsetDialog;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.CodeTypes;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.Pointer;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.RegisterOperations;
@@ -48,6 +51,11 @@ public class CodeWizardDialog extends JDialog
 	private JTextField targetRegisterTextField;
 	private JComboBox<RegisterOperations> registerOperationsComboBox;
 	private JTextField sourceRegisterTextField;
+	private JButton corrupterButton;
+	private JButton noOperationButton;
+	private JButton terminatorButton;
+	private JButton pointerAddOffsetButton;
+	private JButton loadPointerButton;
 	public static String NOP_CODE = "D1000000 DEADC0DE";
 
 	public CodeWizardDialog()
@@ -131,6 +139,38 @@ public class CodeWizardDialog extends JDialog
 		writesOffsetField.setDocument(new InputLengthFilter(8));
 		valueIncrementField.setDocument(new InputLengthFilter(8));
 		addParsePointerExpressionButtonListener();
+
+		addDialogButtonListener(loadPointerButton, new LoadPointerDialog());
+		addDialogButtonListener(pointerAddOffsetButton, new PointerAddOffsetDialog());
+		addDialogButtonListener(corrupterButton, new CorrupterDialog());
+		DialogUtilities.addGenerateCodeButtonListener(noOperationButton, this::generateNoOperationLine, false);
+		DialogUtilities.addGenerateCodeButtonListener(terminatorButton, this::generateTerminatorCode, false);
+	}
+
+	private void addDialogButtonListener(JButton button, JDialog dialog)
+	{
+		button.addActionListener(actionEvent ->
+		{
+			dialog.setTitle(button.getText());
+			dialog.setLocationRelativeTo(this);
+			dialog.setVisible(true);
+		});
+	}
+
+	public String generateTerminatorCode()
+	{
+		return CodeTypes.TERMINATOR.getValue() + "000000" + "DEADCAFE";
+	}
+
+	public static String generateTerminatorLine()
+	{
+		// A "hack" to keep the Supplier lambda reference working
+		return new CodeWizardDialog().generateTerminatorCode();
+	}
+
+	private String generateNoOperationLine()
+	{
+		return CodeTypes.NO_OPERATION.getValue() + "000000" + "DEADC0DE";
 	}
 
 	private void setPossiblePointerSelections()
@@ -270,7 +310,7 @@ public class CodeWizardDialog extends JDialog
 		boolean twoRegistersOperation = isTwoRegistersOperation(codeType);
 		boolean valueFieldEnabled = (codeType != CodeTypes.STRING_WRITE) && !registerOperation || twoRegistersOperation;
 		boolean stringWriteTextFieldEnabled = codeType == CodeTypes.STRING_WRITE;
-		boolean isIndependentCodeType = codeType == CodeTypes.NO_OPERATION || codeType == CodeTypes.TERMINATION;
+		boolean isIndependentCodeType = codeType == CodeTypes.NO_OPERATION || codeType == CodeTypes.TERMINATOR;
 		boolean modifyRegisterOperation = codeType == CodeTypes.INTEGER_OPERATIONS || codeType == CodeTypes.FLOAT_OPERATIONS;
 
 		setPointerRangeAvailability();
@@ -407,8 +447,9 @@ public class CodeWizardDialog extends JDialog
 		setModal(true);
 		getRootPane().setDefaultButton(generateButton);
 		setTitle("Code Wizard");
+		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		WindowUtilities.setIconImage(this);
-		setSize(700, 650);
+		setSize(700, 750);
 	}
 
 	private void copyGeneratedCode()
@@ -432,7 +473,7 @@ public class CodeWizardDialog extends JDialog
 			codeBuilder.append(value);
 		} else
 		{
-			if (selectedCodeType == CodeTypes.TERMINATION)
+			if (selectedCodeType == CodeTypes.TERMINATOR)
 			{
 				String TERMINATION_CODE = "00000000 DEADCAFE";
 				codeBuilder.append(TERMINATION_CODE.replace(" ", "").substring(2));
@@ -588,7 +629,7 @@ public class CodeWizardDialog extends JDialog
 		return CheatCodeFormatter.format(codeBuilder.toString(), false);
 	}
 
-	private String doPadding(String value, int targetLength)
+	public static String doPadding(String value, int targetLength)
 	{
 		while (value.length() < targetLength)
 		{
@@ -598,7 +639,7 @@ public class CodeWizardDialog extends JDialog
 		return value;
 	}
 
-	private String doPadding(String value)
+	public static String doPadding(String value)
 	{
 		return doPadding(value, 8);
 	}

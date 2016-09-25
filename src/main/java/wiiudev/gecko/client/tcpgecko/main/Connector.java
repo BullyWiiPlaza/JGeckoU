@@ -4,7 +4,7 @@ import java.io.*;
 import java.net.Socket;
 
 /**
- * Client implementation for connecting to the Nintendo Wii U AND communicating with the
+ * Client dialogs for connecting to the Nintendo Wii U AND communicating with the
  * <a href="https://github.com/wiiudev/pyGecko/blob/master/codehandler/main.c">code handler server</a>
  */
 public class Connector

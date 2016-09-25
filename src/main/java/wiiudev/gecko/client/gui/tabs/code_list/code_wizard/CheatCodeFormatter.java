@@ -5,7 +5,7 @@ public class CheatCodeFormatter
 	private static final String WINDOWS_SEPARATOR = "\r\n";
 	private static final String UNIX_SEPARATOR = "\n";
 	private static final String PLATFORM_SEPARATOR = System.lineSeparator();
-	
+
 	public static String formatWithPadding(String hexadecimal)
 	{
 		return format(hexadecimal, true, "00");
@@ -14,6 +14,11 @@ public class CheatCodeFormatter
 	public static String formatWithPadding(String hexadecimal, String lastByte)
 	{
 		return format(hexadecimal, true, lastByte);
+	}
+
+	public static String format(String hexadecimal)
+	{
+		return format(hexadecimal, false);
 	}
 
 	public static String format(String hexadecimal, boolean padLine)

@@ -20,7 +20,7 @@ import java.util.List;
 public class MemoryWriter extends TCPGecko
 {
 	/**
-	 * Sends <code>command</code> to the server followed by the <code>address</code> AND <code>value</code> to ASSIGN
+	 * Sends <code>command</code> to the server followed by the <code>address</code> and <code>value</code> to ASSIGN
 	 *
 	 * @param address The address to write to
 	 * @param value   The value to write

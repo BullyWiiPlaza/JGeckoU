@@ -8,11 +8,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class SearchValueConversionContextMenu extends JPopupMenu
+public class ValueConversionContextMenu extends JPopupMenu
 {
 	private JTextField textField;
 
-	public SearchValueConversionContextMenu(JTextField textField)
+	public ValueConversionContextMenu(JTextField textField)
 	{
 		this.textField = textField;
 
@@ -24,6 +24,8 @@ public class SearchValueConversionContextMenu extends JPopupMenu
 		addMenuItem("Hexadecimal -> ASCII", actionEvent -> convert(Conversions::hexadecimalToASCII));
 		addMenuItem("Unicode -> Hexadecimal", actionEvent -> convert(Conversions::unicodeToHexadecimal));
 		addMenuItem("Hexadecimal -> Unicode", actionEvent -> convert(Conversions::hexadecimalToUnicode));
+		addMenuItem("Coordinates -> Hexadecimal", actionEvent -> convert(Conversions::coordinatesToHexadecimal));
+		addMenuItem("Hexadecimal -> Coordinates", actionEvent -> convert(Conversions::hexadecimalToCoordinates));
 	}
 
 	private void addMenuItem(String text, ActionListener actionListener)
@@ -33,14 +35,15 @@ public class SearchValueConversionContextMenu extends JPopupMenu
 		add(hexadecimalToDecimalOption);
 	}
 
-	public void addMouseListener()
+	public void addContextMenu()
 	{
 		textField.addMouseListener(new MouseAdapter()
 		{
 			@Override
 			public void mouseReleased(MouseEvent mouseEvent)
 			{
-				if (mouseEvent.isPopupTrigger())
+				if (mouseEvent.isPopupTrigger()
+						&& textField.isEnabled())
 				{
 					show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
 				}
@@ -55,8 +58,7 @@ public class SearchValueConversionContextMenu extends JPopupMenu
 			String input = textField.getText();
 			String output = converter.convert(input);
 			textField.setText(output);
-		}
-		catch(Exception exception)
+		} catch (Exception exception)
 		{
 			StackTraceUtils.handleException(getRootPane(), exception);
 		}
