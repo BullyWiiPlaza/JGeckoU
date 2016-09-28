@@ -19,6 +19,13 @@ public class CodeListEntry implements Serializable
 		this.comment = comment;
 	}
 
+	public CodeListEntry(CodeListEntry codeListEntry)
+	{
+		this.codeTitle = codeListEntry.getTitle();
+		this.cheatCode = codeListEntry.getCode();
+		this.comment = codeListEntry.getComment();
+	}
+
 	public String getTitle()
 	{
 		return codeTitle;

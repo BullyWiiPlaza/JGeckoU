@@ -11,25 +11,25 @@ import java.util.List;
 
 public class CodesListManager
 {
-	private JList<JCheckBox> codesJList;
+	private JList<JCheckBox> checkboxList;
 	private DefaultListModel<JCheckBox> codeListModel;
 	private List<CodeListEntry> codeListEntries;
 	private JRootPane rootPane;
 
 	@SuppressWarnings("unchecked")
-	public CodesListManager(JList codesJList, JRootPane rootPane)
+	public CodesListManager(JList checkboxList, JRootPane rootPane)
 	{
 		codeListEntries = new LinkedList<>();
-		this.codesJList = codesJList;
-		codesJList.setModel(new DefaultListModel<>());
-		codesJList.setCellRenderer(new CheckBoxListCellRenderer());
-		codeListModel = (DefaultListModel<JCheckBox>) codesJList.getModel();
+		checkboxList.setModel(new DefaultListModel<>());
+		checkboxList.setCellRenderer(new CheckBoxListCellRenderer());
+		this.checkboxList = checkboxList;
+		codeListModel = (DefaultListModel<JCheckBox>) checkboxList.getModel();
 		this.rootPane = rootPane;
 	}
 
-	public JList<JCheckBox> getCodesJList()
+	public JList<JCheckBox> getCheckboxList()
 	{
-		return codesJList;
+		return checkboxList;
 	}
 
 	public boolean isSelectedCodeListEntryTicked()
@@ -58,25 +58,23 @@ public class CodesListManager
 		return false;
 	}
 
-	public JList<JCheckBox> getCodeList()
-	{
-		return codesJList;
-	}
-
 	public void addCodeListEntryClickedListener()
 	{
-		codesJList.addMouseListener(new MouseAdapter()
+		checkboxList.addMouseListener(new MouseAdapter()
 		{
 			@Override
 			public void mousePressed(MouseEvent mouseEvent)
 			{
-				int index = codesJList.locationToIndex(mouseEvent.getPoint());
-
-				if (index != -1)
+				if (SwingUtilities.isLeftMouseButton(mouseEvent))
 				{
-					JCheckBox checkbox = codesJList.getModel().getElementAt(index);
-					checkbox.setSelected(!checkbox.isSelected());
-					codesJList.repaint();
+					int index = checkboxList.locationToIndex(mouseEvent.getPoint());
+
+					if (index != -1)
+					{
+						JCheckBox checkbox = checkboxList.getModel().getElementAt(index);
+						checkbox.setSelected(!checkbox.isSelected());
+						checkboxList.repaint();
+					}
 				}
 			}
 		});
@@ -95,7 +93,7 @@ public class CodesListManager
 		}
 	}
 
-	public void clearCodeList()
+	private void clearCodeList()
 	{
 		codeListEntries.clear();
 		codeListModel.removeAllElements();
@@ -113,7 +111,7 @@ public class CodesListManager
 		JCheckBox codeListCheckBox = codeListEntry.getCodeListCheckBox();
 		codeListCheckBox.setSelected(selected);
 		codeListModel.addElement(codeListCheckBox);
-		codesJList.setSelectedIndex(codesJList.getLastVisibleIndex());
+		checkboxList.setSelectedIndex(checkboxList.getLastVisibleIndex());
 	}
 
 	public void addCodeListEntry(CodeListEntry codeListEntry)
@@ -150,13 +148,14 @@ public class CodesListManager
 	{
 		List<CodeListEntry> activeCodes = new LinkedList<>();
 
-		for (int i = 0; i < codeListEntries.size(); i++)
+		for (int codeEntryIndex = 0; codeEntryIndex < codeListEntries.size(); codeEntryIndex++)
 		{
-			boolean isSelected = codeListModel.getElementAt(i).isSelected();
+			boolean isSelected = codeListModel.getElementAt(codeEntryIndex).isSelected();
 
 			if (isSelected)
 			{
-				activeCodes.add(codeListEntries.get(i));
+				CodeListEntry codeListEntry = codeListEntries.get(codeEntryIndex);
+				activeCodes.add(codeListEntry);
 			}
 		}
 
@@ -167,12 +166,12 @@ public class CodesListManager
 	{
 		codeListModel.remove(selectedCodeListEntry);
 		codeListEntries.remove(selectedCodeListEntry);
-		codesJList.setSelectedIndex(codesJList.getLastVisibleIndex());
+		checkboxList.setSelectedIndex(checkboxList.getLastVisibleIndex());
 	}
 
 	public int getSelectedCodeListIndex(boolean silent)
 	{
-		int selectedCodeIndex = codesJList.getSelectedIndex();
+		int selectedCodeIndex = checkboxList.getSelectedIndex();
 		if (selectedCodeIndex == -1)
 		{
 			if (!silent)
@@ -191,7 +190,7 @@ public class CodesListManager
 
 	public boolean isSomeEntrySelected()
 	{
-		return codesJList.getSelectedIndex() != -1;
+		return checkboxList.getSelectedIndex() != -1;
 	}
 
 	public List<GeckoCode> getCodeListBackup()
@@ -221,5 +220,15 @@ public class CodesListManager
 			CodeListEntry codeListEntry = new CodeListEntry(codeListEntryState.getTitle(), codeListEntryState.getCode(), codeListEntryState.getComment());
 			addCodeListEntry(codeListEntry, codeListEntryState.isEnabled());
 		}
+	}
+
+	public void updateSelectedCodeListEntry(CodeListEntry codeListEntry)
+	{
+		int index = getSelectedCodeListIndex(true);
+		codeListEntries.remove(index);
+		codeListEntries.add(index, codeListEntry);
+		codeListModel.remove(index);
+		codeListModel.add(index, codeListEntry.getCodeListCheckBox());
+		checkboxList.setSelectedIndex(index);
 	}
 }

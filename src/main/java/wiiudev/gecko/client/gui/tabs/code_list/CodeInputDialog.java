@@ -12,30 +12,24 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 
-public class AddCodeDialog extends JDialog
+public class CodeInputDialog extends JDialog
 {
 	private JPanel contentPane;
 	private JButton saveCodeButton;
-	private JButton cancelButton;
 	private JTextArea codeArea;
 	private JTextField codeTitleField;
 	private JLabel statusLabel;
 	private JTextArea codeCommentField;
 	private JButton codeWizardButton;
 	private JScrollPane codeAreaScroller;
-	private boolean editMode;
 
 	private String codeTitle;
 	private String cheatCode;
 	private String comment;
 
-	public AddCodeDialog(CodeListEntry codeListEntry, boolean editMode)
+	public CodeInputDialog(CodeListEntry codeListEntry)
 	{
-		this.editMode = editMode;
 		codeArea.setDocument(new InputCapitalization());
 		codeTitleField.setText(codeListEntry.getTitle());
 		codeArea.setText(codeListEntry.getCode());
@@ -43,25 +37,9 @@ public class AddCodeDialog extends JDialog
 		new DefaultContextMenu().addTo(codeCommentField);
 		new DefaultContextMenu().addTo(codeTitleField);
 
-		setContentPane(contentPane);
-		setModal(true);
-		getRootPane().setDefaultButton(saveCodeButton);
-
 		saveCodeButton.addActionListener(actionEvent -> onSave());
 
-		cancelButton.addActionListener(actionEvent -> onCancel());
-
-		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-		addWindowListener(new WindowAdapter()
-		{
-			public void windowClosing(WindowEvent windowEvent)
-			{
-				onCancel();
-			}
-		});
-
-		contentPane.registerKeyboardAction(actionEvent -> onCancel(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-
+		// Keep the area big enough for a code
 		codeAreaScroller.setPreferredSize(new Dimension(300, 200));
 
 		codeArea.getDocument().addDocumentListener(new DocumentListener()
@@ -91,9 +69,9 @@ public class AddCodeDialog extends JDialog
 		codeWizardButton.addActionListener(actionEvent -> new CodeWizardDialog().setVisible(true));
 	}
 
-	public AddCodeDialog()
+	public CodeInputDialog()
 	{
-		this(new CodeListEntry("", "", ""), true);
+		this(new CodeListEntry("", "", ""));
 	}
 
 	private void validateCode()
@@ -123,11 +101,6 @@ public class AddCodeDialog extends JDialog
 		dispose();
 	}
 
-	private void onCancel()
-	{
-		dispose();
-	}
-
 	public boolean isConfirmed()
 	{
 		return cheatCode != null;
@@ -146,17 +119,10 @@ public class AddCodeDialog extends JDialog
 
 	private void setDialogProperties()
 	{
+		setContentPane(contentPane);
+		setModal(true);
 		setLocationRelativeTo(JGeckoUGUI.getInstance());
-
-		if(editMode)
-		{
-			setTitle("Edit Code");
-		}
-		else
-		{
-			setTitle("Add Code");
-		}
-
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setSize(650, 500);
 		WindowUtilities.setIconImage(this);
 	}

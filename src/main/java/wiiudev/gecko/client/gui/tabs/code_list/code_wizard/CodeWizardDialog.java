@@ -6,12 +6,10 @@ import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.MemoryPointerExpression;
 import wiiudev.gecko.client.gui.input_filters.HexadecimalInputFilter;
 import wiiudev.gecko.client.gui.input_filters.InputLengthFilter;
-import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs.CorrupterDialog;
-import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs.LoadPointerDialog;
-import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs.PointerAddOffsetDialog;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs.*;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.CodeTypes;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.Pointer;
-import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.RegisterOperations;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.RegisterOperation;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.ValueSize;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
@@ -20,16 +18,12 @@ import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 
 public class CodeWizardDialog extends JDialog
 {
 	private JPanel contentPane;
 	private JButton generateButton;
-	private JButton cancelButton;
 	private JComboBox<CodeTypes> codeTypeSelection;
 	private JComboBox<ValueSize> valueSizeSelection;
 	private JComboBox<Pointer> pointerSelection;
@@ -49,13 +43,15 @@ public class CodeWizardDialog extends JDialog
 	private JTextField valueIncrementField;
 	private JButton parsePointerExpressionButton;
 	private JTextField targetRegisterTextField;
-	private JComboBox<RegisterOperations> registerOperationsComboBox;
+	private JComboBox<RegisterOperation> registerOperationsComboBox;
 	private JTextField sourceRegisterTextField;
 	private JButton corrupterButton;
 	private JButton noOperationButton;
 	private JButton terminatorButton;
 	private JButton pointerAddOffsetButton;
 	private JButton loadPointerButton;
+	private JButton fillMemoryButton;
+	private JButton integerFloatingPointOperationButton;
 	public static String NOP_CODE = "D1000000 DEADC0DE";
 
 	public CodeWizardDialog()
@@ -115,20 +111,7 @@ public class CodeWizardDialog extends JDialog
 		setPointerOffsetAvailability();
 
 		generateButton.addActionListener(actionEvent -> generatedArea.setText(getGeneratedCode()));
-		cancelButton.addActionListener(actionEvent -> cancelDialog());
 		copyButton.addActionListener(actionEvent -> copyGeneratedCode());
-
-		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-
-		addWindowListener(new WindowAdapter()
-		{
-			public void windowClosing(WindowEvent actionEvent)
-			{
-				cancelDialog();
-			}
-		});
-
-		contentPane.registerKeyboardAction(actionEvent -> cancelDialog(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 		pointerRangeStartAddressField.setDocument(new InputLengthFilter(8));
 		pointerRangeEndAddressField.setDocument(new InputLengthFilter(8));
 		pointerRangeStartAddress2Field.setDocument(new InputLengthFilter(8));
@@ -140,6 +123,8 @@ public class CodeWizardDialog extends JDialog
 		valueIncrementField.setDocument(new InputLengthFilter(8));
 		addParsePointerExpressionButtonListener();
 
+		addDialogButtonListener(integerFloatingPointOperationButton, new IntegerFloatingPointOperation());
+		addDialogButtonListener(fillMemoryButton, new FillMemoryDialog());
 		addDialogButtonListener(loadPointerButton, new LoadPointerDialog());
 		addDialogButtonListener(pointerAddOffsetButton, new PointerAddOffsetDialog());
 		addDialogButtonListener(corrupterButton, new CorrupterDialog());
@@ -199,7 +184,10 @@ public class CodeWizardDialog extends JDialog
 	{
 		parsePointerExpressionButton.addActionListener(actionEvent ->
 		{
-			String pointerExpression = JOptionPane.showInputDialog(rootPane, "Please enter the pointer expression!", "Pointer Expression?", JOptionPane.INFORMATION_MESSAGE);
+			String pointerExpression = JOptionPane.showInputDialog(rootPane,
+					"Please enter the pointer expression!",
+					parsePointerExpressionButton.getText(),
+					JOptionPane.INFORMATION_MESSAGE);
 
 			try
 			{
@@ -346,7 +334,7 @@ public class CodeWizardDialog extends JDialog
 	{
 		int selectedIndex = registerOperationsComboBox.getSelectedIndex();
 		registerOperationsComboBox.removeAllItems();
-		DefaultComboBoxModel<RegisterOperations> comboBoxModel = new DefaultComboBoxModel<>(RegisterOperations.values());
+		DefaultComboBoxModel<RegisterOperation> comboBoxModel = new DefaultComboBoxModel<>(RegisterOperation.values());
 		registerOperationsComboBox.setModel(comboBoxModel);
 
 		// Restore previous selection and choose the last element if the elements count decreased
@@ -490,7 +478,7 @@ public class CodeWizardDialog extends JDialog
 
 			if (isTwoRegistersOperation(selectedCodeType))
 			{
-				RegisterOperations integerOperation = (RegisterOperations) registerOperationsComboBox.getSelectedItem();
+				RegisterOperation integerOperation = (RegisterOperation) registerOperationsComboBox.getSelectedItem();
 				String operation = integerOperation.getValue();
 				codeBuilder.append(operation);
 			} else
@@ -644,9 +632,10 @@ public class CodeWizardDialog extends JDialog
 		return doPadding(value, 8);
 	}
 
-	private void cancelDialog()
+	public static String getPaddedValue(JFormattedTextField textField)
 	{
-		dispose();
+		String text = textField.getText();
+		return CodeWizardDialog.doPadding(text);
 	}
 
 	public void generateCode()

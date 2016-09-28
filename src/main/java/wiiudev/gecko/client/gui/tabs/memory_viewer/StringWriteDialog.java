@@ -64,7 +64,7 @@ public class StringWriteDialog extends JDialog
 		{
 			String text = textArea.getText();
 
-			// By default, just convert UTF-8 to hexadecimal
+			// By default, just FLOAT_TO_INT UTF-8 to hexadecimal
 			byte[] bytes = Conversions.getNullTerminatedBytes(text);
 
 			// If unicode is desired, overwrite

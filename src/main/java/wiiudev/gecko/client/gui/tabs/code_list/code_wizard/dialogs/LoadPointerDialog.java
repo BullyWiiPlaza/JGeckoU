@@ -23,11 +23,10 @@ public class LoadPointerDialog extends JDialog
 
 	public LoadPointerDialog()
 	{
-		DialogUtilities.setFrameProperties(this, contentPane);
-		DialogUtilities.addGenerateCodeButtonListener(this,
+		DialogUtilities.setCodeGeneratorDialogProperties(this,
 				generateButton,
-				this::generateCode,
-				false);
+				contentPane,
+				this::generateCode);
 
 		try
 		{
@@ -60,9 +59,9 @@ public class LoadPointerDialog extends JDialog
 		StringBuilder codeGenerator = new StringBuilder();
 		codeGenerator.append(CodeTypes.LOAD_POINTER.getValue());
 		codeGenerator.append("000000");
-		codeGenerator.append(CodeWizardDialog.doPadding(addressField.getText()));
-		codeGenerator.append(CodeWizardDialog.doPadding(memoryRange1StartingAddress.getText()));
-		codeGenerator.append(CodeWizardDialog.doPadding(memoryRange1EndAddress.getText()));
+		codeGenerator.append(CodeWizardDialog.getPaddedValue(addressField));
+		codeGenerator.append(CodeWizardDialog.getPaddedValue(memoryRange1StartingAddress));
+		codeGenerator.append(CodeWizardDialog.getPaddedValue(memoryRange1EndAddress));
 
 		if (pointerInPointerCheckBox.isSelected())
 		{
@@ -70,8 +69,8 @@ public class LoadPointerDialog extends JDialog
 			codeGenerator.append(CodeTypes.LOAD_POINTER.getValue());
 			codeGenerator.append("100000");
 			codeGenerator.append("00000000");
-			codeGenerator.append(CodeWizardDialog.doPadding(memoryRange2StartingAddress.getText()));
-			codeGenerator.append(CodeWizardDialog.doPadding(memoryRange2EndAddress.getText()));
+			codeGenerator.append(CodeWizardDialog.getPaddedValue(memoryRange2StartingAddress));
+			codeGenerator.append(CodeWizardDialog.getPaddedValue(memoryRange2EndAddress));
 			codeGenerator.append(CodeWizardDialog.generateTerminatorLine());
 		}
 

@@ -15,11 +15,10 @@ public class PointerAddOffsetDialog extends JDialog
 
 	public PointerAddOffsetDialog()
 	{
-		DialogUtilities.setFrameProperties(this, contentPane);
-		DialogUtilities.addGenerateCodeButtonListener(this,
+		DialogUtilities.setCodeGeneratorDialogProperties(this,
 				generateButton,
-				this::generateCode,
-				false);
+				contentPane,
+				this::generateCode);
 
 		try
 		{
@@ -39,6 +38,6 @@ public class PointerAddOffsetDialog extends JDialog
 	{
 		return CodeTypes.ADD_POINTER_OFFSET.getValue()
 				+ "000000"
-				+ CodeWizardDialog.doPadding(addOffsetField.getText());
+				+ CodeWizardDialog.getPaddedValue(addOffsetField);
 	}
 }

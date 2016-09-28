@@ -17,7 +17,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -150,43 +149,30 @@ public class CodeListStorage
 	public String exportCodeList(List<GeckoCode> codeList, String fileName) throws IOException
 	{
 		String targetFilePath = codesDirectory + File.separator + fileName + ".txt";
-		StringBuilder exportedCodeListBuilder = getExportedCodeListBuilder(codeList);
-		writeToFile(exportedCodeListBuilder, targetFilePath);
+		String exportedCodeList = getExportedCodeList(codeList);
+		writeToFile(exportedCodeList, targetFilePath);
 
 		return targetFilePath;
 	}
 
-	private StringBuilder getExportedCodeListBuilder(List<GeckoCode> codeList)
+	private String getExportedCodeList(List<GeckoCode> codeList)
 	{
 		StringBuilder exportedCodeListBuilder = new StringBuilder();
-		String lineSeparator = System.lineSeparator();
 
-		for(GeckoCode code : codeList)
+		for (GeckoCode code : codeList)
 		{
-			String title = code.getTitle();
-			String cheatCode = code.getCode();
-			String comment = code.getComment();
-			exportedCodeListBuilder.append(title);
-			exportedCodeListBuilder.append(lineSeparator);
-			exportedCodeListBuilder.append(cheatCode);
-			exportedCodeListBuilder.append(lineSeparator);
-			exportedCodeListBuilder.append(comment);
-			exportedCodeListBuilder.append(lineSeparator);
-			exportedCodeListBuilder.append(lineSeparator);
+			exportedCodeListBuilder.append(code.toString());
+			exportedCodeListBuilder.append(System.lineSeparator());
+			exportedCodeListBuilder.append(System.lineSeparator());
 		}
 
-		return exportedCodeListBuilder;
+		return exportedCodeListBuilder.toString().trim();
 	}
 
-	public static void writeToFile(StringBuilder stringBuilder, String targetFilePath) throws IOException
-	{
-		writeToFile(stringBuilder.toString().trim(), targetFilePath);
-	}
-
-	public static void writeToFile(String text, String targetFilePath) throws IOException
+	private static void writeToFile(String text, String targetFilePath) throws IOException
 	{
 		Path targetPath = Paths.get(targetFilePath);
 		byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
-		Files.write(targetPath, bytes, StandardOpenOption.CREATE);
+		Files.write(targetPath, bytes);
 	}
 }

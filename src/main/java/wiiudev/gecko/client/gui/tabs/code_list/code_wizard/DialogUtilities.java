@@ -35,6 +35,18 @@ public class DialogUtilities
 		dialog.pack();
 	}
 
+	public static void setCodeGeneratorDialogProperties(JDialog dialog,
+	                                                    JButton generateButton,
+	                                                    JPanel contentPane,
+	                                                    Supplier<String> generateCode)
+	{
+		DialogUtilities.setFrameProperties(dialog, contentPane);
+		DialogUtilities.addGenerateCodeButtonListener(dialog,
+				generateButton,
+				generateCode,
+				false);
+	}
+
 	public static void addGenerateCodeButtonListener(JButton button,
 	                                                 Supplier<String> supplier,
 	                                                 boolean format)

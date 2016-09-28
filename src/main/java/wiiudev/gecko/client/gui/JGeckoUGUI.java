@@ -12,8 +12,9 @@ import wiiudev.gecko.client.gui.input_filters.HexadecimalInputFilter;
 import wiiudev.gecko.client.gui.input_filters.InputLengthFilter;
 import wiiudev.gecko.client.gui.input_filters.ValueSizes;
 import wiiudev.gecko.client.gui.tabs.GraphicalMemoryDumper;
-import wiiudev.gecko.client.gui.tabs.code_list.AddCodeDialog;
+import wiiudev.gecko.client.gui.tabs.code_list.CodeInputDialog;
 import wiiudev.gecko.client.gui.tabs.code_list.CodesListManager;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CodeWizardDialog;
 import wiiudev.gecko.client.gui.tabs.disassembler.DisassembledInstruction;
 import wiiudev.gecko.client.gui.tabs.disassembler.DisassemblerTableManager;
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Assembler;
@@ -91,7 +92,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton sendCodesButton;
 	private JButton disableCodesButton;
 	private JButton editCodeButton;
-	private JButton codesHelpButton;
+	private JButton codeTypesViewingButton;
 	private JButton updateGameTitlesButton;
 	private JList<JCheckBox> codesListBoxes;
 	private JButton storeCodeListButton;
@@ -941,7 +942,10 @@ public class JGeckoUGUI extends JFrame
 	{
 		if (isDisassemblerAddressValid())
 		{
-			int address = Integer.parseUnsignedInt(disassemblerAddressField.getText(), 16);
+			String stringAddress = disassemblerAddressField.getText();
+			stringAddress = CodeWizardDialog.doPadding(stringAddress);
+			disassemblerAddressField.setText(stringAddress);
+			int address = Integer.parseUnsignedInt(stringAddress, 16);
 
 			try
 			{
@@ -1149,7 +1153,7 @@ public class JGeckoUGUI extends JFrame
 		convertEffectiveToPhysicalButton.addActionListener(actionEvent ->
 		{
 			String suppliedInput = JOptionPane.showInputDialog(this,
-					"Please enter the effective hexadecimal address to convert:",
+					"Please enter the effective hexadecimal address to FLOAT_TO_INT:",
 					convertEffectiveToPhysicalButton.getText(),
 					JOptionPane.INFORMATION_MESSAGE);
 
@@ -2494,7 +2498,7 @@ public class JGeckoUGUI extends JFrame
 	{
 		codeListSender = new CodeListSender();
 
-		codesListManager.getCodesJList().addMouseListener(new MouseAdapter()
+		codesListManager.getCheckboxList().addMouseListener(new MouseAdapter()
 		{
 			@Override
 			public void mousePressed(MouseEvent mouseEvent)
@@ -2507,11 +2511,11 @@ public class JGeckoUGUI extends JFrame
 		});
 
 		autoSaveCodeListCheckBox.addItemListener(actionEvent -> setCodeListButtonsAvailability());
-		addCodeButton.addActionListener(actionEvent -> addCode());
+		addCodeButton.addActionListener(actionEvent -> openAddCodeDialog());
 		deleteCodeButton.addActionListener(actionEvent -> deleteSelectedCodeListEntry());
 		sendCodesButton.addActionListener(actionEvent -> sendCodes());
 		disableCodesButton.addActionListener(actionEvent -> disableCodes());
-		codesHelpButton.addActionListener(actionEvent -> visitCodeHandlerGBATempThread());
+		codeTypesViewingButton.addActionListener(actionEvent -> askForViewingCodeTypes());
 		editCodeButton.addActionListener(actionEvent -> editSelectedCode());
 		storeCodeListButton.addActionListener(actionEvent -> storeCurrentCodeList(false));
 		downloadCodeDatabaseButton.addActionListener(actionEvent -> handleDownloadingCodeDatabase());
@@ -2599,11 +2603,14 @@ public class JGeckoUGUI extends JFrame
 					{
 						Object[] options = {"Yes", "No"};
 
+						String codeList = getCodeList(downloadedCodes);
+
 						int selectAnswer = JOptionPane.showOptionDialog(rootPane,
-								codesCount + " code(s) found for " + gameName + "." + System.lineSeparator()
+								codesCount + " code(s) found for " + gameName + ":" + System.lineSeparator() + System.lineSeparator() +
+										codeList + System.lineSeparator() + System.lineSeparator()
 										+ "Would you like to add them to your current code list?"
 										+ System.lineSeparator() + "Duplicates will not be added!",
-								"Download Codes?",
+								"Add Codes?",
 								JOptionPane.YES_NO_CANCEL_OPTION,
 								JOptionPane.QUESTION_MESSAGE,
 								null,
@@ -2634,6 +2641,19 @@ public class JGeckoUGUI extends JFrame
 				return null;
 			}
 		}.execute();
+	}
+
+	private String getCodeList(List<GeckoCode> downloadedCodes)
+	{
+		StringBuilder downloadedCodesBuilder = new StringBuilder();
+		for (GeckoCode geckoCode : downloadedCodes)
+		{
+			String title = geckoCode.getTitle();
+			downloadedCodesBuilder.append(title);
+			downloadedCodesBuilder.append(System.lineSeparator());
+		}
+
+		return downloadedCodesBuilder.toString().trim();
 	}
 
 	private void configureConnectionTab()
@@ -3052,7 +3072,7 @@ public class JGeckoUGUI extends JFrame
 
 	private void addCodeListChangedListener()
 	{
-		codesListManager.getCodesJList().addListSelectionListener(selectionEvent -> handleCodeListButtonAvailability());
+		codesListManager.getCheckboxList().addListSelectionListener(selectionEvent -> handleCodeListButtonAvailability());
 	}
 
 	private void handleCodeListButtonAvailability()
@@ -3109,14 +3129,15 @@ public class JGeckoUGUI extends JFrame
 		}
 	}
 
-	private void addCode()
+	private void openAddCodeDialog()
 	{
-		AddCodeDialog addCodeDialog = new AddCodeDialog();
-		addCodeDialog.display();
+		CodeInputDialog codeInputDialog = new CodeInputDialog();
+		codeInputDialog.setTitle(addCodeButton.getText());
+		codeInputDialog.display();
 
-		if (addCodeDialog.isConfirmed())
+		if (codeInputDialog.isConfirmed())
 		{
-			CodeListEntry codeListEntry = addCodeDialog.getCodeListEntry();
+			CodeListEntry codeListEntry = codeInputDialog.getCodeListEntry();
 			codesListManager.addCodeListEntry(codeListEntry);
 
 			if (autoSaveCodeListCheckBox.isSelected())
@@ -3169,17 +3190,17 @@ public class JGeckoUGUI extends JFrame
 		}
 	}
 
-	private void visitCodeHandlerGBATempThread()
+	private void askForViewingCodeTypes()
 	{
 		int selectedAnswer = JOptionPane.showConfirmDialog(
 				rootPane,
-				"Do you want to view the code types documentation?",
-				"Code Types Documentation?",
+				"Do you want to view the online code types documentation?",
+				codeTypesViewingButton.getText(),
 				JOptionPane.YES_NO_OPTION);
 
 		if (selectedAnswer == JOptionPane.YES_OPTION)
 		{
-			openURL("http://gbatemp.net/threads/post-your-wiiu-cheat-codes-here.395443/");
+			openURL("http://cosmocortney.ddns.net/enzy/cafe_code_types_en.php");
 		}
 	}
 
@@ -3242,15 +3263,14 @@ public class JGeckoUGUI extends JFrame
 
 		if (codeListEntry != null)
 		{
-			boolean selected = codesListManager.isSelectedCodeListEntryTicked();
-			AddCodeDialog addCodeDialog = new AddCodeDialog(codeListEntry, true);
-			addCodeDialog.display();
+			CodeInputDialog codeInputDialog = new CodeInputDialog(codeListEntry);
+			codeInputDialog.setTitle(editCodeButton.getText());
+			codeInputDialog.display();
 
-			if (addCodeDialog.isConfirmed())
+			if (codeInputDialog.isConfirmed())
 			{
-				codesListManager.deleteSelectedCodeListEntry(true);
-				codeListEntry = addCodeDialog.getCodeListEntry();
-				codesListManager.addCodeListEntry(codeListEntry, selected);
+				codeListEntry = codeInputDialog.getCodeListEntry();
+				codesListManager.updateSelectedCodeListEntry(codeListEntry);
 
 				if (autoSaveCodeListCheckBox.isSelected())
 				{

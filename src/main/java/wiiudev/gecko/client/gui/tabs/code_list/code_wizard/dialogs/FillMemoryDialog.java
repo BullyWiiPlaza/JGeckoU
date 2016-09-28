@@ -8,16 +8,16 @@ import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.CodeTypes;
 import javax.swing.*;
 import java.text.ParseException;
 
-public class CorrupterDialog extends JDialog
+public class FillMemoryDialog extends JDialog
 {
-	protected JPanel contentPane;
-	private JFormattedTextField startingAddressField;
-	private JFormattedTextField endAddressField;
-	private JFormattedTextField valueField;
-	private JFormattedTextField replacementField;
+	private JPanel contentPane;
 	private JButton generateButton;
+	private JFormattedTextField addressField;
+	private JFormattedTextField lengthField;
+	private JFormattedTextField valueField;
+	private JCheckBox pointerCheckBox;
 
-	public CorrupterDialog()
+	public FillMemoryDialog()
 	{
 		DialogUtilities.setCodeGeneratorDialogProperties(this,
 				generateButton,
@@ -26,10 +26,9 @@ public class CorrupterDialog extends JDialog
 
 		try
 		{
-			DialogUtilities.addHexadecimalFormatterTo(startingAddressField);
-			DialogUtilities.addHexadecimalFormatterTo(endAddressField);
+			DialogUtilities.addHexadecimalFormatterTo(addressField);
 			DialogUtilities.addHexadecimalFormatterTo(valueField);
-			DialogUtilities.addHexadecimalFormatterTo(replacementField);
+			DialogUtilities.addHexadecimalFormatterTo(lengthField);
 		} catch (ParseException parseException)
 		{
 			StackTraceUtils.handleException(rootPane, parseException);
@@ -38,11 +37,14 @@ public class CorrupterDialog extends JDialog
 
 	private String generateCode()
 	{
-		return String.valueOf(CodeTypes.CORRUPTER.getValue()) +
-				"000000" +
-				CodeWizardDialog.doPadding(startingAddressField.getText()) +
-				CodeWizardDialog.doPadding(endAddressField.getText()) +
-				CodeWizardDialog.doPadding(valueField.getText()) +
-				CodeWizardDialog.doPadding(replacementField.getText());
+		return CodeTypes.FILL_MEMORY.getValue() + getPointerValue() + "00000"
+				+ CodeWizardDialog.getPaddedValue(valueField)
+				+ CodeWizardDialog.getPaddedValue(addressField)
+				+ CodeWizardDialog.getPaddedValue(lengthField);
+	}
+
+	private int getPointerValue()
+	{
+		return pointerCheckBox.isSelected() ? 1 : 0;
 	}
 }

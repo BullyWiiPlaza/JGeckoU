@@ -46,4 +46,16 @@ public class GeckoCode
 	{
 		this.title = title;
 	}
+
+	@Override
+	public String toString()
+	{
+		String exportedCodeListBuilder = title +
+				System.lineSeparator() +
+				code +
+				System.lineSeparator() +
+				comment;
+
+		return exportedCodeListBuilder.trim();
+	}
 }
