@@ -1,12 +1,9 @@
 package wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs;
 
-import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CodeWizardDialog;
-import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.DialogUtilities;
-import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.CodeTypes;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.CodeType;
 
 import javax.swing.*;
-import java.text.ParseException;
 
 public class LoadPointerDialog extends JDialog
 {
@@ -28,18 +25,12 @@ public class LoadPointerDialog extends JDialog
 				contentPane,
 				this::generateCode);
 
-		try
-		{
-			DialogUtilities.addHexadecimalFormatterTo(addressField);
-			DialogUtilities.addHexadecimalFormatterTo(memoryRange1StartingAddress);
-			DialogUtilities.addHexadecimalFormatterTo(memoryRange1EndAddress);
-			DialogUtilities.addHexadecimalFormatterTo(memoryRange2StartingAddress);
-			DialogUtilities.addHexadecimalFormatterTo(memoryRange2EndAddress);
-			DialogUtilities.addHexadecimalFormatterTo(addOffsetField);
-		} catch (ParseException parseException)
-		{
-			StackTraceUtils.handleException(rootPane, parseException);
-		}
+		DialogUtilities.setHexadecimalFormatter(addressField);
+		DialogUtilities.setHexadecimalFormatter(memoryRange1StartingAddress);
+		DialogUtilities.setHexadecimalFormatter(memoryRange1EndAddress);
+		DialogUtilities.setHexadecimalFormatter(memoryRange2StartingAddress);
+		DialogUtilities.setHexadecimalFormatter(memoryRange2EndAddress);
+		DialogUtilities.setHexadecimalFormatter(addOffsetField);
 
 		pointerInPointerCheckBox.addItemListener(itemEvent -> setComponentsAvailability());
 
@@ -57,7 +48,7 @@ public class LoadPointerDialog extends JDialog
 	private String generateCode()
 	{
 		StringBuilder codeGenerator = new StringBuilder();
-		codeGenerator.append(CodeTypes.LOAD_POINTER.getValue());
+		codeGenerator.append(CodeType.LOAD_POINTER.getValue());
 		codeGenerator.append("000000");
 		codeGenerator.append(CodeWizardDialog.getPaddedValue(addressField));
 		codeGenerator.append(CodeWizardDialog.getPaddedValue(memoryRange1StartingAddress));
@@ -66,7 +57,7 @@ public class LoadPointerDialog extends JDialog
 		if (pointerInPointerCheckBox.isSelected())
 		{
 			codeGenerator.append(PointerAddOffsetDialog.generatePointerAddOffsetCode(addOffsetField));
-			codeGenerator.append(CodeTypes.LOAD_POINTER.getValue());
+			codeGenerator.append(CodeType.LOAD_POINTER.getValue());
 			codeGenerator.append("100000");
 			codeGenerator.append("00000000");
 			codeGenerator.append(CodeWizardDialog.getPaddedValue(memoryRange2StartingAddress));

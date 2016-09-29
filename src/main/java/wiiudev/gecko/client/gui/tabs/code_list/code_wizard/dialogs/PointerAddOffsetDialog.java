@@ -1,11 +1,9 @@
 package wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs;
 
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CodeWizardDialog;
-import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.DialogUtilities;
-import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.CodeTypes;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.CodeType;
 
 import javax.swing.*;
-import java.text.ParseException;
 
 public class PointerAddOffsetDialog extends JDialog
 {
@@ -20,13 +18,7 @@ public class PointerAddOffsetDialog extends JDialog
 				contentPane,
 				this::generateCode);
 
-		try
-		{
-			DialogUtilities.addHexadecimalFormatterTo(addOffsetField);
-		} catch (ParseException parseException)
-		{
-			parseException.printStackTrace();
-		}
+		DialogUtilities.setHexadecimalFormatter(addOffsetField);
 	}
 
 	private String generateCode()
@@ -36,7 +28,7 @@ public class PointerAddOffsetDialog extends JDialog
 
 	public static String generatePointerAddOffsetCode(JFormattedTextField addOffsetField)
 	{
-		return CodeTypes.ADD_POINTER_OFFSET.getValue()
+		return CodeType.ADD_POINTER_OFFSET.getValue()
 				+ "000000"
 				+ CodeWizardDialog.getPaddedValue(addOffsetField);
 	}

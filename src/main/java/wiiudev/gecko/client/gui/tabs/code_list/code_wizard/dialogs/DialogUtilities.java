@@ -1,6 +1,7 @@
-package wiiudev.gecko.client.gui.tabs.code_list.code_wizard;
+package wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs;
 
 import wiiudev.gecko.client.conversions.SystemClipboard;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CheatCodeFormatter;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
 
 import javax.swing.*;
@@ -12,18 +13,29 @@ import java.util.function.Supplier;
 
 public class DialogUtilities
 {
-	public static void addHexadecimalFormatterTo(JFormattedTextField formattedTextField) throws ParseException
+	public static void setHexadecimalFormatter(JFormattedTextField formattedTextField)
+	{
+		setHexadecimalFormatter(formattedTextField, 8);
+	}
+
+	public static void setHexadecimalFormatter(JFormattedTextField formattedTextField, int maximumLength)
 	{
 		String mask = "";
 
-		for (int valueIndex = 0; valueIndex < 8; valueIndex++)
+		for (int valueIndex = 0; valueIndex < maximumLength; valueIndex++)
 		{
 			mask += "H";
 		}
 
-		MaskFormatter formatter = new MaskFormatter(mask);
-		DefaultFormatterFactory factory = new DefaultFormatterFactory(formatter);
-		formattedTextField.setFormatterFactory(factory);
+		try
+		{
+			MaskFormatter formatter = new MaskFormatter(mask);
+			DefaultFormatterFactory factory = new DefaultFormatterFactory(formatter);
+			formattedTextField.setFormatterFactory(factory);
+		} catch (ParseException parseException)
+		{
+			parseException.printStackTrace();
+		}
 	}
 
 	public static void setFrameProperties(JDialog dialog, JPanel contentPane)
@@ -74,5 +86,18 @@ public class DialogUtilities
 				frame.dispose();
 			}
 		});
+	}
+
+	public static int getBooleanInt(JCheckBox checkBox)
+	{
+		return checkBox.isSelected() ? 1 : 0;
+	}
+
+	public static void addRegisterItems(JComboBox<Integer> registerComboBox)
+	{
+		for (int registerIndex = 0; registerIndex < 8; registerIndex++)
+		{
+			registerComboBox.addItem(registerIndex);
+		}
 	}
 }

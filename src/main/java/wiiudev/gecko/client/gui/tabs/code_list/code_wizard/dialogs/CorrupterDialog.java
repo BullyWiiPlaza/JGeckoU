@@ -1,12 +1,9 @@
 package wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs;
 
-import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CodeWizardDialog;
-import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.DialogUtilities;
-import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.CodeTypes;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.CodeType;
 
 import javax.swing.*;
-import java.text.ParseException;
 
 public class CorrupterDialog extends JDialog
 {
@@ -24,21 +21,15 @@ public class CorrupterDialog extends JDialog
 				contentPane,
 				this::generateCode);
 
-		try
-		{
-			DialogUtilities.addHexadecimalFormatterTo(startingAddressField);
-			DialogUtilities.addHexadecimalFormatterTo(endAddressField);
-			DialogUtilities.addHexadecimalFormatterTo(valueField);
-			DialogUtilities.addHexadecimalFormatterTo(replacementField);
-		} catch (ParseException parseException)
-		{
-			StackTraceUtils.handleException(rootPane, parseException);
-		}
+		DialogUtilities.setHexadecimalFormatter(startingAddressField);
+		DialogUtilities.setHexadecimalFormatter(endAddressField);
+		DialogUtilities.setHexadecimalFormatter(valueField);
+		DialogUtilities.setHexadecimalFormatter(replacementField);
 	}
 
 	private String generateCode()
 	{
-		return String.valueOf(CodeTypes.CORRUPTER.getValue()) +
+		return String.valueOf(CodeType.CORRUPTER.getValue()) +
 				"000000" +
 				CodeWizardDialog.doPadding(startingAddressField.getText()) +
 				CodeWizardDialog.doPadding(endAddressField.getText()) +

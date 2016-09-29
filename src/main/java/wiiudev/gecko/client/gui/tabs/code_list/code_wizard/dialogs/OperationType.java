@@ -1,13 +1,14 @@
 package wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs;
 
-public enum RegisterDataType
+public enum OperationType
 {
-	FLOAT("Floating Point"),
-	INTEGER("Integer");
+	LOAD("Load"),
+	STORE("Store"),
+	OPERATION("Operation");
 
 	private String text;
 
-	RegisterDataType(String text)
+	OperationType(String text)
 	{
 		this.text = text;
 	}

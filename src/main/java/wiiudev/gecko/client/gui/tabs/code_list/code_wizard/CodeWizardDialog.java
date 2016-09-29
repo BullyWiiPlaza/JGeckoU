@@ -7,7 +7,7 @@ import wiiudev.gecko.client.gui.MemoryPointerExpression;
 import wiiudev.gecko.client.gui.input_filters.HexadecimalInputFilter;
 import wiiudev.gecko.client.gui.input_filters.InputLengthFilter;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs.*;
-import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.CodeTypes;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.CodeType;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.Pointer;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.RegisterOperation;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.ValueSize;
@@ -24,7 +24,7 @@ public class CodeWizardDialog extends JDialog
 {
 	private JPanel contentPane;
 	private JButton generateButton;
-	private JComboBox<CodeTypes> codeTypeSelection;
+	private JComboBox<CodeType> codeTypeSelection;
 	private JComboBox<ValueSize> valueSizeSelection;
 	private JComboBox<Pointer> pointerSelection;
 	private JTextField addressField;
@@ -51,7 +51,11 @@ public class CodeWizardDialog extends JDialog
 	private JButton pointerAddOffsetButton;
 	private JButton loadPointerButton;
 	private JButton fillMemoryButton;
-	private JButton integerFloatingPointOperationButton;
+	private JButton registerOperationButton;
+	private JButton ramWriteButton;
+	private JButton stringWriteButton;
+	private JButton skipWriteButton;
+	private JButton conditionalButton;
 	public static String NOP_CODE = "D1000000 DEADC0DE";
 
 	public CodeWizardDialog()
@@ -59,7 +63,7 @@ public class CodeWizardDialog extends JDialog
 		setLocationRelativeTo(JGeckoUGUI.getInstance());
 		defineDialogProperties();
 
-		DefaultComboBoxModel<CodeTypes> codeTypesDefaultComboBoxModel = new DefaultComboBoxModel<>(CodeTypes.values());
+		DefaultComboBoxModel<CodeType> codeTypesDefaultComboBoxModel = new DefaultComboBoxModel<>(CodeType.values());
 		codeTypeSelection.setModel(codeTypesDefaultComboBoxModel);
 
 		DefaultComboBoxModel<Pointer> pointerDefaultComboBoxModel = new DefaultComboBoxModel<>(Pointer.values());
@@ -123,7 +127,11 @@ public class CodeWizardDialog extends JDialog
 		valueIncrementField.setDocument(new InputLengthFilter(8));
 		addParsePointerExpressionButtonListener();
 
-		addDialogButtonListener(integerFloatingPointOperationButton, new IntegerFloatingPointOperation());
+		addDialogButtonListener(ramWriteButton, new RAMWritesDialog());
+		addDialogButtonListener(stringWriteButton, new StringWriteDialog());
+		addDialogButtonListener(skipWriteButton, new SkipWriteDialog());
+		addDialogButtonListener(conditionalButton, new ConditionalsDialog());
+		addDialogButtonListener(registerOperationButton, new RegisterOperationDialog());
 		addDialogButtonListener(fillMemoryButton, new FillMemoryDialog());
 		addDialogButtonListener(loadPointerButton, new LoadPointerDialog());
 		addDialogButtonListener(pointerAddOffsetButton, new PointerAddOffsetDialog());
@@ -142,9 +150,9 @@ public class CodeWizardDialog extends JDialog
 		});
 	}
 
-	public String generateTerminatorCode()
+	private String generateTerminatorCode()
 	{
-		return CodeTypes.TERMINATOR.getValue() + "000000" + "DEADCAFE";
+		return CodeType.TERMINATOR.getValue() + "000000" + "DEADCAFE";
 	}
 
 	public static String generateTerminatorLine()
@@ -155,14 +163,14 @@ public class CodeWizardDialog extends JDialog
 
 	private String generateNoOperationLine()
 	{
-		return CodeTypes.NO_OPERATION.getValue() + "000000" + "DEADC0DE";
+		return CodeType.NO_OPERATION.getValue() + "000000" + "DEADC0DE";
 	}
 
 	private void setPossiblePointerSelections()
 	{
-		CodeTypes codeType = (CodeTypes) codeTypeSelection.getSelectedItem();
+		CodeType codeType = (CodeType) codeTypeSelection.getSelectedItem();
 
-		if (codeType == CodeTypes.LOAD_POINTER)
+		if (codeType == CodeType.LOAD_POINTER)
 		{
 			pointerSelection.removeAllItems();
 
@@ -207,7 +215,7 @@ public class CodeWizardDialog extends JDialog
 						return;
 					}
 
-					codeTypeSelection.setSelectedItem(CodeTypes.RAM_WRITE);
+					codeTypeSelection.setSelectedItem(CodeType.RAM_WRITE);
 					pointerSelection.setSelectedItem(offsetsCount == 1 ? Pointer.POINTER : Pointer.POINTER_IN_POINTER);
 					valueSizeSelection.setSelectedItem(ValueSize.THIRTY_TWO_BIT);
 					pointerOffsetField.setText(Integer.toHexString(offsets[0]).toUpperCase());
@@ -293,38 +301,38 @@ public class CodeWizardDialog extends JDialog
 
 	private void setCodeTypesAvailability()
 	{
-		CodeTypes codeType = (CodeTypes) codeTypeSelection.getSelectedItem();
+		CodeType codeType = (CodeType) codeTypeSelection.getSelectedItem();
 		boolean registerOperation = isRegisterOperation(codeType);
 		boolean twoRegistersOperation = isTwoRegistersOperation(codeType);
-		boolean valueFieldEnabled = (codeType != CodeTypes.STRING_WRITE) && !registerOperation || twoRegistersOperation;
-		boolean stringWriteTextFieldEnabled = codeType == CodeTypes.STRING_WRITE;
-		boolean isIndependentCodeType = codeType == CodeTypes.NO_OPERATION || codeType == CodeTypes.TERMINATOR;
-		boolean modifyRegisterOperation = codeType == CodeTypes.INTEGER_OPERATIONS || codeType == CodeTypes.FLOAT_OPERATIONS;
+		boolean valueFieldEnabled = (codeType != CodeType.STRING_WRITE) && !registerOperation || twoRegistersOperation;
+		boolean stringWriteTextFieldEnabled = codeType == CodeType.STRING_WRITE;
+		boolean isIndependentCodeType = codeType == CodeType.NO_OPERATION || codeType == CodeType.TERMINATOR;
+		boolean modifyRegisterOperation = codeType == CodeType.INTEGER_OPERATIONS || codeType == CodeType.FLOAT_OPERATIONS;
 
 		setPointerRangeAvailability();
 		sourceRegisterTextField.setEnabled(modifyRegisterOperation);
 		targetRegisterTextField.setEnabled(registerOperation);
 		registerOperationsComboBox.setEnabled(twoRegistersOperation);
-		valueField.setEnabled(valueFieldEnabled && !isIndependentCodeType && codeType != CodeTypes.LOAD_POINTER);
+		valueField.setEnabled(valueFieldEnabled && !isIndependentCodeType && codeType != CodeType.LOAD_POINTER);
 		stringWriteTextArea.setEnabled(stringWriteTextFieldEnabled);
-		pointerSelection.setEnabled(!isIndependentCodeType && !twoRegistersOperation && codeType != CodeTypes.ADD_POINTER_OFFSET);
-		valueSizeSelection.setEnabled(!isIndependentCodeType && !twoRegistersOperation && codeType != CodeTypes.LOAD_POINTER && codeType != CodeTypes.ADD_POINTER_OFFSET);
+		pointerSelection.setEnabled(!isIndependentCodeType && !twoRegistersOperation && codeType != CodeType.ADD_POINTER_OFFSET);
+		valueSizeSelection.setEnabled(!isIndependentCodeType && !twoRegistersOperation && codeType != CodeType.LOAD_POINTER && codeType != CodeType.ADD_POINTER_OFFSET);
 
-		if (codeType != CodeTypes.ADD_POINTER_OFFSET)
+		if (codeType != CodeType.ADD_POINTER_OFFSET)
 		{
 			valueSizeSelection.setSelectedItem(ValueSize.THIRTY_TWO_BIT);
 		}
 
-		addressField.setEnabled(!isIndependentCodeType && !twoRegistersOperation && codeType != CodeTypes.ADD_POINTER_OFFSET);
-		boolean isSkipWrite = codeType == CodeTypes.SKIP_WRITE;
-		boolean isFillMemory = codeType == CodeTypes.FILL_MEMORY;
+		addressField.setEnabled(!isIndependentCodeType && !twoRegistersOperation && codeType != CodeType.ADD_POINTER_OFFSET);
+		boolean isSkipWrite = codeType == CodeType.SKIP_WRITE;
+		boolean isFillMemory = codeType == CodeType.FILL_MEMORY;
 		valueIncrementField.setEnabled(isSkipWrite || isFillMemory);
 		writesOffsetField.setEnabled(isSkipWrite);
 		writesCountField.setEnabled(isSkipWrite || isFillMemory);
 
 		addRegisterComboBoxItems();
 
-		if (codeType == CodeTypes.INTEGER_OPERATIONS)
+		if (codeType == CodeType.INTEGER_OPERATIONS)
 		{
 			registerOperationsComboBox.removeItemAt(registerOperationsComboBox.getItemCount() - 1);
 		}
@@ -351,14 +359,14 @@ public class CodeWizardDialog extends JDialog
 		}
 	}
 
-	private boolean isTwoRegistersOperation(CodeTypes codeType)
+	private boolean isTwoRegistersOperation(CodeType codeType)
 	{
-		return codeType == CodeTypes.INTEGER_OPERATIONS || codeType == CodeTypes.FLOAT_OPERATIONS;
+		return codeType == CodeType.INTEGER_OPERATIONS || codeType == CodeType.FLOAT_OPERATIONS;
 	}
 
-	private boolean isRegisterOperation(CodeTypes codeType)
+	private boolean isRegisterOperation(CodeType codeType)
 	{
-		return codeType == CodeTypes.LOAD_INT || codeType == CodeTypes.STORE_INT || codeType == CodeTypes.INTEGER_OPERATIONS || codeType == CodeTypes.LOAD_FLOAT || codeType == CodeTypes.STORE_FLOAT || codeType == CodeTypes.FLOAT_OPERATIONS;
+		return codeType == CodeType.LOAD_INT || codeType == CodeType.STORE_INT || codeType == CodeType.INTEGER_OPERATIONS || codeType == CodeType.LOAD_FLOAT || codeType == CodeType.STORE_FLOAT || codeType == CodeType.FLOAT_OPERATIONS;
 	}
 
 	private void setPointerOffsetAvailability()
@@ -368,8 +376,8 @@ public class CodeWizardDialog extends JDialog
 		switch (selectedPointerType)
 		{
 			case POINTER:
-				CodeTypes codeType = (CodeTypes) codeTypeSelection.getSelectedItem();
-				pointerOffsetField.setEnabled(codeType != CodeTypes.LOAD_POINTER);
+				CodeType codeType = (CodeType) codeTypeSelection.getSelectedItem();
+				pointerOffsetField.setEnabled(codeType != CodeType.LOAD_POINTER);
 				pointerRangeStartAddressField.setEnabled(true);
 				pointerRangeEndAddressField.setEnabled(true);
 				pointerOffset2Field.setEnabled(false);
@@ -398,9 +406,9 @@ public class CodeWizardDialog extends JDialog
 
 	private void setPointerRangeAvailability()
 	{
-		CodeTypes codeType = (CodeTypes) codeTypeSelection.getSelectedItem();
-		pointerRangeStartAddressField.setEnabled(codeType == CodeTypes.LOAD_POINTER);
-		pointerRangeEndAddressField.setEnabled(codeType == CodeTypes.LOAD_POINTER);
+		CodeType codeType = (CodeType) codeTypeSelection.getSelectedItem();
+		pointerRangeStartAddressField.setEnabled(codeType == CodeType.LOAD_POINTER);
+		pointerRangeEndAddressField.setEnabled(codeType == CodeType.LOAD_POINTER);
 	}
 
 	private void setValueFieldInputFilter()
@@ -450,25 +458,25 @@ public class CodeWizardDialog extends JDialog
 	private String getGeneratedCode()
 	{
 		StringBuilder codeBuilder = new StringBuilder();
-		CodeTypes selectedCodeType = (CodeTypes) codeTypeSelection.getSelectedItem();
+		CodeType selectedCodeType = (CodeType) codeTypeSelection.getSelectedItem();
 		String codeType = selectedCodeType.getValue();
 		codeBuilder.append(codeType);
 
-		if (selectedCodeType == CodeTypes.ADD_POINTER_OFFSET)
+		if (selectedCodeType == CodeType.ADD_POINTER_OFFSET)
 		{
 			codeBuilder.append("000000");
 			String value = doPadding(valueField.getText());
 			codeBuilder.append(value);
 		} else
 		{
-			if (selectedCodeType == CodeTypes.TERMINATOR)
+			if (selectedCodeType == CodeType.TERMINATOR)
 			{
 				String TERMINATION_CODE = "00000000 DEADCAFE";
 				codeBuilder.append(TERMINATION_CODE.replace(" ", "").substring(2));
 				return CheatCodeFormatter.format(codeBuilder.toString(), false);
 			}
 
-			if (selectedCodeType == CodeTypes.NO_OPERATION)
+			if (selectedCodeType == CodeType.NO_OPERATION)
 			{
 				codeBuilder.append(NOP_CODE.replace(" ", "").substring(2));
 				return CheatCodeFormatter.format(codeBuilder.toString(), false);
@@ -486,7 +494,7 @@ public class CodeWizardDialog extends JDialog
 				String pointer = selectedPointerType.getValue();
 				codeBuilder.append(pointer);
 
-				if (selectedCodeType == CodeTypes.LOAD_POINTER)
+				if (selectedCodeType == CodeType.LOAD_POINTER)
 				{
 					codeBuilder.append("0");
 				} else
@@ -500,12 +508,12 @@ public class CodeWizardDialog extends JDialog
 			String stringWriteText = stringWriteTextArea.getText();
 			String stringWriteHexadecimal = Conversions.asciiToHexadecimal(stringWriteText);
 
-			if (selectedCodeType == CodeTypes.STRING_WRITE)
+			if (selectedCodeType == CodeType.STRING_WRITE)
 			{
 				int bytesCount = stringWriteHexadecimal.length() / 2;
 				String paddedSize = Conversions.toHexadecimal(bytesCount, 4);
 				codeBuilder.append(paddedSize);
-			} else if (selectedCodeType == CodeTypes.SKIP_WRITE)
+			} else if (selectedCodeType == CodeType.SKIP_WRITE)
 			{
 				String writesCount = doPadding(writesCountField.getText(), 4);
 				codeBuilder.append(writesCount);
@@ -557,14 +565,14 @@ public class CodeWizardDialog extends JDialog
 				codeBuilder.append(address);
 			}
 
-			if (selectedPointerType == Pointer.POINTER || selectedPointerType == Pointer.POINTER_IN_POINTER || selectedCodeType == CodeTypes.LOAD_POINTER)
+			if (selectedPointerType == Pointer.POINTER || selectedPointerType == Pointer.POINTER_IN_POINTER || selectedCodeType == CodeType.LOAD_POINTER)
 			{
 				String rangeStart = doPadding(pointerRangeStartAddressField.getText());
 				codeBuilder.append(rangeStart);
 				String rangeEnd = doPadding(pointerRangeEndAddressField.getText());
 				codeBuilder.append(rangeEnd);
 
-				if (selectedCodeType != CodeTypes.LOAD_POINTER)
+				if (selectedCodeType != CodeType.LOAD_POINTER)
 				{
 					String pointerOffset = doPadding(pointerOffsetField.getText());
 					codeBuilder.append(pointerOffset);
@@ -587,7 +595,7 @@ public class CodeWizardDialog extends JDialog
 				}
 			}
 
-			if (selectedCodeType == CodeTypes.STRING_WRITE)
+			if (selectedCodeType == CodeType.STRING_WRITE)
 			{
 				codeBuilder.append(stringWriteHexadecimal);
 				return CheatCodeFormatter.formatWithPadding(codeBuilder.toString(), "FF");
@@ -599,7 +607,7 @@ public class CodeWizardDialog extends JDialog
 				codeBuilder.append(value);
 			}
 
-			if (selectedCodeType == CodeTypes.SKIP_WRITE)
+			if (selectedCodeType == CodeType.SKIP_WRITE)
 			{
 				String offset = doPadding(writesOffsetField.getText(), 8);
 				codeBuilder.append(offset);
@@ -608,7 +616,7 @@ public class CodeWizardDialog extends JDialog
 				codeBuilder.append(increment);
 			}
 
-			if (selectedPointerType != Pointer.POINTER && selectedPointerType != Pointer.POINTER_IN_POINTER && !(isRegisterOperation(selectedCodeType)) && selectedCodeType != CodeTypes.LOAD_POINTER)
+			if (selectedPointerType != Pointer.POINTER && selectedPointerType != Pointer.POINTER_IN_POINTER && !(isRegisterOperation(selectedCodeType)) && selectedCodeType != CodeType.LOAD_POINTER)
 			{
 				codeBuilder.append("00000000");
 			}
@@ -617,7 +625,7 @@ public class CodeWizardDialog extends JDialog
 		return CheatCodeFormatter.format(codeBuilder.toString(), false);
 	}
 
-	public static String doPadding(String value, int targetLength)
+	private static String doPadding(String value, int targetLength)
 	{
 		while (value.length() < targetLength)
 		{
@@ -634,8 +642,13 @@ public class CodeWizardDialog extends JDialog
 
 	public static String getPaddedValue(JFormattedTextField textField)
 	{
+		return getPaddedValue(textField, 8);
+	}
+
+	public static String getPaddedValue(JFormattedTextField textField, int padding)
+	{
 		String text = textField.getText();
-		return CodeWizardDialog.doPadding(text);
+		return doPadding(text, padding);
 	}
 
 	public void generateCode()
