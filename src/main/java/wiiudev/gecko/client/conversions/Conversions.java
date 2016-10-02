@@ -15,7 +15,7 @@ public class Conversions
 	/**
 	 * Converts the given <code>hexadecimal</code> to it's decimal representation
 	 *
-	 * @param hexadecimal The <code>hexadecimal</code> to FLOAT_TO_INT
+	 * @param hexadecimal The <code>hexadecimal</code> to convert
 	 * @return The converted decimal
 	 */
 	public static String hexadecimalToDecimal(String hexadecimal)
@@ -26,7 +26,7 @@ public class Conversions
 	/**
 	 * Converts a given <code>decimal</code> number to hexadecimal
 	 *
-	 * @param decimal The <code>decimal</code> to FLOAT_TO_INT
+	 * @param decimal The <code>decimal</code> to convert
 	 * @return The converted hexadecimal
 	 */
 	public static String decimalToHexadecimal(String decimal)
@@ -37,7 +37,7 @@ public class Conversions
 	/**
 	 * Converts the given <code>hexadecimal</code> representing text to it's text form
 	 *
-	 * @param hexadecimal The <code>hexadecimal</code> to FLOAT_TO_INT
+	 * @param hexadecimal The <code>hexadecimal</code> to convert
 	 * @return The converted text
 	 */
 	public static String hexadecimalToASCII(String hexadecimal)
@@ -55,7 +55,7 @@ public class Conversions
 	/**
 	 * Converts a given <code>text</code> to it's hexadecimal representation
 	 *
-	 * @param text The <code>text</code> to FLOAT_TO_INT
+	 * @param text The <code>text</code> to convert
 	 * @return The hexadecimal result
 	 */
 	public static String asciiToHexadecimal(String text)
@@ -122,11 +122,13 @@ public class Conversions
 	/**
 	 * Converts a hexadecimal String to a decimal number
 	 *
-	 * @param hexadecimal The hexadecimal to FLOAT_TO_INT
+	 * @param hexadecimal The hexadecimal to convert
 	 * @return The converted decimal number
 	 */
 	public static int toDecimal(String hexadecimal)
 	{
+		hexadecimal = hexadecimal.trim();
+
 		if (hexadecimal.equals(""))
 		{
 			hexadecimal = "0";
@@ -138,7 +140,7 @@ public class Conversions
 	/**
 	 * Converts a decimal number to a hexadecimal String with padding
 	 *
-	 * @param decimal The decimal to FLOAT_TO_INT
+	 * @param decimal The decimal to convert
 	 * @param length  The forced length of the result
 	 * @return The converted hexadecimal
 	 */
@@ -154,7 +156,7 @@ public class Conversions
 	/**
 	 * Converts a decimal number to a hexadecimal String with a padded length of 8
 	 *
-	 * @param decimal The decimal to FLOAT_TO_INT
+	 * @param decimal The decimal to convert
 	 * @return The converted hexadecimal String
 	 */
 	public static String toHexadecimal(int decimal)
@@ -300,7 +302,7 @@ public class Conversions
 	/**
 	 * Converts a hexadecimal value to its single precision floating point representation
 	 *
-	 * @param hexadecimal The <code>hexadecimal</code> to FLOAT_TO_INT
+	 * @param hexadecimal The <code>hexadecimal</code> to convert
 	 * @return The converted value
 	 */
 	public static String hexadecimalToFloatingPoint(String hexadecimal)

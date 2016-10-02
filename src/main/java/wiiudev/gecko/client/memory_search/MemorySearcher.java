@@ -71,7 +71,7 @@ public class MemorySearcher
 				{
 					SearchConditions searchCondition = searchRefinement.getSearchCondition();
 					BigInteger targetValue = searchRefinement.getValue();
-					boolean isSearchConditionTrue = searchCondition.isTrue(targetValue, currentValue);
+					boolean isSearchConditionTrue = searchCondition.isTrue(targetValue, searchResult);
 
 					if (isSearchConditionTrue)
 					{
@@ -99,11 +99,11 @@ public class MemorySearcher
 
 				BigInteger targetValue = isUnknownValueSearch ?
 						searchResult.getCurrentValue() : searchRefinement.getValue();
-				boolean isSearchConditionTrue = searchCondition.isTrue(targetValue, currentValue);
+				searchResult.updateValue(currentValue);
+				boolean isSearchConditionTrue = searchCondition.isTrue(targetValue, searchResult);
 
 				if (isSearchConditionTrue)
 				{
-					searchResult.updateValue(currentValue);
 					updatedSearchResults.add(searchResult);
 				}
 

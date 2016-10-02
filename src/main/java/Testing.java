@@ -1,11 +1,14 @@
+import wiiudev.gecko.client.tcpgecko.main.Connector;
+
 public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
+		Connector.getInstance().connect("192.168.178.35");
 		// System.out.println(removeScientificNotation("3.0103E-7"));
 	}
 	// System.out.println(decimalToHex(-20f));
-	// Connector.getInstance().connect("192.168.178.35");
+	//
 
 		/*MemoryRange memoryRange = new MemoryRange(0x01800000, 0x10000000);
 		memoryRange.updateMemoryRange(false);

@@ -51,8 +51,7 @@ public class StringWriteDialog extends JDialog
 		setTitle(dialogTitle);
 		setContentPane(contentPane);
 		setModal(true);
-		getRootPane().setDefaultButton(pokeButton);
-		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setLocationRelativeTo(null);
 		setSize(400, 300);
 		WindowUtilities.setIconImage(this);

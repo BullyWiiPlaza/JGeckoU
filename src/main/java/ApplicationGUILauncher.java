@@ -4,6 +4,7 @@ import javax.swing.*;
 
 public class ApplicationGUILauncher
 {
+	// TODO Code search different by, greater than by, less than by
 	// TODO File system access (extract and replace files)
 	// TODO Move up and down buttons for codes and watch list
 	// TODO When code or watch modified, put it back at its original spot

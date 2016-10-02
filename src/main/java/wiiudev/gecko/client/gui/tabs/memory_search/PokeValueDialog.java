@@ -116,6 +116,7 @@ public class PokeValueDialog extends JDialog
 	{
 		String value = pokeValueField.getText();
 		value = Conversions.prependPadding(value, valueSize.getBytesCount() * 2);
+
 		return Conversions.hexStringToByteArray(value);
 	}
 }

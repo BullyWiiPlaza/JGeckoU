@@ -25,7 +25,7 @@ public enum RegisterOperation
 
 	public String getValue()
 	{
-		return new Hexadecimal(value, 2).toString();
+		return new Hexadecimal(value, 1).toString();
 	}
 
 	@Override

@@ -25,6 +25,7 @@ public class MemoryViewerContextMenu extends JPopupMenu
 
 	private JMenuItem writeStringOption;
 	private JMenuItem uploadFileOption;
+	private JMenuItem serialWriteOption;
 
 	public MemoryViewerContextMenu(JTable table)
 	{
@@ -80,6 +81,12 @@ public class MemoryViewerContextMenu extends JPopupMenu
 		rpcOption.setAccelerator(rpcKeyStroke);
 		rpcOption.addActionListener(actionEvent -> performRemoteProcedureCall());
 		add(rpcOption);
+
+		serialWriteOption = new JMenuItem("Serial Write");
+		KeyStroke serialWriteKeyStroke = KeyStroke.getKeyStroke("control S");
+		serialWriteOption.setAccelerator(serialWriteKeyStroke);
+		serialWriteOption.addActionListener(actionEvent -> performSerialWrite());
+		add(serialWriteOption);
 
 		int value = JGeckoUGUI.getInstance().getSelectedMemoryViewerValue();
 		boolean isValidAccess = AddressRange.isValidAccess(value, 4, MemoryAccessLevel.READ);
@@ -141,6 +148,11 @@ public class MemoryViewerContextMenu extends JPopupMenu
 						performRemoteProcedureCall();
 					}
 
+					if (keyEventPressed(pressedEvent, serialWriteKeyStroke.getKeyCode()))
+					{
+						performSerialWrite();
+					}
+
 					if (keyEventPressed(pressedEvent, dereferenceKeyStroke.getKeyCode()))
 					{
 						dereferenceAddress();
@@ -148,6 +160,20 @@ public class MemoryViewerContextMenu extends JPopupMenu
 				}
 			}
 		});
+	}
+
+	private void performSerialWrite()
+	{
+		JGeckoUGUI instance = JGeckoUGUI.getInstance();
+		int address = instance.getSelectedMemoryViewerAddress();
+
+		SerialWriteDialog serialWriteDialog = new SerialWriteDialog(address, serialWriteOption.getText());
+		serialWriteDialog.setVisible(true);
+
+		if(serialWriteDialog.hasWritten())
+		{
+			instance.updateMemoryViewer();
+		}
 	}
 
 	public static void dereferenceAddress()
@@ -203,7 +229,7 @@ public class MemoryViewerContextMenu extends JPopupMenu
 				Path selectedFile = fileChooser.getSelectedFile().toPath();
 				MemoryWriter memoryWriter = new MemoryWriter();
 				int selectedAddress = JGeckoUGUI.getInstance().getSelectedMemoryViewerAddress();
-				memoryWriter.uploadFile(selectedAddress, selectedFile);
+				memoryWriter.upload(selectedAddress, selectedFile);
 				JGeckoUGUI.getInstance().updateMemoryViewer();
 			}
 		} catch (IOException exception)

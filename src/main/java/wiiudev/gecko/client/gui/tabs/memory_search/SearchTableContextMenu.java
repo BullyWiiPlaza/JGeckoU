@@ -15,6 +15,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class SearchTableContextMenu extends JPopupMenu
@@ -124,46 +125,97 @@ public class SearchTableContextMenu extends JPopupMenu
 
 	private void pokeValues(byte[] valueBytes)
 	{
-		List<SearchResult> searchResults = getSelectedSearchResults();
-
-		try
+		new SwingWorker<String, String>()
 		{
-			for (int searchResultIndex = 0; searchResultIndex < searchResults.size(); searchResultIndex++)
+			@Override
+			protected String doInBackground() throws Exception
 			{
-				SearchResult searchResult = searchResults.get(searchResultIndex);
+				List<SearchResult> searchResults = getSelectedSearchResults();
 
-				int address = searchResult.getAddress();
-				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-				byteArrayOutputStream.write(valueBytes);
-
-				if (searchResultIndex < searchResults.size() - 1)
+				try
 				{
-					SearchResult nextSearchResult = searchResults.get(searchResultIndex + 1);
+					List<MemoryPoke> memoryPokes = new ArrayList<>();
+					int searchResultsCount = searchResults.size();
 
-					// Optimize poking by reducing the amount of queries sent
-					while (searchResult.getAddress()
-							+ searchResult.getValueSize().getBytesCount()
-							== nextSearchResult.getAddress())
+					for (int searchResultIndex = 0; searchResultIndex < searchResultsCount; searchResultIndex++)
 					{
-						byteArrayOutputStream.write(valueBytes);
-						searchResult = nextSearchResult;
-						searchResultIndex++;
+						SearchResult searchResult = searchResults.get(searchResultIndex);
 
-						if (searchResultIndex == searchResults.size() - 1)
+						int address = searchResult.getAddress();
+						ByteArrayOutputStream valueBytesStream = new ByteArrayOutputStream();
+						valueBytesStream.write(valueBytes);
+
+						if (searchResultIndex < searchResults.size() - 1)
 						{
-							break;
+							SearchResult nextSearchResult = searchResults.get(searchResultIndex + 1);
+
+							// Optimize poking by reducing the amount of queries sent
+							while (searchResult.getAddress()
+									+ searchResult.getValueSize().getBytesCount()
+									== nextSearchResult.getAddress())
+							{
+								valueBytesStream.write(valueBytes);
+								searchResult = nextSearchResult;
+								searchResultIndex++;
+
+								if (searchResultIndex == searchResults.size() - 1)
+								{
+									break;
+								}
+
+								nextSearchResult = searchResults.get(searchResultIndex + 1);
+							}
 						}
 
-						nextSearchResult = searchResults.get(searchResultIndex + 1);
+						MemoryPoke memoryPoke = new MemoryPoke(address, valueBytesStream);
+						memoryPokes.add(memoryPoke);
+						updateProgress("Evaluated", searchResultIndex, searchResultsCount);
 					}
+
+					int totalPokesCount = memoryPokes.size();
+					int memoryPokeIndex = 0;
+
+					for (MemoryPoke memoryPoke : memoryPokes)
+					{
+						memoryPoke.poke();
+						memoryPokeIndex++;
+
+						updateProgress("Poked", memoryPokeIndex, totalPokesCount);
+					}
+				} catch (Exception exception)
+				{
+					StackTraceUtils.handleException(getRootPane(), exception);
 				}
 
-				MemoryPoke memoryPoke = new MemoryPoke(address, byteArrayOutputStream);
-				memoryPoke.poke();
+				return null;
 			}
-		} catch (IOException exception)
+		}.execute();
+	}
+
+	private void updateProgress(String labelName, int memoryPokeIndex, int totalPokesCount)
+	{
+		updateProgressBar(memoryPokeIndex, totalPokesCount);
+		updateLabel(labelName, memoryPokeIndex, totalPokesCount);
+	}
+
+	private void updateProgressBar(int memoryPokeIndex, int totalPokesCount)
+	{
+		JProgressBar progressBar = JGeckoUGUI.getInstance().getSearchProgressBar();
+		int progress = memoryPokeIndex * 100 / totalPokesCount;
+		progressBar.setValue(progress);
+	}
+
+	private void updateLabel(String labelName, int memoryPokeIndex, int totalPokesCount)
+	{
+		JLabel addressProgressLabel = JGeckoUGUI.getInstance().getAddressProgressLabel();
+
+		if (memoryPokeIndex == totalPokesCount)
 		{
-			StackTraceUtils.handleException(getRootPane(), exception);
+			addressProgressLabel.setText("");
+		}
+		else
+		{
+			addressProgressLabel.setText(labelName + ": " + memoryPokeIndex + "/" + totalPokesCount);
 		}
 	}
 
@@ -221,23 +273,25 @@ public class SearchTableContextMenu extends JPopupMenu
 
 	private static class MemoryPoke
 	{
+		private MemoryWriter memoryWriter;
+
 		private int address;
 		private byte[] bytes;
 
-		MemoryPoke(int address, ByteArrayOutputStream byteArrayOutputStream)
+		MemoryPoke(int address, ByteArrayOutputStream valueBytesStream)
 		{
-			this(address, byteArrayOutputStream.toByteArray());
+			this(address, valueBytesStream.toByteArray());
 		}
 
 		MemoryPoke(int address, byte[] bytes)
 		{
+			memoryWriter = new MemoryWriter();
 			this.address = address;
 			this.bytes = bytes;
 		}
 
 		void poke() throws IOException
 		{
-			MemoryWriter memoryWriter = new MemoryWriter();
 			memoryWriter.writeBytes(address, bytes);
 		}
 	}

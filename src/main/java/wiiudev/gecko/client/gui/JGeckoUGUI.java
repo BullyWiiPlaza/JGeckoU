@@ -111,7 +111,6 @@ public class JGeckoUGUI extends JFrame
 	private JComboBox<MemoryViews> memoryViewerViews;
 	private JButton firmwareVersionButton;
 	private JButton searchMemoryViewerButton;
-	private JTextField searchMemoryViewerValueField;
 	private JTextField searchLengthField;
 	private JButton pokeMemoryViewerValueButton;
 	private JTextField memoryViewerValueField;
@@ -242,8 +241,8 @@ public class JGeckoUGUI extends JFrame
 
 		restorePersistentSettings();
 		setSearchValueBackgroundColor();
-		setSearchInputFilter();
 		addSettingsBackupShutdownHook();
+		updateSearchConditionsComboBox();
 
 		addCancelActionListener(cancelSearchButton, "search");
 		addCancelActionListener(cancelDumpButton, "memory dump");
@@ -511,14 +510,20 @@ public class JGeckoUGUI extends JFrame
 
 			if (selectedAnswer == JOptionPane.YES_OPTION)
 			{
-				List<SearchResult> searchResults = memorySearcher.undoSearchResults();
-				populateSearchResults(searchResults);
-
-				noResultsFound = false;
-				setConnectionButtonsAvailability();
-				updateSearchIterationsLabel();
+				undoSearch();
 			}
 		});
+	}
+
+	private void undoSearch()
+	{
+		List<SearchResult> searchResults = memorySearcher.undoSearchResults();
+		populateSearchResults(searchResults);
+
+		noResultsFound = false;
+		setConnectionButtonsAvailability();
+		updateSearchIterationsLabel();
+		updateSearchConditionsComboBox();
 	}
 
 	private void addNewSearchButtonListener()
@@ -571,6 +576,7 @@ public class JGeckoUGUI extends JFrame
 					List<SearchResult> searchResults = memorySearcher.search(searchRefinement);
 					populateSearchResults(searchResults);
 					updateSearchIterationsLabel();
+					updateSearchConditionsComboBox();
 				} catch (Exception exception)
 				{
 					if (!dumpingCanceled)
@@ -677,13 +683,7 @@ public class JGeckoUGUI extends JFrame
 		updateSearchIterationsLabel();
 		noResultsFound = false;
 		setConnectionButtonsAvailability();
-	}
-
-	private void setSearchInputFilter()
-	{
-		/*ValueSize valueSize = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex());
-		int charactersLength = valueSize.getBytesCount() * 2;
-		HexadecimalInputFilter.setHexadecimalInputFilter(searchValueField, charactersLength);*/
+		updateSearchConditionsComboBox();
 	}
 
 	private void populateSearchValueSizes()
@@ -697,7 +697,6 @@ public class JGeckoUGUI extends JFrame
 			if (itemEvent.getStateChange() == ItemEvent.SELECTED)
 			{
 				setConnectionButtonsAvailability();
-				setSearchInputFilter();
 				setSearchValueBackgroundColor();
 			}
 		});
@@ -707,12 +706,23 @@ public class JGeckoUGUI extends JFrame
 	{
 		int selectedSearchConditionIndex = searchConditionComboBox.getSelectedIndex();
 		populateSearchConditions();
+		boolean unknownValueSearch = searchModeComboBox.getSelectedItem() == SearchMode.UNKNOWN;
+		boolean specificValueSearch = searchModeComboBox.getSelectedItem() == SearchMode.SPECIFIC;
 
-		// Remove the bit flag options when doing an unknown value search
-		if (searchModeComboBox.getSelectedItem() == SearchMode.UNKNOWN)
+		if(unknownValueSearch)
 		{
 			searchConditionComboBox.removeItem(SearchConditions.FLAG_SET);
 			searchConditionComboBox.removeItem(SearchConditions.FLAG_UNSET);
+			searchConditionComboBox.removeItem(SearchConditions.DIFFERENT_BY);
+			searchConditionComboBox.removeItem(SearchConditions.DIFFERENT_BY_GREATER);
+			searchConditionComboBox.removeItem(SearchConditions.DIFFERENT_BY_LESS);
+		}
+
+		if ((specificValueSearch && memorySearcher == null) || (specificValueSearch && memorySearcher.isFirstSearch()))
+		{
+			searchConditionComboBox.removeItem(SearchConditions.DIFFERENT_BY);
+			searchConditionComboBox.removeItem(SearchConditions.DIFFERENT_BY_GREATER);
+			searchConditionComboBox.removeItem(SearchConditions.DIFFERENT_BY_LESS);
 		}
 
 		if (selectedSearchConditionIndex >= searchConditionComboBox.getItemCount())
@@ -882,7 +892,7 @@ public class JGeckoUGUI extends JFrame
 					MemoryWriter memoryWriter = new MemoryWriter();
 					int address = disassembledInstruction.getAddress();
 					int value = Integer.parseUnsignedInt(assembled, 16);
-					memoryWriter.writeKernelInt(address, value);
+					memoryWriter.kernelWriteInt(address, value);
 
 					updateDisassembler();
 				} catch (AssemblerFilesException | AssemblerException exception)
@@ -1216,7 +1226,7 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		tcpGeckoThreadButton.addActionListener(e ->
+		tcpGeckoThreadButton.addActionListener(actionEvent ->
 		{
 			try
 			{
@@ -2773,7 +2783,7 @@ public class JGeckoUGUI extends JFrame
 				case THIRTY_TWO_BIT:
 					if (kernelWriteCheckBox.isSelected())
 					{
-						memoryWriter.writeKernelInt(targetAddress, newValue);
+						memoryWriter.kernelWriteInt(targetAddress, newValue);
 					} else
 					{
 						memoryWriter.writeInt(targetAddress, newValue);
@@ -3604,15 +3614,15 @@ public class JGeckoUGUI extends JFrame
 	{
 		boolean isRangePositive = Conversions.toDecimal(searchEndingAddressField.getText())
 				- Conversions.toDecimal(searchStartingAddressField.getText()) > 0;
-		ValueSize valueSize = searchValueSizeComboBox.getItemAt(searchValueSizeComboBox.getSelectedIndex());
-		boolean isRangeAlignedCorrectly = true;
-		/*boolean isRangeAlignedCorrectly = valueSize != null
-				&& (Conversions.toDecimal(searchEndingAddressField.getText()) - Conversions.toDecimal(searchStartingAddressField.getText())) % valueSize.getBytesCount() == 0;*/
-		boolean areAddressesValid = AddressRange.isValidAccess(Conversions.toDecimal(searchStartingAddressField.getText()), 1, MemoryAccessLevel.READ) && AddressRange.isValidAccess(Conversions.toDecimal(searchEndingAddressField.getText()), 1, MemoryAccessLevel.READ);
-		searchButton.setEnabled(TCPGecko.isConnected() && !searching
-				&& !noResultsFound && isRangePositive
-				&& isRangeAlignedCorrectly && areAddressesValid
-				&& (isSearchValueOkay() || !searchValueField.isEnabled()));
+		boolean isStartingAddressValidAccess = AddressRange.isValidAccess(
+				Conversions.toDecimal(searchStartingAddressField.getText()),
+				1,
+				MemoryAccessLevel.READ);
+		boolean isEndAddressValidAccess = AddressRange.isValidAccess(
+				Conversions.toDecimal(searchEndingAddressField.getText()),
+				1, MemoryAccessLevel.READ);
+		boolean areAddressesValid = isStartingAddressValidAccess && isEndAddressValidAccess;
+		searchButton.setEnabled(TCPGecko.isConnected() && !searching && !noResultsFound && isRangePositive && areAddressesValid && (isSearchValueOkay() || !searchValueField.isEnabled()));
 	}
 
 	private void setCodeListButtonsAvailability()
