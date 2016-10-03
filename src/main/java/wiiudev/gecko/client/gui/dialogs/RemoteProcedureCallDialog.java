@@ -141,7 +141,7 @@ public class RemoteProcedureCallDialog extends JDialog
 					int address = Conversions.toDecimal(functionAddressField.getText());
 					ExportedSymbol exportedSymbol = new ExportedSymbol(address);
 					int[] parameters = getParameters();
-					long returnValue = remoteProcedureCall.call64(exportedSymbol, parameters);
+					long returnValue = remoteProcedureCall.callLong(exportedSymbol, parameters);
 					functionResultField.setText(new Hexadecimal(returnValue, 16).toString());
 				} else
 				{
@@ -150,7 +150,7 @@ public class RemoteProcedureCallDialog extends JDialog
 					int parameters[] = getParameters();
 					ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(rplName, symbolName);
 					functionAddressField.setText(new Hexadecimal(exportedSymbol.getAddress(), 8).toString());
-					long returnValue = remoteProcedureCall.call64(exportedSymbol, parameters);
+					long returnValue = remoteProcedureCall.callLong(exportedSymbol, parameters);
 					functionResultField.setText(new Hexadecimal(returnValue, 16).toString());
 				}
 			} catch (Exception exception)

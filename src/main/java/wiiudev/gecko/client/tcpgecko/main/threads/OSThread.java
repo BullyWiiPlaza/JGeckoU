@@ -1,28 +1,31 @@
 package wiiudev.gecko.client.tcpgecko.main.threads;
 
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static wiiudev.gecko.client.tcpgecko.main.threads.OSThreadStructure.*;
+
 public class OSThread
 {
 	private int address;
-	private int suspendedAddress;
-	private int nameLocationPointer;
-	private String name;
+	private int affinity;
 	private OSThreadState state;
+	private int priority;
+	private String name;
 
 	private MemoryReader memoryReader;
+	private MemoryWriter memoryWriter;
 
 	public OSThread(int address) throws IOException
 	{
 		this.address = address;
-		suspendedAddress = address + OSThreadStruct.SUSPEND.getOffset();
-		nameLocationPointer = address + OSThreadStruct.NAME.getOffset();
 		memoryReader = new MemoryReader();
+		memoryWriter = new MemoryWriter();
 
 		setFields();
 	}
@@ -43,7 +46,7 @@ public class OSThread
 
 		while ((temporaryThreadAddress =
 				memoryReader.readInt(threadAddress
-						+ OSThreadStruct.LINK_ACTIVE.getOffset())) != 0)
+						+ LINK_ACTIVE.getOffset())) != 0)
 		{
 			OSThread osThread = new OSThread(threadAddress);
 			osThreads.add(osThread);
@@ -59,7 +62,7 @@ public class OSThread
 
 	public void setState(OSThreadState state) throws IOException
 	{
-		OSThreadRPC.setThreadState(this, state);
+		OSThreadRPC.setState(this, state);
 		this.state = state;
 	}
 
@@ -76,7 +79,16 @@ public class OSThread
 
 	private void setFields() throws IOException
 	{
-		int nameLocation = memoryReader.readInt(nameLocationPointer);
+		priority = OSThreadRPC.getPriority(this);
+		affinity = OSThreadRPC.getAffinity(this);
+		setName();
+		setInternalState();
+	}
+
+	private void setName() throws IOException
+	{
+		name = OSThreadRPC.getName(this);
+		/*int nameLocation = memoryReader.readInt(address + NAME.getOffset());
 
 		if (nameLocation == 0)
 		{
@@ -86,14 +98,16 @@ public class OSThread
 		{
 			// Read the name
 			name = memoryReader.readString(nameLocation);
-		}
 
-		setInternalState();
+			// Replace those encapsulating brackets
+			name = name.replaceAll("\\{", "");
+			name = name.replaceAll("\\}", "");
+		}*/
 	}
 
 	private void setInternalState() throws IOException
 	{
-		int threadState = memoryReader.readInt(suspendedAddress);
+		int threadState = memoryReader.readInt(getSuspendedAddress());
 		state = OSThreadState.parse(threadState);
 	}
 
@@ -109,7 +123,7 @@ public class OSThread
 
 	public int getSuspendedAddress()
 	{
-		return suspendedAddress;
+		return address + SUSPEND.getOffset();
 	}
 
 	public String getName()
@@ -119,7 +133,7 @@ public class OSThread
 
 	public void setName(String name) throws IOException
 	{
-		OSThreadRPC.setThreadName(this, name);
+		OSThreadRPC.setName(this, name);
 		this.name = name;
 	}
 
@@ -129,11 +143,33 @@ public class OSThread
 		return osContext.toString();
 	}
 
+	public int getAffinity()
+	{
+		return affinity;
+	}
+
+	public void setAffinity(int affinity) throws IOException
+	{
+		memoryWriter.writeInt(address + AFFINITY.getOffset(), affinity);
+	}
+
+	public int getPriority()
+	{
+		return priority;
+	}
+
+	public void setPriority(int priority) throws IOException
+	{
+		memoryWriter.writeInt(address + PRIORITY.getOffset(), priority);
+	}
+
 	@Override
 	public String toString()
 	{
 		return "Address: " + new Hexadecimal(address, 8) + System.lineSeparator()
-				+ "Name: " + name + System.lineSeparator() +
-				"State: " + state;
+				+ "Affinity: " + affinity + System.lineSeparator()
+				+ "State: " + state + System.lineSeparator()
+				+ "Priority: " + priority + System.lineSeparator()
+				+ "Name: " + name;
 	}
 }

@@ -56,7 +56,7 @@ public class TCPGeckoTesting
 			RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 			ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("t6mp_cafef_rpl.rpl", "Com_SessionMode_IsPublicOnlineGame");
 			System.out.println(new Hexadecimal(exportedSymbol.getAddress()));
-			// long result = exportedSymbol.call32();
+			// long result = exportedSymbol.callInt();
 			// System.out.println(result);
 		}*/
 	}
@@ -280,7 +280,7 @@ public class TCPGeckoTesting
 		int readInteger = memoryReader.readInt(0x10000004);
 		Assert.assertEquals(readInteger, 0x48344120);
 
-		/*readInteger = memoryReader.readKernelInt(0x01000000);
+		/*readInteger = memoryReader.kernelReadInt(0x01000000);
 		Assert.assertEquals(readInteger, 0x38005E00);*/
 
 		byte readByte = memoryReader.read(0x10000005);

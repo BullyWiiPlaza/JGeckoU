@@ -33,7 +33,7 @@ public class ThreadsTableManager
 
 	public void configure()
 	{
-		String[] columnHeaderNames = new String[]{"Name", "Address", "State"};
+		String[] columnHeaderNames = new String[]{"Name", "Address", "State", "CPU Affinity", "Priority"};
 		JTableUtilities.configureTable(table, columnHeaderNames);
 		addContextMenuListener();
 	}
@@ -94,11 +94,13 @@ public class ThreadsTableManager
 		return selectedThreads;
 	}
 
-	public void addRow(OSThread osThread)
+	private void addRow(OSThread osThread)
 	{
 		Object[] objects = new Object[]{osThread.getName(),
 				new Hexadecimal(osThread.getAddress()),
-				osThread.getState()};
+				osThread.getState(),
+		osThread.getAffinity(),
+		osThread.getPriority()};
 		DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
 		tableModel.addRow(objects);
 	}

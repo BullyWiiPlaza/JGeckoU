@@ -27,7 +27,7 @@ public class RemoteFileSystem extends TCPGecko
 	public FileSystemStatus initialize() throws IOException
 	{
 		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSInit");
-		int status = remoteProcedureCall.call32(exportedSymbol);
+		int status = remoteProcedureCall.callInt(exportedSymbol);
 
 		return FileSystemStatus.getStatus(status);
 	}
@@ -61,7 +61,7 @@ public class RemoteFileSystem extends TCPGecko
 		int clientAddress = client.getAddress();
 		String symbolName = register ? "FSAddClient" : "FSDelClient";
 		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", symbolName);
-		int status = remoteProcedureCall.call32(exportedSymbol, clientAddress, errorHandling.getValue());
+		int status = remoteProcedureCall.callInt(exportedSymbol, clientAddress, errorHandling.getValue());
 		client.setRegistered(this);
 
 		return FileSystemStatus.getStatus(status);
@@ -74,7 +74,7 @@ public class RemoteFileSystem extends TCPGecko
 	                                      ErrorHandling errorHandling) throws IOException
 	{
 		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSOpenDir");
-		int status = remoteProcedureCall.call32(exportedSymbol, client.getAddress(),
+		int status = remoteProcedureCall.callInt(exportedSymbol, client.getAddress(),
 				commandBlock.getAddress(), path.getAddress(),
 				directoryHandle.getAddress(), errorHandling.getValue());
 		FileSystemStatus fileSystemFileSystemStatus = FileSystemStatus.getStatus(status);
@@ -102,7 +102,7 @@ public class RemoteFileSystem extends TCPGecko
 	                                 ErrorHandling errorHandling) throws IOException
 	{
 		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSOpenFile");
-		int status = remoteProcedureCall.call32(exportedSymbol,
+		int status = remoteProcedureCall.callInt(exportedSymbol,
 				client.getAddress(),
 				commandBlock.getAddress(),
 				path.getAddress(),
@@ -122,7 +122,7 @@ public class RemoteFileSystem extends TCPGecko
 	{
 		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSReadFile");
 
-		return remoteProcedureCall.call32(exportedSymbol,
+		return remoteProcedureCall.callInt(exportedSymbol,
 				client.getAddress(),
 				commandBlock.getAddress(),
 				destinationBuffer.getAddress(),
@@ -140,7 +140,7 @@ public class RemoteFileSystem extends TCPGecko
 	                                      ErrorHandling errorHandling) throws IOException
 	{
 		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSReadDir");
-		int status = remoteProcedureCall.call32(exportedSymbol, client.getAddress(),
+		int status = remoteProcedureCall.callInt(exportedSymbol, client.getAddress(),
 				commandBlock.getAddress(),
 				directoryHandle.dereference(),
 				directoryEntry.getAddress(),
@@ -157,7 +157,7 @@ public class RemoteFileSystem extends TCPGecko
 	                                       ErrorHandling errorHandling) throws IOException
 	{
 		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSCloseDir");
-		int status = remoteProcedureCall.call32(exportedSymbol, client.getAddress(),
+		int status = remoteProcedureCall.callInt(exportedSymbol, client.getAddress(),
 				commandBlock.getAddress(),
 				directoryHandle.dereference(),
 				errorHandling.getValue());
@@ -171,7 +171,7 @@ public class RemoteFileSystem extends TCPGecko
 	                                  ErrorHandling errorHandling) throws IOException
 	{
 		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSCloseFile");
-		int status = remoteProcedureCall.call32(exportedSymbol,
+		int status = remoteProcedureCall.callInt(exportedSymbol,
 				client.getAddress(),
 				commandBlock.getAddress(),
 				directoryHandle.dereference(),

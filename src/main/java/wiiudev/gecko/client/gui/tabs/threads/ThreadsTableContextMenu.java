@@ -16,6 +16,8 @@ public class ThreadsTableContextMenu extends JPopupMenu
 {
 	private ThreadsTableManager threadsTableManager;
 
+	private JMenuItem setNameOption;
+
 	public ThreadsTableContextMenu(ThreadsTableManager threadsTableManager)
 	{
 		this.threadsTableManager = threadsTableManager;
@@ -39,7 +41,7 @@ public class ThreadsTableContextMenu extends JPopupMenu
 				switchToMemoryViewer());
 		add(memoryViewerOption);
 
-		JMenuItem setNameOption = new JMenuItem("Change Name");
+		setNameOption = new JMenuItem("Change Name");
 		KeyStroke setNameKeyStroke = KeyStroke.getKeyStroke("control N");
 		setNameOption.setAccelerator(setNameKeyStroke);
 		setNameOption.addActionListener(actionEvent -> displayChangeThreadNameDialog());
@@ -75,6 +77,7 @@ public class ThreadsTableContextMenu extends JPopupMenu
 		OSThread thread = jGeckoUGUI.getSelectedThread();
 		ChangeThreadNameDialog changeThreadNameDialog = new ChangeThreadNameDialog(thread);
 		changeThreadNameDialog.setLocationRelativeTo(jGeckoUGUI.getRootPane());
+		changeThreadNameDialog.setTitle(setNameOption.getText());
 		changeThreadNameDialog.setVisible(true);
 
 		if (changeThreadNameDialog.isConfirmed())
@@ -85,6 +88,7 @@ public class ThreadsTableContextMenu extends JPopupMenu
 			{
 				thread.setName(name);
 				jGeckoUGUI.updateThreads(false);
+				jGeckoUGUI.setSelectedThread(thread);
 			} catch (Exception exception)
 			{
 				exception.printStackTrace();
@@ -124,6 +128,7 @@ public class ThreadsTableContextMenu extends JPopupMenu
 
 	private void switchToMemoryViewer()
 	{
+		// Select the first one from a bunch
 		List<OSThread> osThreads = threadsTableManager.getSelectedItems();
 		JGeckoUGUI.selectInMemoryViewer(osThreads.get(0).getAddress());
 	}

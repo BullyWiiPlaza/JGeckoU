@@ -11,7 +11,7 @@ import java.io.IOException;
 
 public class OSThreadRPC
 {
-	public static void setThreadState(OSThread thread, OSThreadState state) throws IOException
+	public static void setState(OSThread thread, OSThreadState state) throws IOException
 	{
 		MemoryWriter memoryWriter = new MemoryWriter();
 		int threadAddress = thread.getAddress();
@@ -20,47 +20,96 @@ public class OSThreadRPC
 
 		String symbolName = (state == OSThreadState.PAUSED) ? "OSSuspendThread" : "OSResumeThread";
 		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", symbolName);
-		remoteProcedureCall.call(exportedSymbol, threadAddress);
+		ExportedSymbol setThreadState = remoteProcedureCall.getSymbol("coreinit.rpl", symbolName);
+		remoteProcedureCall.call(setThreadState, threadAddress);
 	}
 
-	public static OSThread getCurrentThread() throws IOException
+	public static OSThread getCurrent() throws IOException
 	{
 		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl",
+		ExportedSymbol getCurrentThread = remoteProcedureCall.getSymbol("coreinit.rpl",
 				"OSGetCurrentThread");
-		int address = remoteProcedureCall.call32(exportedSymbol);
+		int address = remoteProcedureCall.callInt(getCurrentThread);
 
 		return new OSThread(address);
 	}
 
-	public static void setThreadName(OSThread thread, String name) throws IOException
+	public static void setName(OSThread thread, String name) throws IOException
 	{
-		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl",
-				"OSSetThreadName");
-		RemoteString remoteString = new RemoteString(name);
-		remoteProcedureCall.call32(exportedSymbol,
-				thread.getAddress(),
-				remoteString.getAddress());
+		try (RemoteString allocatedName = new RemoteString(name))
+		{
+			RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+			ExportedSymbol setThreadName = remoteProcedureCall.getSymbol("coreinit.rpl",
+					"OSSetThreadName");
+			remoteProcedureCall.callInt(setThreadName,
+					thread.getAddress(),
+					allocatedName.getAddress());
+		}
 	}
 
-	public static String getThreadName(OSThread thread) throws IOException
+	public static String getName(OSThread thread) throws IOException
 	{
 		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl",
+		ExportedSymbol getName = remoteProcedureCall.getSymbol("coreinit.rpl",
 				"OSGetThreadName");
-		int address = remoteProcedureCall.call32(exportedSymbol, thread.getAddress());
+		int address = remoteProcedureCall.callInt(getName, thread.getAddress());
+		String name;
 
 		if (address == 0)
 		{
 			// No name, we're using the thread's address instead
-			return new Hexadecimal(thread.getAddress(), 8).toString();
+			name = new Hexadecimal(thread.getAddress(), 8).toString();
 		} else
 		{
 			// Alright, read the name
 			MemoryReader memoryReader = new MemoryReader();
-			return memoryReader.readString(address);
+			name = memoryReader.readString(address);
+
+			// Replace those encapsulating brackets
+			name = name.replaceAll("\\{", "");
+			name = name.replaceAll("\\}", "");
 		}
+
+		return name;
+	}
+
+	public static void disableInterrupts() throws IOException
+	{
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol disableInterrupts = remoteProcedureCall.getSymbol("coreinit.rpl",
+				"OSDisableInterrupts");
+		remoteProcedureCall.call(disableInterrupts);
+	}
+
+	public static void enableInterrupts() throws IOException
+	{
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol enableInterrupts = remoteProcedureCall.getSymbol("coreinit.rpl",
+				"OSEnableInterrupts");
+		remoteProcedureCall.call(enableInterrupts);
+	}
+
+	public static boolean areInterruptsEnabled() throws IOException
+	{
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol enableInterrupts = remoteProcedureCall.getSymbol("coreinit.rpl",
+				"OSIsInterruptEnabled");
+		return remoteProcedureCall.callBoolean(enableInterrupts);
+	}
+
+	public static int getAffinity(OSThread osThread) throws IOException
+	{
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol getAffinity = remoteProcedureCall.getSymbol("coreinit.rpl",
+				"OSGetThreadAffinity");
+		return remoteProcedureCall.callInt(getAffinity, osThread.getAddress());
+	}
+
+	public static int getPriority(OSThread osThread) throws IOException
+	{
+		RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
+		ExportedSymbol getPriority = remoteProcedureCall.getSymbol("coreinit.rpl",
+				"OSGetThreadPriority");
+		return remoteProcedureCall.callInt(getPriority, osThread.getAddress());
 	}
 }

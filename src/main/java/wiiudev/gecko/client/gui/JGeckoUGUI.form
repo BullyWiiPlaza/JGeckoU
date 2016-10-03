@@ -419,7 +419,7 @@
               </grid>
             </children>
           </grid>
-          <grid id="9edcb" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="9edcb" layout-manager="GridLayoutManager" row-count="5" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <tabbedpane title="Threads"/>
@@ -427,17 +427,9 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="3589c" class="javax.swing.JButton" binding="readThreadsButton" default-binding="true">
-                <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Retrieve Threads"/>
-                </properties>
-              </component>
               <scrollpane id="36d04">
                 <constraints>
-                  <grid row="2" column="1" row-span="2" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="3" column="1" row-span="2" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
@@ -448,17 +440,9 @@
                   </component>
                 </children>
               </scrollpane>
-              <component id="9da24" class="javax.swing.JLabel">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Registers:"/>
-                </properties>
-              </component>
               <scrollpane id="a42cc">
                 <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="3" column="0" row-span="2" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
@@ -472,6 +456,50 @@
                   </component>
                 </children>
               </scrollpane>
+              <component id="60b99" class="javax.swing.JLabel" binding="threadsCountLabel">
+                <constraints>
+                  <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value=""/>
+                </properties>
+              </component>
+              <grid id="3bd89" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="a60bb" class="javax.swing.JButton" binding="tcpGeckoThreadButton" default-binding="true">
+                    <constraints>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Current Thread Information"/>
+                      <toolTipText value="Displays information about the TCP Gecko thread"/>
+                    </properties>
+                  </component>
+                  <component id="3589c" class="javax.swing.JButton" binding="readThreadsButton" default-binding="true">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Retrieve All Threads"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+              <component id="68dff" class="javax.swing.JCheckBox" binding="interruptsCheckBox" default-binding="true">
+                <constraints>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Interrupts"/>
+                  <toolTipText value="Whether to enable interrupts or not"/>
+                </properties>
+              </component>
               <component id="2de5c" class="javax.swing.JCheckBox" binding="autoUpdateRegistersCheckBox">
                 <constraints>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -480,12 +508,12 @@
                   <text value="Auto Update"/>
                 </properties>
               </component>
-              <component id="60b99" class="javax.swing.JLabel" binding="threadsCountLabel">
+              <component id="9da24" class="javax.swing.JLabel">
                 <constraints>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value=""/>
+                  <text value="Registers:"/>
                 </properties>
               </component>
             </children>
@@ -569,14 +597,33 @@
                   </component>
                 </children>
               </grid>
-              <component id="1ab14" class="javax.swing.JButton" binding="powerPCAssemblyDocumentationButton" default-binding="true">
+              <grid id="10a6d" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="13" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="1" column="0" row-span="1" col-span="13" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
-                <properties>
-                  <text value="PowerPC Assembly Documentation"/>
-                </properties>
-              </component>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="6da8f" class="javax.swing.JButton" binding="remoteDisassemblerButton" default-binding="true">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Remote Disassembler"/>
+                      <toolTipText value="Asks the Wii U to disassemble an opcode"/>
+                    </properties>
+                  </component>
+                  <component id="1ab14" class="javax.swing.JButton" binding="powerPCAssemblyDocumentationButton" default-binding="true">
+                    <constraints>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="PowerPC Assembly Documentation"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
             </children>
           </grid>
           <grid id="acde7" binding="watchListTab" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -1297,7 +1344,7 @@
                       <toolTipText value="Shows the system's time in nanoseconds"/>
                     </properties>
                   </component>
-                  <grid id="57e3a" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                  <grid id="57e3a" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                     <margin top="0" left="0" bottom="0" right="0"/>
                     <constraints>
                       <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -1305,18 +1352,9 @@
                     <properties/>
                     <border type="none"/>
                     <children>
-                      <component id="e2a37" class="javax.swing.JButton" binding="remoteDisassemblerButton" default-binding="true">
-                        <constraints>
-                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                        </constraints>
-                        <properties>
-                          <text value="Remote Disassembler"/>
-                          <toolTipText value="Asks the Wii U to disassemble an opcode"/>
-                        </properties>
-                      </component>
                       <component id="2678e" class="javax.swing.JButton" binding="displayMessageButton" default-binding="true">
                         <constraints>
-                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
                           <text value="Display Message"/>
@@ -1325,7 +1363,7 @@
                       </component>
                       <component id="f8550" class="javax.swing.JButton" binding="convertEffectiveToPhysicalButton" default-binding="true">
                         <constraints>
-                          <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                          <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                         </constraints>
                         <properties>
                           <text value="Effective To Physical Address"/>
@@ -1395,24 +1433,6 @@
                       <text value="Shutdown"/>
                     </properties>
                   </component>
-                  <component id="824d2" class="javax.swing.JButton" binding="tcpGeckoThreadButton" default-binding="true">
-                    <constraints>
-                      <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <text value="TCP Gecko Thread"/>
-                      <toolTipText value="Displays information about the TCP Gecko thread"/>
-                    </properties>
-                  </component>
-                  <component id="98b09" class="javax.swing.JButton" binding="memoryBoundsButton" default-binding="true">
-                    <constraints>
-                      <grid row="8" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <text value="Memory Bounds"/>
-                      <toolTipText value="Shows the game's dynamic memory bounds"/>
-                    </properties>
-                  </component>
                   <component id="ab9f7" class="javax.swing.JButton" binding="systemInformationButton" default-binding="true">
                     <constraints>
                       <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
@@ -1420,6 +1440,15 @@
                     <properties>
                       <text value="System Information"/>
                       <toolTipText value="Displays Wii U system information"/>
+                    </properties>
+                  </component>
+                  <component id="98b09" class="javax.swing.JButton" binding="memoryBoundsButton" default-binding="true">
+                    <constraints>
+                      <grid row="7" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Memory Bounds"/>
+                      <toolTipText value="Shows the game's dynamic memory bounds"/>
                     </properties>
                   </component>
                 </children>

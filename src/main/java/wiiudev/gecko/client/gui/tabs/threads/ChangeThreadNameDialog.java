@@ -4,6 +4,8 @@ import wiiudev.gecko.client.gui.utilities.WindowUtilities;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
 
 import javax.swing.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 public class ChangeThreadNameDialog extends JDialog
 {
@@ -16,17 +18,37 @@ public class ChangeThreadNameDialog extends JDialog
 	{
 		setContentPane(contentPane);
 		setModal(true);
-		setTitle("Change Thread Name");
 		WindowUtilities.setIconImage(this);
 		pack();
 
 		threadNameField.setText(thread.getName());
 
-		setButton.addActionListener(actionEvent ->
+		setButton.addActionListener(actionEvent -> set());
+
+		threadNameField.addKeyListener(new KeyAdapter()
 		{
-			confirmed = true;
-			dispose();
+			public void keyReleased(KeyEvent keyEvent)
+			{
+			}
+
+			public void keyTyped(KeyEvent keyEvent)
+			{
+			}
+
+			public void keyPressed(KeyEvent keyEvent)
+			{
+				if (keyEvent.getKeyCode() == KeyEvent.VK_ENTER)
+				{
+					set();
+				}
+			}
 		});
+	}
+
+	private void set()
+	{
+		confirmed = true;
+		dispose();
 	}
 
 	public boolean isConfirmed()

@@ -1,6 +1,5 @@
 package wiiudev.gecko.client.tcpgecko.main;
 
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import wiiudev.gecko.client.gui.input_filters.ValueSizes;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.ValueSize;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Commands;
@@ -10,6 +9,7 @@ import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -26,16 +26,8 @@ public class MemoryReader extends TCPGecko
 	 */
 	public byte read(int address) throws IOException
 	{
-		reentrantLock.lock();
-
-		try
-		{
-			byte[] readBytes = readBytes(address, 1);
-			return readBytes[0];
-		} finally
-		{
-			reentrantLock.unlock();
-		}
+		byte[] readBytes = readBytes(address, 1);
+		return readBytes[0];
 	}
 
 	/**
@@ -46,16 +38,8 @@ public class MemoryReader extends TCPGecko
 	 */
 	public short readShort(int address) throws IOException
 	{
-		reentrantLock.lock();
-
-		try
-		{
-			byte[] readBytes = readBytes(address, 2);
-			return ByteBuffer.wrap(readBytes).getShort();
-		} finally
-		{
-			reentrantLock.unlock();
-		}
+		byte[] readBytes = readBytes(address, 2);
+		return ByteBuffer.wrap(readBytes).getShort();
 	}
 
 	/**
@@ -78,16 +62,8 @@ public class MemoryReader extends TCPGecko
 	 */
 	public float readFloat(int address) throws IOException
 	{
-		reentrantLock.lock();
-
-		try
-		{
-			int readInt = readInt(address);
-			return DataConversions.toFloat((long) readInt);
-		} finally
-		{
-			reentrantLock.unlock();
-		}
+		int readInt = readInt(address);
+		return DataConversions.toFloat((long) readInt);
 	}
 
 	/**
@@ -98,35 +74,27 @@ public class MemoryReader extends TCPGecko
 	 */
 	public String readString(int address) throws IOException
 	{
-		reentrantLock.lock();
+		byte[] bytesRead;
+		StringBuilder stringBuilder = new StringBuilder();
+		int byteBufferSize = 100; // The amount of bytes to read AND inspect at once
 
-		try
+		while (true)
 		{
-			byte[] bytesRead;
-			StringBuilder stringBuilder = new StringBuilder();
-			int byteBufferSize = 100; // The amount of bytes to read AND inspect at once
+			bytesRead = readBytes(address, byteBufferSize);
 
-			while (true)
+			for (byte byteRead : bytesRead)
 			{
-				bytesRead = readBytes(address, byteBufferSize);
-
-				for (byte byteRead : bytesRead)
+				if (byteRead == 0)
 				{
-					if (byteRead == 0)
-					{
-						// The String has ended
-						return stringBuilder.toString();
-					}
-
-					char letter = DataConversions.toCharacter(byteRead);
-					stringBuilder.append(letter);
+					// The String has ended
+					return stringBuilder.toString();
 				}
 
-				address += byteBufferSize;
+				char letter = DataConversions.toCharacter(byteRead);
+				stringBuilder.append(letter);
 			}
-		} finally
-		{
-			reentrantLock.unlock();
+
+			address += byteBufferSize;
 		}
 	}
 
@@ -138,31 +106,21 @@ public class MemoryReader extends TCPGecko
 	 */
 	public boolean readBoolean(int address) throws IOException
 	{
-		reentrantLock.lock();
-
-		try
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
 			byte readByte = read(address);
 			return readByte == 1;
-		} finally
-		{
-			reentrantLock.unlock();
 		}
 	}
 
 	public int readFirmwareVersion() throws IOException
 	{
-		reentrantLock.lock();
-
-		try
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
 			sendCommand(Commands.GET_OS_VERSION);
 			dataSender.flush();
 
 			return dataReceiver.readInt();
-		} finally
-		{
-			reentrantLock.unlock();
 		}
 	}
 
@@ -176,9 +134,7 @@ public class MemoryReader extends TCPGecko
 	 */
 	public int search(int address, int value, int length) throws IOException
 	{
-		reentrantLock.lock();
-
-		try
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
 			AddressRange.assertValidAccess(address, 4, MemoryAccessLevel.READ);
 
@@ -189,97 +145,49 @@ public class MemoryReader extends TCPGecko
 			dataSender.flush();
 
 			return dataReceiver.read();
-		} finally
-		{
-			reentrantLock.unlock();
 		}
-	}
-
-	public int readValue(int targetAddress, ValueSizes valueSize) throws IOException
-	{
-		reentrantLock.lock();
-
-		try
-		{
-			int currentValue = -1;
-
-			switch (valueSize)
-			{
-				case EIGHT_BIT:
-					currentValue = read(targetAddress);
-					break;
-
-				case SIXTEEN_BIT:
-					currentValue = readShort(targetAddress);
-					break;
-
-				case THIRTY_TWO_BIT:
-					currentValue = readInt(targetAddress);
-					break;
-			}
-
-			return currentValue;
-		} finally
-		{
-			reentrantLock.unlock();
-		}
-	}
-
-	public String readValue(int address, ValueSize valueSize) throws IOException
-	{
-		long readValue = -1;
-
-		switch (valueSize)
-		{
-			case EIGHT_BIT:
-				readValue = read(address);
-				break;
-			case SIXTEEN_BIT:
-				readValue = readShort(address);
-				break;
-
-			case THIRTY_TWO_BIT:
-				readValue = readInt(address);
-				break;
-		}
-
-		return new Hexadecimal((int) readValue, 8).toString();
 	}
 
 	public boolean isRunning() throws IOException
 	{
-		reentrantLock.lock();
-
-		try
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
 			sendCommand(Commands.GET_STATUS);
 			dataSender.flush();
 
 			Status receivedStatus = readStatus();
-
 			return receivedStatus == Status.RUNNING;
-		} finally
-		{
-			reentrantLock.unlock();
 		}
 	}
 
-	public int readKernelInt(int address) throws IOException
+	/* // Freezes
+	public int kernelReadInt(int address) throws IOException
 	{
 		reentrantLock.lock();
 
 		try
 		{
+			AddressRange.assertValidAccess(address, 4, MemoryAccessLevel.READ);
+
 			sendCommand(Commands.MEMORY_KERNEL_READ);
 			dataSender.writeInt(address);
 			dataSender.flush();
 
-			return dataReceiver.readInt();
+			Status status = readStatus();
+
+			if (status == Status.OK)
+			{
+				return dataReceiver.readInt();
+			}
+			else
+			{
+				throw new IllegalStateException("Unexpected status: " + status);
+			}
 		} finally
 		{
 			reentrantLock.unlock();
 		}
-	}
+	}*/
 
 	public static int dereference(int address) throws IOException
 	{
@@ -295,9 +203,7 @@ public class MemoryReader extends TCPGecko
 	 */
 	public byte[] readBytes(int address, int length) throws IOException
 	{
-		reentrantLock.lock();
-
-		try
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
 			requestBytes(address, length);
 
@@ -322,48 +228,93 @@ public class MemoryReader extends TCPGecko
 		} finally
 		{
 			TCPGecko.hasRequestedBytes = false;
-			reentrantLock.unlock();
 		}
 	}
 
 	public void requestBytes(int address, int length) throws IOException
 	{
-		reentrantLock.lock();
+		AddressRange.assertValidAccess(address, length, MemoryAccessLevel.READ);
 
 		try
 		{
-			AddressRange.assertValidAccess(address, length, MemoryAccessLevel.READ);
-
 			sendCommand(Commands.MEMORY_READ);
 			dataSender.writeInt(address);
 			dataSender.writeInt(address + length);
 			dataSender.flush();
-
-			TCPGecko.hasRequestedBytes = true;
 		} finally
 		{
-			reentrantLock.unlock();
+			TCPGecko.hasRequestedBytes = true;
 		}
 	}
 
 	public byte[] readBytes(int length) throws IOException
 	{
-		reentrantLock.lock();
+		Status status = readStatus();
+		byte[] received = new byte[length];
 
-		try
+		if (status == Status.OK)
 		{
-			Status status = readStatus();
-			byte[] received = new byte[length];
+			dataReceiver.readFully(received);
+		}
 
-			if (status == Status.OK)
+		return received;
+	}
+
+	public int kernelReadInt(int address) throws IOException
+	{
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
+		{
+			sendCommand(Commands.MEMORY_KERNEL_READ);
+			dataSender.writeInt(address);
+			dataSender.flush();
+
+			return dataReceiver.readInt();
+		}
+	}
+
+	public int readValue(int targetAddress, ValueSizes valueSize) throws IOException
+	{
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
+		{
+			int currentValue = -1;
+
+			switch (valueSize)
 			{
-				dataReceiver.readFully(received);
+				case EIGHT_BIT:
+					currentValue = read(targetAddress);
+					break;
+
+				case SIXTEEN_BIT:
+					currentValue = readShort(targetAddress);
+					break;
+
+				case THIRTY_TWO_BIT:
+					currentValue = readInt(targetAddress);
+					break;
 			}
 
-			return received;
-		} finally
-		{
-			reentrantLock.unlock();
+			return currentValue;
 		}
+	}
+
+	public String readValue(int address, ValueSize valueSize) throws IOException
+	{
+		long readValue = -1;
+
+		switch (valueSize)
+		{
+			case EIGHT_BIT:
+				readValue = read(address);
+				break;
+			case SIXTEEN_BIT:
+				readValue = readShort(address);
+				break;
+
+			case THIRTY_TWO_BIT:
+				readValue = readInt(address);
+				break;
+		}
+
+		return new Hexadecimal((int) readValue, 8).toString();
 	}
 }

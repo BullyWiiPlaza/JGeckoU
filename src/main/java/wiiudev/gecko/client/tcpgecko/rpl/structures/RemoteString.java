@@ -37,22 +37,13 @@ public class RemoteString implements Closeable
 	{
 		// Allocate space for the String
 		int stringLength = string.length();
-		int address = CoreInit.allocateSystemMemory(stringLength, 0x20);
-		int size = getDataSize(stringLength);
-
-		// Initialize the memory with zeros
-		CoreInit.clearMemory(address, size);
+		int address = CoreInit.allocateSystemMemory(stringLength + 1, 0x4);
 
 		// Set the String
 		MemoryWriter memoryWriter = new MemoryWriter();
 		memoryWriter.writeString(address, string);
 
 		return address;
-	}
-
-	private int getDataSize(int length)
-	{
-		return length + (32 - (length % 32));
 	}
 
 	@Override

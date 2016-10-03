@@ -89,13 +89,23 @@ public class Assembler implements Closeable
 		processBuilder.command(parametersList);
 		Process process = processBuilder.start();
 		String errorMessage = IOUtils.toString(process.getErrorStream(), "UTF-8");
+		errorMessage = errorMessage.toLowerCase();
+		String baseSourceFileName = getBaseFileName(sourceFile.toFile().getAbsolutePath());
+		errorMessage = errorMessage.replaceAll(baseSourceFileName, "assembly_instruction");
 
-		if (errorMessage.toLowerCase().contains("error"))
+		if (errorMessage.contains("error"))
 		{
 			throw new AssemblerException(errorMessage);
 		}
 
 		process.waitFor();
+	}
+
+	private String getBaseFileName(String absoluteFileName)
+	{
+		Path path = Paths.get(absoluteFileName);
+
+		return path.getFileName().toString().split("\\.")[0];
 	}
 
 	public static String assemble(String instruction) throws Exception

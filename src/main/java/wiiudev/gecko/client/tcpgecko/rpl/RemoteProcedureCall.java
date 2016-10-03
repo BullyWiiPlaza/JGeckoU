@@ -1,10 +1,11 @@
 package wiiudev.gecko.client.tcpgecko.rpl;
 
-import org.apache.commons.io.output.ByteArrayOutputStream;
+import wiiudev.gecko.client.tcpgecko.main.CloseableReentrantLock;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Commands;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
@@ -19,26 +20,29 @@ public class RemoteProcedureCall extends TCPGecko
 		return getSymbol(rplName, symbolName, false, false);
 	}
 
-	public ExportedSymbol getSymbol(String rplName, String symbolName, boolean isPointer, boolean isData) throws IOException
+	ExportedSymbol getSymbol(String rplName, String symbolName, boolean isPointer, boolean isData) throws IOException
 	{
-		sendCommand(Commands.GET_SYMBOL);
-
 		ByteArrayOutputStream symbolRequest = getSymbolRequest(rplName, symbolName);
 
-		dataSender.writeByte(symbolRequest.size());
-		dataSender.write(symbolRequest.toByteArray());
-		dataSender.writeByte(isData ? 1 : 0);
-		dataSender.flush();
-
-		int address = dataReceiver.readInt();
-
-		if (isPointer)
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
-			// Dereference the pointer if we need to
-			address = MemoryReader.dereference(address);
-		}
+			sendCommand(Commands.GET_SYMBOL);
 
-		return new ExportedSymbol(address, rplName, symbolName);
+			dataSender.writeByte(symbolRequest.size());
+			dataSender.write(symbolRequest.toByteArray());
+			dataSender.writeByte(isData ? 1 : 0);
+			dataSender.flush();
+
+			int address = dataReceiver.readInt();
+
+			if (isPointer)
+			{
+				// Dereference the pointer if we need to
+				address = MemoryReader.dereference(address);
+			}
+
+			return new ExportedSymbol(address, rplName, symbolName);
+		}
 	}
 
 	private ByteArrayOutputStream getSymbolRequest(String rplName, String symbolName) throws IOException
@@ -75,17 +79,30 @@ public class RemoteProcedureCall extends TCPGecko
 	 * @return The first 32-bit of the return value
 	 * @throws IllegalArgumentException If there are too many parameters
 	 */
-	public int call32(ExportedSymbol exportedSymbol, int... parameters) throws IOException
+	public int callInt(ExportedSymbol exportedSymbol, int... parameters) throws IOException
 	{
 		return (int) call(exportedSymbol, true, parameters);
 	}
 
-	public void call(ExportedSymbol exportedSymbol, int... parameters) throws IOException
+	public boolean callBoolean(ExportedSymbol exportedSymbol, int... parameters) throws IOException
 	{
-		call32(exportedSymbol, parameters);
+		return (int) call(exportedSymbol, true, parameters) == 1;
 	}
 
-	public long call64(ExportedSymbol exportedSymbol, int... parameters) throws IOException
+	public String callString(ExportedSymbol exportedSymbol, int... parameters) throws IOException
+	{
+		int address = callInt(exportedSymbol, parameters);
+		MemoryReader memoryReader = new MemoryReader();
+
+		return memoryReader.readString(address);
+	}
+
+	public void call(ExportedSymbol exportedSymbol, int... parameters) throws IOException
+	{
+		callInt(exportedSymbol, parameters);
+	}
+
+	public long callLong(ExportedSymbol exportedSymbol, int... parameters) throws IOException
 	{
 		return (long) call(exportedSymbol, false, parameters);
 	}
@@ -97,7 +114,8 @@ public class RemoteProcedureCall extends TCPGecko
 
 		Commands command = totalParametersCount == SMALL_RPC_PARAMETERS_COUNT
 				? Commands.RPC : Commands.RPC_BIG;
-		sendCommand(command);
+
+
 		int functionAddress = exportedSymbol.getAddress();
 
 		// Function address and parameters
@@ -109,25 +127,27 @@ public class RemoteProcedureCall extends TCPGecko
 			request.put(parameter);
 		}
 
-		for (int requestComponent : request.array())
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
-			dataSender.writeInt(requestComponent);
-		}
+			sendCommand(command);
 
-		// System.out.println("Request [" + exportedSymbol.getRplName() + ": " + exportedSymbol.getSymbolName() + "] " + integerArrayToHexadecimal(request.array()));
+			for (int requestComponent : request.array())
+			{
+				dataSender.writeInt(requestComponent);
+			}
 
-		dataSender.flush();
+			dataSender.flush();
 
-		// The reply is 8 bytes
-		long reply = dataReceiver.readLong();
+			// The reply is 8 bytes
+			long reply = dataReceiver.readLong();
 
-		if (returnFirstInteger)
-		{
-			return getFirstInteger(reply);
-		}
-		else
-		{
-			return reply;
+			if (returnFirstInteger)
+			{
+				return getFirstInteger(reply);
+			} else
+			{
+				return reply;
+			}
 		}
 	}
 
@@ -141,28 +161,6 @@ public class RemoteProcedureCall extends TCPGecko
 		buffer.putLong(value);
 
 		return buffer.getInt(0);
-	}
-
-	private static String byteToUnsignedHex(int integer)
-	{
-		String hex = Integer.toHexString(integer);
-
-		while (hex.length() < 8)
-		{
-			hex = "0" + hex;
-		}
-
-		return hex;
-	}
-
-	private String integerArrayToHexadecimal(int[] array)
-	{
-		StringBuilder builder = new StringBuilder(array.length * 8);
-		for (int integer : array)
-		{
-			builder.append(byteToUnsignedHex(integer));
-		}
-		return builder.toString();
 	}
 
 	private int getPaddingIntegersCount(int... parameters)

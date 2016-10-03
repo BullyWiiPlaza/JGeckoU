@@ -16,7 +16,7 @@ public class Testing
 
 		/*RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 		ExportedSymbol exportedSymbol = new ExportedSymbol(0x0249EEE0);
-		int result = remoteProcedureCall.call32(exportedSymbol);
+		int result = remoteProcedureCall.callInt(exportedSymbol);
 		System.out.println(Conversions.toHexadecimal(result, 8));*/
 		/*ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("t6mp_cafef_rpl.rpl", "Party_IsPrivateOnlineGame");
 		System.out.println(Conversions.toHexadecimal(exportedSymbol.getAddress(), 8));*/

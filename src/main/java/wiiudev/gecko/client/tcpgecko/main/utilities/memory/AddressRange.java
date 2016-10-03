@@ -1,5 +1,6 @@
 package wiiudev.gecko.client.tcpgecko.main.utilities.memory;
 
+import wiiudev.gecko.client.conversions.Conversions;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 
 import java.io.IOException;
@@ -15,7 +16,7 @@ public class AddressRange
 	{
 		if (!isValidAccess(address, length, memoryAccessLevel))
 		{
-			throw new IllegalArgumentException("The request for address " + Integer.toHexString(address).toUpperCase() + " with length " + length + " and memory access level " + memoryAccessLevel.toString() + " is invalid!");
+			throw new IllegalArgumentException("The request for address " + Integer.toHexString(address).toUpperCase() + " with length " + Conversions.toHexadecimal(length) + " and memory access level " + memoryAccessLevel.toString() + " is invalid!");
 		}
 	}
 
