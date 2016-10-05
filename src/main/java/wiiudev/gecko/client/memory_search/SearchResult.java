@@ -47,14 +47,40 @@ public class SearchResult implements Cloneable, Comparable
 
 	private byte[] getBytes(BigInteger bigInteger) throws IOException
 	{
-		byte[] previousValue = bigInteger.toByteArray();
+		byte[] retrieved = bigInteger.toByteArray();
 		ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 		int bytesCount = getValueSize().getBytesCount();
-		int paddingBytes = bytesCount - previousValue.length;
-		byteArrayOutputStream.write(new byte[paddingBytes]);
-		byteArrayOutputStream.write(previousValue);
+		int paddingBytes = bytesCount - retrieved.length;
+
+		if (paddingBytes >= 0)
+		{
+			byteArrayOutputStream.write(new byte[paddingBytes]);
+			byteArrayOutputStream.write(retrieved);
+		} else
+		{
+			writeWithoutLeadingNullBytes(byteArrayOutputStream, retrieved);
+		}
 
 		return byteArrayOutputStream.toByteArray();
+	}
+
+	private void writeWithoutLeadingNullBytes(ByteArrayOutputStream byteArrayOutputStream, byte[] bytes)
+	{
+		int index = 0;
+		boolean nonNullByteFound = false;
+
+		while (index < bytes.length)
+		{
+			byte value = bytes[index];
+
+			if (value != 0 || nonNullByteFound)
+			{
+				nonNullByteFound = true;
+				byteArrayOutputStream.write(value);
+			}
+
+			index++;
+		}
 	}
 
 	public byte[] getCurrentValueBytes() throws IOException
