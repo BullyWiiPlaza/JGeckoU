@@ -15,32 +15,23 @@ public class GraphicalRefiner
 	private int length;
 	private List<SearchQueryOptimizer.MemoryDumpingChunk> memoryDumpingChunks;
 	private int bytesToDump;
-	private JProgressBar progressBar;
 
 	private byte[] dumpedBytes;
 
-	public GraphicalRefiner(int address, int length, List<SearchQueryOptimizer.MemoryDumpingChunk> memoryDumpingChunks, int bytesToDump, JProgressBar progressBar)
+	public GraphicalRefiner(int address,
+	                        int length,
+	                        List<SearchQueryOptimizer.MemoryDumpingChunk> memoryDumpingChunks,
+	                        int bytesToDump)
 	{
 		this.address = address;
 		this.length = length;
 		this.memoryDumpingChunks = memoryDumpingChunks;
 		this.bytesToDump = bytesToDump;
-		this.progressBar = progressBar;
 	}
 
 	public byte[] dumpMemory() throws ExecutionException, InterruptedException
 	{
 		MemoryDumpingTask task = new MemoryDumpingTask();
-
-		task.addPropertyChangeListener(changeEvent ->
-		{
-			if ("progress".equals(changeEvent.getPropertyName()))
-			{
-				int newValue = (Integer) changeEvent.getNewValue();
-				progressBar.setValue(newValue);
-			}
-		});
-
 		task.execute();
 
 		// Wait till done
@@ -54,8 +45,6 @@ public class GraphicalRefiner
 		@Override
 		protected Long doInBackground() throws Exception
 		{
-			progressBar.setValue(0);
-
 			try
 			{
 				long bytesDumped = 0;
@@ -72,16 +61,17 @@ public class GraphicalRefiner
 
 					bytesDumped += dumped.length;
 
-					long progress = bytesDumped * 100 / bytesToDump;
-					setProgress((int) progress);
-					publish(bytesDumped);
+					ProgressVisualization.updateProgress("Dumped Bytes", bytesDumped, bytesToDump);
 
 					if (JGeckoUGUI.getInstance().isDumpingCanceled())
 					{
+						ProgressVisualization.deleteUpdateLabel();
+
 						return null;
 					}
 				}
 
+				ProgressVisualization.deleteUpdateLabel();
 				dumpedBytes = dumpedBytesBuffer.array();
 
 				return bytesDumped;

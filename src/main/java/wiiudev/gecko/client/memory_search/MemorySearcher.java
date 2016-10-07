@@ -6,14 +6,12 @@ import wiiudev.gecko.client.memory_search.enumerations.SearchMode;
 import wiiudev.gecko.client.memory_search.enumerations.ValueSize;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 public class MemorySearcher
@@ -38,11 +36,21 @@ public class MemorySearcher
 		isFirstSearch = true;
 	}
 
-	public List<SearchResult> search(SearchRefinement searchRefinement) throws IOException, ExecutionException, InterruptedException
+	public List<SearchResult> search(SearchRefinement searchRefinement) throws Exception
 	{
+		ValueSize valueSize = searchRefinement.getValueSize();
+		int valueSizeBytesCount = valueSize.getBytesCount();
+
+		if (!isFirstSearch)
+		{
+			// Update the address and length
+			SearchResult firstSearchResult = searchResults.get(0);
+			address = firstSearchResult.getAddress();
+			length = searchResults.get(searchResults.size() - 1).getAddress() - address + valueSizeBytesCount;
+		}
+
 		SearchMode searchMode = searchRefinement.getSearchMode();
 		boolean isUnknownValueSearch = searchMode == SearchMode.UNKNOWN;
-		ValueSize valueSize = searchRefinement.getValueSize();
 		SearchQueryOptimizer searchQueryOptimizer = new SearchQueryOptimizer(address, length);
 		ByteBuffer valuesReader = searchQueryOptimizer.dumpBytes(searchResults);
 		List<SearchResult> updatedSearchResults = new LinkedList<>();
@@ -50,7 +58,6 @@ public class MemorySearcher
 		JButton searchButton = JGeckoUGUI.getInstance().getSearchButton();
 		JProgressBar progressBar = JGeckoUGUI.getInstance().getSearchProgressBar();
 
-		int valueSizeBytesCount = valueSize.getBytesCount();
 		int byteBufferLimit = valuesReader.limit();
 
 		searchButton.setText("Searching...");
