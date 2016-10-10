@@ -1,6 +1,7 @@
 package wiiudev.gecko.client.memory_search;
 
 import wiiudev.gecko.client.gui.JGeckoUGUI;
+import wiiudev.gecko.client.gui.tabs.memory_search.ProgressVisualization;
 import wiiudev.gecko.client.memory_search.enumerations.SearchConditions;
 import wiiudev.gecko.client.memory_search.enumerations.SearchMode;
 import wiiudev.gecko.client.memory_search.enumerations.ValueSize;
@@ -36,7 +37,7 @@ public class MemorySearcher
 		isFirstSearch = true;
 	}
 
-	public List<SearchResult> search(SearchRefinement searchRefinement) throws Exception
+	public List<SearchResult> search(SearchRefinement searchRefinement, boolean aligned) throws Exception
 	{
 		ValueSize valueSize = searchRefinement.getValueSize();
 		int valueSizeBytesCount = valueSize.getBytesCount();
@@ -56,19 +57,23 @@ public class MemorySearcher
 		List<SearchResult> updatedSearchResults = new LinkedList<>();
 
 		JButton searchButton = JGeckoUGUI.getInstance().getSearchButton();
-		JProgressBar progressBar = JGeckoUGUI.getInstance().getSearchProgressBar();
 
-		int byteBufferLimit = valuesReader.limit();
+		int limit = valuesReader.limit();
 
 		searchButton.setText("Searching...");
-		progressBar.setValue(0);
 
 		if (isFirstSearch)
 		{
-			while (valuesReader.position() + valueSizeBytesCount <= byteBufferLimit)
+			while (valuesReader.position() + valueSizeBytesCount <= limit)
 			{
-				BigInteger currentValue = getValue(valuesReader, valueSizeBytesCount);
+				BigInteger currentValue = getValue(valuesReader, valueSizeBytesCount, aligned);
 				int searchResultAddress = address + valuesReader.position() - Math.min(valueSize.getBytesCount(), 4);
+
+				if (!aligned)
+				{
+					searchResultAddress += valueSize.getBytesCount() - 1;
+				}
+
 				SearchResult searchResult = new SearchResult(searchResultAddress, currentValue, currentValue, valueSize);
 
 				if (isUnknownValueSearch)
@@ -87,10 +92,15 @@ public class MemorySearcher
 				}
 
 				int position = valuesReader.position();
-				setLabelProgress(position, byteBufferLimit);
-				int progress = position * 100 / byteBufferLimit;
-				progressBar.setValue(progress);
+				ProgressVisualization.updateProgress("Evaluated Bytes", position, limit);
+
+				if (JGeckoUGUI.getInstance().isDumpingCanceled())
+				{
+					return null;
+				}
 			}
+
+			ProgressVisualization.updateProgress("Evaluated Bytes", 1, 1);
 		} else
 		{
 			int searchResultsIndex = 0;
@@ -101,7 +111,7 @@ public class MemorySearcher
 				int position = currentAddress - address;
 				valuesReader.position(position);
 
-				BigInteger currentValue = getValue(valuesReader, valueSizeBytesCount);
+				BigInteger currentValue = getValue(valuesReader, valueSizeBytesCount, aligned);
 				SearchConditions searchCondition = searchRefinement.getSearchCondition();
 
 				BigInteger targetValue = isUnknownValueSearch ?
@@ -116,9 +126,9 @@ public class MemorySearcher
 
 				searchResultsIndex++;
 
-				setLabelProgress(searchResultsIndex, searchResults.size());
-				int progress = searchResultsIndex * 100 / searchResults.size();
-				progressBar.setValue(progress);
+				ProgressVisualization.updateProgress("Evaluated Search Results",
+						searchResultsIndex,
+						searchResults.size());
 
 				if (JGeckoUGUI.getInstance().isDumpingCanceled())
 				{
@@ -189,26 +199,26 @@ public class MemorySearcher
 		return searchResultsStack.size();
 	}
 
-	private BigInteger getValue(ByteBuffer byteBuffer, int bytesCount)
+	private BigInteger getValue(ByteBuffer byteBuffer, int bytesCount, boolean aligned)
 	{
 		byte[] retrieved = new byte[bytesCount];
+		byteBuffer.get(retrieved);
 
-		try
+		if (aligned)
 		{
-			byteBuffer.get(retrieved);
-		} catch (Exception exception)
-		{
-			exception.printStackTrace();
-		}
+			// For bigger value sizes still go in 32-bit steps
+			int additionalBytes = bytesCount - ValueSize.THIRTY_TWO_BIT.getBytesCount();
 
-		// For bigger value sizes still go in 32-bit steps
-		int additionalBytes = bytesCount - ValueSize.THIRTY_TWO_BIT.getBytesCount();
-
-		if (additionalBytes > 0)
+			if (additionalBytes > 0)
+			{
+				// Scale the buffer position backwards
+				int currentPosition = byteBuffer.position();
+				byteBuffer.position(currentPosition - additionalBytes);
+			}
+		} else
 		{
-			// Scale the buffer position backwards
 			int currentPosition = byteBuffer.position();
-			byteBuffer.position(currentPosition - additionalBytes);
+			byteBuffer.position(currentPosition - bytesCount + 1);
 		}
 
 		return getUnsigned(retrieved);

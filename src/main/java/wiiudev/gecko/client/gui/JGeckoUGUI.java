@@ -193,6 +193,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton cancelSearchButton;
 	private JButton cancelDumpButton;
 	private JCheckBox interruptsCheckBox;
+	private JCheckBox searchAlignedCheckBox;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -596,7 +597,7 @@ public class JGeckoUGUI extends JFrame
 					}
 
 					SearchRefinement searchRefinement = getSearchRefinement();
-					List<SearchResult> searchResults = memorySearcher.search(searchRefinement);
+					List<SearchResult> searchResults = memorySearcher.search(searchRefinement, searchAlignedCheckBox.isSelected());
 					populateSearchResults(searchResults);
 					updateSearchIterationsLabel();
 					updateSearchConditionsComboBox();
@@ -1716,6 +1717,7 @@ public class JGeckoUGUI extends JFrame
 			simpleProperties.put("DISASSEMBLER_ADDRESS", disassemblerAddressField.getText());
 			simpleProperties.put("SEARCH_RANGE_START", searchStartingAddressField.getText());
 			simpleProperties.put("SEARCH_RANGE_END", searchEndingAddressField.getText());
+			simpleProperties.put("SEARCH_ALIGNED", String.valueOf(searchAlignedCheckBox.isSelected()));
 			simpleProperties.put("SEARCH_VALUE", searchValueField.getText());
 			simpleProperties.put("SEARCH_VALUE_SIZE", searchValueSizeComboBox.getSelectedItem().toString());
 			simpleProperties.put("SEARCH_MODE", searchModeComboBox.getSelectedItem().toString());
@@ -1820,6 +1822,13 @@ public class JGeckoUGUI extends JFrame
 		{
 			ValueSize valueSize = ValueSize.parse(searchValueSize);
 			searchValueSizeComboBox.setSelectedItem(valueSize);
+		}
+
+		String searchAligned = simpleProperties.get("SEARCH_ALIGNED");
+		if (searchAligned != null)
+		{
+			boolean selected = Boolean.parseBoolean(searchAligned);
+			searchAlignedCheckBox.setSelected(selected);
 		}
 
 		String searchValue = simpleProperties.get("SEARCH_VALUE");

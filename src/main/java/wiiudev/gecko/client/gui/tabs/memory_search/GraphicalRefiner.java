@@ -14,14 +14,14 @@ public class GraphicalRefiner
 	private int address;
 	private int length;
 	private List<SearchQueryOptimizer.MemoryDumpingChunk> memoryDumpingChunks;
-	private int bytesToDump;
+	private long bytesToDump;
 
 	private byte[] dumpedBytes;
 
 	public GraphicalRefiner(int address,
 	                        int length,
 	                        List<SearchQueryOptimizer.MemoryDumpingChunk> memoryDumpingChunks,
-	                        int bytesToDump)
+	                        long bytesToDump)
 	{
 		this.address = address;
 		this.length = length;

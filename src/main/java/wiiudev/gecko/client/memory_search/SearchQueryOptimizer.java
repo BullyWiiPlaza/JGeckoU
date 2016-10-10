@@ -35,7 +35,7 @@ public class SearchQueryOptimizer
 		}
 
 		// Only dump the bytes that are still in the results
-		int bytesToDump = 0;
+		long bytesToDump = 0;
 		List<MemoryDumpingChunk> memoryDumpingChunks = new LinkedList<>();
 
 		// For performance optimization, use this set
