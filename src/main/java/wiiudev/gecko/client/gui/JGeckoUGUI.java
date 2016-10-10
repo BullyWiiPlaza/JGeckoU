@@ -88,10 +88,8 @@ public class JGeckoUGUI extends JFrame
 	private JTextField ipAddressField;
 	private JCheckBox autoDetectCheckBox;
 	private JButton addCodeButton;
-	private JButton deleteCodeButton;
 	private JButton sendCodesButton;
 	private JButton disableCodesButton;
-	private JButton editCodeButton;
 	private JButton codeTypesViewingButton;
 	private JButton updateGameTitlesButton;
 	private JList<JCheckBox> codesListBoxes;
@@ -2543,35 +2541,36 @@ public class JGeckoUGUI extends JFrame
 	{
 		codeListSender = new CodeListSender();
 
-		codesListManager.getCheckboxList().addMouseListener(new MouseAdapter()
+		JList<JCheckBox> checkBoxesList = codesListManager.getCheckBoxList();
+		checkBoxesList.addMouseListener(new MouseAdapter()
 		{
 			@Override
 			public void mousePressed(MouseEvent mouseEvent)
 			{
-				if (autoSaveCodeListCheckBox.isSelected())
-				{
-					storeCurrentCodeList(true);
-				}
+				considerStoringCodeList();
 			}
 		});
 
 		autoSaveCodeListCheckBox.addItemListener(actionEvent -> setCodeListButtonsAvailability());
 		addCodeButton.addActionListener(actionEvent -> openAddCodeDialog());
-		deleteCodeButton.addActionListener(actionEvent -> deleteSelectedCodeListEntry());
 		sendCodesButton.addActionListener(actionEvent -> sendCodes());
 		disableCodesButton.addActionListener(actionEvent -> disableCodes());
 		codeTypesViewingButton.addActionListener(actionEvent -> askForViewingCodeTypes());
-		editCodeButton.addActionListener(actionEvent -> editSelectedCode());
 		storeCodeListButton.addActionListener(actionEvent -> storeCurrentCodeList(false));
 		downloadCodeDatabaseButton.addActionListener(actionEvent -> handleDownloadingCodeDatabase());
 		exportCodeListButton.addActionListener(actionEvent -> exportCodeList());
 		loadCodeListButton.addActionListener(actionEvent -> loadCodeList());
 
-		addCodeListBoxesMouseListener();
-		addCodeListChangedListener();
+		codesListBoxes.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mousePressed(MouseEvent mouseEvent)
+			{
+				setSendCodesButtonAvailability();
+			}
+		});
 
 		updateCodeDatabaseDownloadButtonAvailability();
-		handleCodeListButtonAvailability();
 		setCodeListButtonsAvailability();
 	}
 
@@ -2579,49 +2578,13 @@ public class JGeckoUGUI extends JFrame
 	{
 		try
 		{
-			List<GeckoCode> codes = codesListManager.getCodeListBackup();
-			String targetPath = codesStorage.exportCodeList(codes, gameId);
+			List<CodeListEntry> codeListEntries = codesListManager.getCodeListEntries();
+			String targetPath = codesStorage.exportCodeList(codeListEntries, gameId);
 			askForOpeningFile(targetPath);
 		} catch (Exception exception)
 		{
 			StackTraceUtils.handleException(rootPane, exception);
 		}
-	}
-
-	private void addCodeListBoxesMouseListener()
-	{
-		codesListBoxes.addMouseListener(new MouseListener()
-		{
-			@Override
-			public void mouseClicked(MouseEvent mouseEvent)
-			{
-				setSendCodesButtonAvailability();
-			}
-
-			@Override
-			public void mousePressed(MouseEvent mouseEvent)
-			{
-				setSendCodesButtonAvailability();
-			}
-
-			@Override
-			public void mouseReleased(MouseEvent mouseEvent)
-			{
-				setSendCodesButtonAvailability();
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent mouseEvent)
-			{
-				setSendCodesButtonAvailability();
-			}
-
-			@Override
-			public void mouseExited(MouseEvent mouseEvent)
-			{
-				setSendCodesButtonAvailability();
-			}
-		});
 	}
 
 	private void handleDownloadingCodeDatabase()
@@ -3113,17 +3076,6 @@ public class JGeckoUGUI extends JFrame
 		conversionDialog.display();
 	}
 
-	private void addCodeListChangedListener()
-	{
-		codesListManager.getCheckboxList().addListSelectionListener(selectionEvent -> handleCodeListButtonAvailability());
-	}
-
-	private void handleCodeListButtonAvailability()
-	{
-		editCodeButton.setEnabled(codesListManager.isSomeEntrySelected());
-		deleteCodeButton.setEnabled(codesListManager.isSomeEntrySelected());
-	}
-
 	private void loadCodeList()
 	{
 		CodeListChooser codeListChooser = new CodeListChooser();
@@ -3183,21 +3135,22 @@ public class JGeckoUGUI extends JFrame
 			CodeListEntry codeListEntry = codeInputDialog.getCodeListEntry();
 			codesListManager.addCodeListEntry(codeListEntry);
 
-			if (autoSaveCodeListCheckBox.isSelected())
-			{
-				storeCurrentCodeList(true);
-			}
+			considerStoringCodeList();
 		}
 	}
 
-	private void deleteSelectedCodeListEntry()
+	public void moveCodeListEntryUpwards()
+	{
+		codesListManager.moveUpwards();
+
+		considerStoringCodeList();
+	}
+
+	public void deleteSelectedCodeListEntry()
 	{
 		codesListManager.deleteSelectedCodeListEntry(false);
 
-		if (autoSaveCodeListCheckBox.isSelected())
-		{
-			storeCurrentCodeList(true);
-		}
+		considerStoringCodeList();
 	}
 
 	private void sendCodes()
@@ -3300,25 +3253,21 @@ public class JGeckoUGUI extends JFrame
 		}
 	}
 
-	private void editSelectedCode()
+	public void editSelectedCode()
 	{
 		CodeListEntry codeListEntry = codesListManager.getSelectedCodeListEntry();
 
 		if (codeListEntry != null)
 		{
 			CodeInputDialog codeInputDialog = new CodeInputDialog(codeListEntry);
-			codeInputDialog.setTitle(editCodeButton.getText());
+			codeInputDialog.setTitle("Edit Code");
 			codeInputDialog.display();
 
 			if (codeInputDialog.isConfirmed())
 			{
 				codeListEntry = codeInputDialog.getCodeListEntry();
 				codesListManager.updateSelectedCodeListEntry(codeListEntry);
-
-				if (autoSaveCodeListCheckBox.isSelected())
-				{
-					storeCurrentCodeList(true);
-				}
+				considerStoringCodeList();
 			}
 		}
 	}
@@ -3826,5 +3775,19 @@ public class JGeckoUGUI extends JFrame
 	{
 		int index = threadsTableManager.getThreads().indexOf(thread);
 		threadsTableManager.setSelectedItems(new int[]{index});
+	}
+
+	public void moveCodeListEntryDownwards()
+	{
+		codesListManager.moveDownwards();
+		considerStoringCodeList();
+	}
+
+	private void considerStoringCodeList()
+	{
+		if (autoSaveCodeListCheckBox.isSelected())
+		{
+			storeCurrentCodeList(true);
+		}
 	}
 }

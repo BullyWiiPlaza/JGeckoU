@@ -117,7 +117,7 @@ public class TitleDatabaseManager
 		throw new TitleNotFoundException(gameId);
 	}
 
-	public void restore() throws IOException, SAXException, ParserConfigurationException
+	private void restore() throws IOException, SAXException, ParserConfigurationException
 	{
 		NodeList nodesList = XMLHelper.getNodesList(titleDatabaseFilePath, titleTagName);
 
@@ -149,10 +149,8 @@ public class TitleDatabaseManager
 	/**
 	 * Parses and stores all Wii U game's title ids.
 	 * This method may take a while and slow down your computer
-	 *
-	 * @throws Exception
 	 */
-	public static void update(List<Title> titlesDatabase) throws Exception
+	private static void update(List<Title> titlesDatabase) throws Exception
 	{
 		titlesDatabase.clear();
 		int poolSize = Runtime.getRuntime().availableProcessors() * 2;

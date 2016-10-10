@@ -19,13 +19,6 @@ public class CodeListEntry implements Serializable
 		this.comment = comment;
 	}
 
-	public CodeListEntry(CodeListEntry codeListEntry)
-	{
-		this.codeTitle = codeListEntry.getTitle();
-		this.cheatCode = codeListEntry.getCode();
-		this.comment = codeListEntry.getComment();
-	}
-
 	public String getTitle()
 	{
 		return codeTitle;
@@ -44,5 +37,16 @@ public class CodeListEntry implements Serializable
 	public String getComment()
 	{
 		return comment;
+	}
+
+	@Override
+	public String toString()
+	{
+		String code = codeTitle + System.lineSeparator()
+				+ cheatCode
+				+ System.lineSeparator()
+				+ comment;
+
+		return code.trim();
 	}
 }

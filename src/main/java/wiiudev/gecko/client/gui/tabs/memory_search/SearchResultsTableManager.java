@@ -145,9 +145,8 @@ public class SearchResultsTableManager
 
 		List<SearchResult> removedSearchResults = new ArrayList<>();
 
-		for (int selectedRowsIndex = 0; selectedRowsIndex < selectedRows.length; selectedRowsIndex++)
+		for (int selectedRow : selectedRows)
 		{
-			int selectedRow = selectedRows[selectedRowsIndex];
 			SearchResult removedSelectedRow = searchResults.get(selectedRow);
 			removedSearchResults.add(removedSelectedRow);
 		}

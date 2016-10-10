@@ -6,6 +6,7 @@ import wiiudev.gecko.client.codes.GeckoCode;
 import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -15,9 +16,10 @@ public class CodesListManager
 	private DefaultListModel<JCheckBox> codeListModel;
 	private List<CodeListEntry> codeListEntries;
 	private JRootPane rootPane;
+	private CodeListContextMenu contextMenu;
 
 	@SuppressWarnings("unchecked")
-	public CodesListManager(JList checkboxList, JRootPane rootPane)
+	public CodesListManager(JList<JCheckBox> checkboxList, JRootPane rootPane)
 	{
 		codeListEntries = new LinkedList<>();
 		checkboxList.setModel(new DefaultListModel<>());
@@ -25,18 +27,69 @@ public class CodesListManager
 		this.checkboxList = checkboxList;
 		codeListModel = (DefaultListModel<JCheckBox>) checkboxList.getModel();
 		this.rootPane = rootPane;
+		contextMenu = new CodeListContextMenu(this);
+		contextMenu.addContextMenu();
+		addContextMenuListener();
 	}
 
-	public JList<JCheckBox> getCheckboxList()
+	private void addContextMenuListener()
+	{
+		checkboxList.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseReleased(MouseEvent mouseEvent)
+			{
+				handleContextMenu(mouseEvent);
+			}
+		});
+	}
+
+	private void handleContextMenu(MouseEvent mouseEvent)
+	{
+		int rowIndex = getSelectedCodeListIndex(true);
+
+		if (rowIndex >= 0)
+		{
+			if (mouseEvent.isPopupTrigger() &&
+					mouseEvent.getComponent() instanceof JList)
+			{
+				// Select the row
+				checkboxList.setSelectedIndex(checkboxList.locationToIndex(mouseEvent.getPoint()));
+
+				// Show the context menu
+				contextMenu.show(mouseEvent.getComponent(),
+						mouseEvent.getX(),
+						mouseEvent.getY());
+			}
+		}
+	}
+
+	private void swapCodeListEntries(int originalPosition, int newPosition)
+	{
+		if (isProperIndex(originalPosition) && isProperIndex(newPosition))
+		{
+			// Swap the visual check boxes
+			JCheckBox originalCheckBox = codeListModel.get(originalPosition);
+			JCheckBox swapCheckBox = codeListModel.get(newPosition);
+			codeListModel.set(originalPosition, swapCheckBox);
+			codeListModel.set(newPosition, originalCheckBox);
+
+			// Update the internal code list entries also
+			Collections.swap(codeListEntries, originalPosition, newPosition);
+
+			// Select the moved element again
+			checkboxList.setSelectedIndex(newPosition);
+		}
+	}
+
+	private boolean isProperIndex(int newPosition)
+	{
+		return newPosition >= 0 && newPosition < codeListModel.size();
+	}
+
+	public JList<JCheckBox> getCheckBoxList()
 	{
 		return checkboxList;
-	}
-
-	public boolean isSelectedCodeListEntryTicked()
-	{
-		int selectedCodeListEntry = getSelectedCodeListIndex(false);
-
-		return codeListModel.getElementAt(selectedCodeListEntry).isSelected();
 	}
 
 	public boolean containsCode(GeckoCode geckoCode)
@@ -105,7 +158,7 @@ public class CodesListManager
 		addCodeListEntry(codeListEntry);
 	}
 
-	public void addCodeListEntry(CodeListEntry codeListEntry, boolean selected)
+	private void addCodeListEntry(CodeListEntry codeListEntry, boolean selected)
 	{
 		codeListEntries.add(codeListEntry);
 		JCheckBox codeListCheckBox = codeListEntry.getCodeListCheckBox();
@@ -169,7 +222,7 @@ public class CodesListManager
 		checkboxList.setSelectedIndex(checkboxList.getLastVisibleIndex());
 	}
 
-	public int getSelectedCodeListIndex(boolean silent)
+	private int getSelectedCodeListIndex(boolean silent)
 	{
 		int selectedCodeIndex = checkboxList.getSelectedIndex();
 		if (selectedCodeIndex == -1)
@@ -186,11 +239,6 @@ public class CodesListManager
 		{
 			return selectedCodeIndex;
 		}
-	}
-
-	public boolean isSomeEntrySelected()
-	{
-		return checkboxList.getSelectedIndex() != -1;
 	}
 
 	public List<GeckoCode> getCodeListBackup()
@@ -230,5 +278,28 @@ public class CodesListManager
 		codeListModel.remove(index);
 		codeListModel.add(index, codeListEntry.getCodeListCheckBox());
 		checkboxList.setSelectedIndex(index);
+	}
+
+	public void moveUpwards()
+	{
+		int index = getSelectedCodeListIndex(true);
+		swapCodeListEntries(index, index - 1);
+	}
+
+	public void moveDownwards()
+	{
+		int index = getSelectedCodeListIndex(true);
+		swapCodeListEntries(index, index + 1);
+	}
+
+	public String getSelectedCode()
+	{
+		CodeListEntry codeListEntry = getSelectedCodeListEntry();
+		return codeListEntry.toString();
+	}
+
+	public List<CodeListEntry> getCodeListEntries()
+	{
+		return codeListEntries;
 	}
 }

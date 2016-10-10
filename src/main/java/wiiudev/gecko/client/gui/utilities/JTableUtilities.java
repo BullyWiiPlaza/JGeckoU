@@ -80,13 +80,13 @@ public class JTableUtilities
 		table.setSelectionModel(new ForcedListSelectionModel());
 	}
 
-	public static void removeAllKeyListeners(JTable table)
+	public static void removeAllKeyListeners(JComponent component)
 	{
-		KeyListener[] keyListeners = table.getKeyListeners();
+		KeyListener[] keyListeners = component.getKeyListeners();
 
 		for (KeyListener keyListener : keyListeners)
 		{
-			table.removeKeyListener(keyListener);
+			component.removeKeyListener(keyListener);
 		}
 	}
 

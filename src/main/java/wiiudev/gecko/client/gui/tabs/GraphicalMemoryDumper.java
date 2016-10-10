@@ -3,6 +3,7 @@ package wiiudev.gecko.client.gui.tabs;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
+import wiiudev.gecko.client.tcpgecko.main.CloseableReentrantLock;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 
@@ -21,7 +22,11 @@ public class GraphicalMemoryDumper
 
 	private boolean isDone;
 
-	public GraphicalMemoryDumper(int address, int bytesCount, File targetFile, JProgressBar progressBar, JButton dumpMemoryButton)
+	public GraphicalMemoryDumper(int address,
+	                             int bytesCount,
+	                             File targetFile,
+	                             JProgressBar progressBar,
+	                             JButton dumpMemoryButton)
 	{
 		this.address = address;
 		this.bytesCount = bytesCount;
@@ -68,10 +73,8 @@ public class GraphicalMemoryDumper
 				MemoryReader memoryReader = new MemoryReader();
 				ByteArrayOutputStream memoryDumpBuffer = new ByteArrayOutputStream();
 
-				try
+				try (CloseableReentrantLock ignored = TCPGecko.reentrantLock.acquire())
 				{
-					TCPGecko.reentrantLock.lock();
-
 					memoryReader.requestBytes(address, bytesCount);
 
 					// Read in chunks
@@ -99,9 +102,6 @@ public class GraphicalMemoryDumper
 							break;
 						}
 					}
-				} finally
-				{
-					TCPGecko.reentrantLock.unlock();
 				}
 
 				Files.write(targetFile.toPath(), memoryDumpBuffer.toByteArray());

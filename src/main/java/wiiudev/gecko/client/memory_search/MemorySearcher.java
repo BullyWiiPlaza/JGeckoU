@@ -67,7 +67,8 @@ public class MemorySearcher
 			while (valuesReader.position() + valueSizeBytesCount <= limit)
 			{
 				BigInteger currentValue = getValue(valuesReader, valueSizeBytesCount, aligned);
-				int searchResultAddress = address + valuesReader.position() - Math.min(valueSize.getBytesCount(), 4);
+				int position = valuesReader.position();
+				int searchResultAddress = address + position - Math.min(valueSize.getBytesCount(), 4);
 
 				if (!aligned)
 				{
@@ -91,7 +92,6 @@ public class MemorySearcher
 					}
 				}
 
-				int position = valuesReader.position();
 				ProgressVisualization.updateProgress("Evaluated Bytes", position, limit);
 
 				if (JGeckoUGUI.getInstance().isDumpingCanceled())
@@ -100,9 +100,10 @@ public class MemorySearcher
 				}
 			}
 
-			ProgressVisualization.updateProgress("Evaluated Bytes", 1, 1);
+			ProgressVisualization.deleteUpdateLabel();
 		} else
 		{
+			// Not the first search, refine the search results
 			int searchResultsIndex = 0;
 
 			for (SearchResult searchResult : searchResults)
@@ -150,12 +151,6 @@ public class MemorySearcher
 		}
 
 		return searchResults;
-	}
-
-	private void setLabelProgress(int currentIndex, int size)
-	{
-		JLabel addressProgressLabel = JGeckoUGUI.getInstance().getAddressProgressLabel();
-		addressProgressLabel.setText("Evaluated: " + currentIndex + "/" + size);
 	}
 
 	private void pushSearchResults()

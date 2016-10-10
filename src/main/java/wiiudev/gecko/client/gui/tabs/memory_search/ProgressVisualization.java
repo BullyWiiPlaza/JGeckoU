@@ -16,6 +16,12 @@ public class ProgressVisualization
 	{
 		JLabel addressProgressLabel = JGeckoUGUI.getInstance().getAddressProgressLabel();
 		addressProgressLabel.setText("");
+		setProgressBarCompleted();
+	}
+
+	private static void setProgressBarCompleted()
+	{
+		updateProgressBar(1, 1);
 	}
 
 	private static void updateProgressBar(long finishedCount, long totalCount)

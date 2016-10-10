@@ -45,21 +45,22 @@ public class GraphicalSearcher
 			{
 				long bytesDumped = 0;
 				MemoryReader memoryReader = new MemoryReader();
-				ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+				ByteArrayOutputStream dumpedBytesStream = new ByteArrayOutputStream();
 
 				try (CloseableReentrantLock ignored = TCPGecko.reentrantLock.acquire())
 				{
 					memoryReader.requestBytes(address, length);
 
 					// Read in chunks
-					while (length > TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
+					while (length > 0)
 					{
-						byte[] retrievedBytes = memoryReader.readBytes(TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
-						byteArrayOutputStream.write(retrievedBytes);
+						int bytesToDump = Math.min(length, TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
+						byte[] readBytes = memoryReader.readBytes(bytesToDump);
+						dumpedBytesStream.write(readBytes);
 
-						length -= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
+						length -= bytesToDump;
+						bytesDumped += bytesToDump;
 						ProgressVisualization.updateProgress("Dumped Bytes", bytesDumped, startingBytesCount);
-						bytesDumped += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
 
 						if (JGeckoUGUI.getInstance().isDumpingCanceled())
 						{
@@ -67,18 +68,10 @@ public class GraphicalSearcher
 						}
 					}
 
-					if (length <= TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE)
-					{
-						byte[] retrievedBytes = memoryReader.readBytes(length);
-						byteArrayOutputStream.write(retrievedBytes);
-						bytesDumped += retrievedBytes.length;
-						ProgressVisualization.updateProgress("Dumped Bytes", bytesDumped, startingBytesCount);
-					}
-
 					ProgressVisualization.deleteUpdateLabel();
 				}
 
-				dumpedBytes = byteArrayOutputStream.toByteArray();
+				dumpedBytes = dumpedBytesStream.toByteArray();
 
 				return bytesDumped;
 			} catch (Exception exception)

@@ -1,11 +1,14 @@
 package wiiudev.gecko.client.codes;
 
+import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import wiiudev.gecko.client.gui.utilities.XMLHelper;
+import wiiudev.gecko.client.titles.Title;
+import wiiudev.gecko.client.titles.TitleDatabaseManager;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLOutputFactory;
@@ -32,19 +35,19 @@ public class CodeListStorage
 
 	private String codeListFilePath;
 
-	public CodeListStorage(String codeListFilePath) throws IOException
+	public CodeListStorage(String fileName) throws IOException
 	{
 		String desiredExtension = "." + fileExtension;
 
-		if (!codeListFilePath.endsWith(desiredExtension))
+		if (!fileName.endsWith(desiredExtension))
 		{
-			codeListFilePath = codeListFilePath.concat(desiredExtension);
+			fileName = fileName.concat(desiredExtension);
 		}
 
 		createCodesDirectory();
-		codeListFilePath = codesDirectory + File.separator + codeListFilePath;
+		fileName = codesDirectory + File.separator + fileName;
 
-		this.codeListFilePath = codeListFilePath;
+		this.codeListFilePath = fileName;
 		createCodeListFile();
 	}
 
@@ -146,7 +149,7 @@ public class CodeListStorage
 		return codeListFilePath;
 	}
 
-	public String exportCodeList(List<GeckoCode> codeList, String fileName) throws IOException
+	public String exportCodeList(List<CodeListEntry> codeList, String fileName) throws Exception
 	{
 		String targetFilePath = codesDirectory + File.separator + fileName + ".txt";
 		String exportedCodeList = getExportedCodeList(codeList);
@@ -155,11 +158,12 @@ public class CodeListStorage
 		return targetFilePath;
 	}
 
-	private String getExportedCodeList(List<GeckoCode> codeList)
+	private String getExportedCodeList(List<CodeListEntry> codeList) throws Exception
 	{
 		StringBuilder exportedCodeListBuilder = new StringBuilder();
+		exportedCodeListBuilder.append(getGameTitle());
 
-		for (GeckoCode code : codeList)
+		for (CodeListEntry code : codeList)
 		{
 			exportedCodeListBuilder.append(code.toString());
 			exportedCodeListBuilder.append(System.lineSeparator());
@@ -167,6 +171,17 @@ public class CodeListStorage
 		}
 
 		return exportedCodeListBuilder.toString().trim();
+	}
+
+	private String getGameTitle() throws Exception
+	{
+		TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
+		Title title = titleDatabaseManager.getTitleFromGameId(FilenameUtils.getBaseName(codeListFilePath));
+
+		return title.getGameName()
+				+ " [" + title.getGameId() + "]"
+				+ System.lineSeparator()
+				+ System.lineSeparator();
 	}
 
 	private static void writeToFile(String text, String targetFilePath) throws IOException
