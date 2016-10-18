@@ -1,4 +1,3 @@
-import wiiudev.gecko.client.codes.CodeListInformationReader;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 
@@ -6,11 +5,6 @@ public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
-		CodeListInformationReader codeListInformationReader = new CodeListInformationReader();
-		codeListInformationReader.getStartAddress();
-		codeListInformationReader.getEndAddress();
-		codeListInformationReader.getCodeHandlerEnabledAddress();
-
 		System.exit(0);
 
 		Connector.getInstance().connect("192.168.178.35");

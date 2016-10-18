@@ -35,7 +35,7 @@ public class SearchTableContextMenu extends JPopupMenu
 		KeyStroke pokePreviousKeyStroke = PopupMenuUtilities.addOption(this, "Poke Previous", "control P", actionEvent -> pokePreviousValues());
 		KeyStroke pokeCurrentKeyStroke = PopupMenuUtilities.addOption(this, "Poke Current", "control U", actionEvent -> pokeCurrentValues());
 		KeyStroke copyAddressKeyStroke = PopupMenuUtilities.addOption(this, "Copy Address", "control R", actionEvent -> copySelectedAddress());
-		KeyStroke deleteSelectedKeyStroke = PopupMenuUtilities.addOption(this, "Delete", "control D", actionEvent -> deleteSelectedRows());
+		KeyStroke deleteSelectedKeyStroke = PopupMenuUtilities.addOption(this, "Delete", "control E", actionEvent -> deleteSelectedRows());
 
 		JTable table = tableManager.getTable();
 		JTableUtilities.removeAllKeyListeners(table);
