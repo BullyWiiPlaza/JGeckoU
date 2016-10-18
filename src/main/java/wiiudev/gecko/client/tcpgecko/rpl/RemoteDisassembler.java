@@ -60,7 +60,12 @@ public class RemoteDisassembler
 		{
 			RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
 			ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "DisassemblePPCOpcode");
-			remoteProcedureCall.call(exportedSymbol, address, instructionBuffer.getAddress(), instructionBufferLength, findSymbol.getAddress(), 0);
+			remoteProcedureCall.call(exportedSymbol,
+					address,
+					instructionBuffer.getAddress(),
+					instructionBufferLength,
+					findSymbol.getAddress(),
+					0);
 
 			// Read the output buffer's contents
 			MemoryReader memoryReader = new MemoryReader();

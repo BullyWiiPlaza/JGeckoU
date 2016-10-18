@@ -1,5 +1,6 @@
 package wiiudev.gecko.client.codes;
 
+import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 
 import java.io.IOException;
@@ -10,9 +11,24 @@ import java.util.List;
  */
 public class CodeListSender
 {
+	private CodeListInformationReader codeListInformationReader;
+
 	private List<CodeListEntry> codesList;
 	private MemoryWriter memoryWriter;
-	private static int codeListStartingAddress = 0x10015000;
+	private int codeListStartingAddress;
+
+	public CodeListSender()
+	{
+		try
+		{
+			codeListInformationReader = new CodeListInformationReader();
+		} catch (IOException exception)
+		{
+			StackTraceUtils.handleException(null, exception);
+		}
+
+		codeListStartingAddress = codeListInformationReader.getStartAddress();
+	}
 
 	/**
 	 * Sends the current code list
@@ -43,13 +59,13 @@ public class CodeListSender
 	private void setCodeHandlerEnabled(boolean enabled) throws IOException
 	{
 		int value = enabled ? 1 : 0;
-		int codeHandlerEnabledAddress = codeListStartingAddress - 0x304;
+		int codeHandlerEnabledAddress = codeListInformationReader.getCodeHandlerEnabledAddress();
 		memoryWriter.writeInt(codeHandlerEnabledAddress, value);
 	}
 
 	private void clearCodes() throws IOException
 	{
-		int maximumCodeListLength = 0x2000;
+		int maximumCodeListLength = codeListInformationReader.getEndAddress() - codeListStartingAddress;
 		byte[] zeros = new byte[maximumCodeListLength];
 		memoryWriter.writeBytes(codeListStartingAddress, zeros);
 	}
@@ -79,7 +95,7 @@ public class CodeListSender
 			// Write the cheat code bytes
 			memoryWriter.writeBytes(codeListAddress, cheatCodeBytes);
 
-			// Advance to ASSIGN the next cheat code
+			// Advance to write the next cheat code
 			codeListAddress += cheatCodeBytesLength;
 		}
 

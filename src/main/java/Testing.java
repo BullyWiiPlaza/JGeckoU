@@ -1,10 +1,23 @@
+import wiiudev.gecko.client.codes.CodeListInformationReader;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 
 public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
+		CodeListInformationReader codeListInformationReader = new CodeListInformationReader();
+		codeListInformationReader.getStartAddress();
+		codeListInformationReader.getEndAddress();
+		codeListInformationReader.getCodeHandlerEnabledAddress();
+
+		System.exit(0);
+
 		Connector.getInstance().connect("192.168.178.35");
+
+		MemoryReader memoryReader = new MemoryReader();
+		memoryReader.disassembleRange(0x02000000, 0x10);
+		Connector.getInstance().closeConnection();
 		// System.out.println(removeScientificNotation("3.0103E-7"));
 	}
 	// System.out.println(decimalToHex(-20f));

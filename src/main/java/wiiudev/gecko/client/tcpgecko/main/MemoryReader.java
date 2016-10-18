@@ -274,27 +274,25 @@ public class MemoryReader extends TCPGecko
 
 	public int readValue(int targetAddress, ValueSizes valueSize) throws IOException
 	{
-		try (CloseableReentrantLock ignored = reentrantLock.acquire())
+		int currentValue = -1;
+
+		// TODO Refactor this "redundancy"
+		switch (valueSize)
 		{
-			int currentValue = -1;
+			case EIGHT_BIT:
+				currentValue = read(targetAddress);
+				break;
 
-			switch (valueSize)
-			{
-				case EIGHT_BIT:
-					currentValue = read(targetAddress);
-					break;
+			case SIXTEEN_BIT:
+				currentValue = readShort(targetAddress);
+				break;
 
-				case SIXTEEN_BIT:
-					currentValue = readShort(targetAddress);
-					break;
-
-				case THIRTY_TWO_BIT:
-					currentValue = readInt(targetAddress);
-					break;
-			}
-
-			return currentValue;
+			case THIRTY_TWO_BIT:
+				currentValue = readInt(targetAddress);
+				break;
 		}
+
+		return currentValue;
 	}
 
 	public String readValue(int address, ValueSize valueSize) throws IOException
@@ -316,5 +314,16 @@ public class MemoryReader extends TCPGecko
 		}
 
 		return new Hexadecimal((int) readValue, 8).toString();
+	}
+
+	public void disassembleRange(int address, int length) throws IOException
+	{
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
+		{
+			sendCommand(Commands.MEMORY_DISASSEMBLE);
+			dataSender.writeInt(address);
+			dataSender.writeInt(address + length);
+			dataSender.flush();
+		}
 	}
 }

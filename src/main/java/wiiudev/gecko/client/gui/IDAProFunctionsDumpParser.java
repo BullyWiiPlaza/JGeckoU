@@ -1,10 +1,7 @@
 package wiiudev.gecko.client.gui;
 
-import org.apache.commons.io.IOUtils;
+import wiiudev.gecko.client.gui.utilities.ClasspathUtilities;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +20,7 @@ public class IDAProFunctionsDumpParser
 	{
 		try
 		{
-			String string = getClassPathString(fileName);
+			String string = ClasspathUtilities.getClassPathString(fileName);
 			String[] lines = string.split(System.lineSeparator());
 			functionNames = new ArrayList<>();
 
@@ -37,14 +34,6 @@ public class IDAProFunctionsDumpParser
 		{
 			exception.printStackTrace();
 		}
-	}
-
-	private String getClassPathString(String fileName) throws IOException
-	{
-		ClassLoader loader = Thread.currentThread().getContextClassLoader();
-		InputStream inputStream = loader.getResourceAsStream(fileName);
-
-		return IOUtils.toString(inputStream, Charset.defaultCharset());
 	}
 
 	public boolean contains(String functionName)

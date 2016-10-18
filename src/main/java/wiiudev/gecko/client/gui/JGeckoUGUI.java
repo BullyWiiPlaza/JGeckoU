@@ -2589,17 +2589,17 @@ public class JGeckoUGUI extends JFrame
 
 	private void handleDownloadingCodeDatabase()
 	{
+		String buttonText = downloadCodeDatabaseButton.getText();
+		downloadCodeDatabaseButton.setText("Downloading...");
+		downloadCodeDatabaseButton.setEnabled(false);
+
 		new SwingWorker<String, String>()
 		{
 			@Override
 			protected String doInBackground() throws Exception
 			{
-				String buttonText = downloadCodeDatabaseButton.getText();
-
 				try
 				{
-					downloadCodeDatabaseButton.setText("Downloading...");
-					downloadCodeDatabaseButton.setEnabled(false);
 					CodeDatabaseDownloader codeDatabaseDownloader = new CodeDatabaseDownloader(gameId);
 					List<GeckoCode> downloadedCodes = codeDatabaseDownloader.getCodes();
 					int codesCount = downloadedCodes.size();
@@ -2640,13 +2640,16 @@ public class JGeckoUGUI extends JFrame
 				} catch (Exception exception)
 				{
 					StackTraceUtils.handleException(rootPane, exception);
-				} finally
-				{
-					downloadCodeDatabaseButton.setText(buttonText);
-					downloadCodeDatabaseButton.setEnabled(true);
 				}
 
 				return null;
+			}
+
+			@Override
+			protected void done()
+			{
+				downloadCodeDatabaseButton.setText(buttonText);
+				downloadCodeDatabaseButton.setEnabled(true);
 			}
 		}.execute();
 	}
