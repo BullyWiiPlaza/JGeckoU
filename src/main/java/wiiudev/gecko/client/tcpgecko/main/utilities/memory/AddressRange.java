@@ -49,8 +49,8 @@ public class AddressRange
 
 		if (isInRange(address, endAddress, new MemoryRange(0x01000000, 0x01800000)))
 		{
-			// return memoryAccessLevel == MemoryAccessLevel.READ;
-			return true; // Now writing is possible
+			return memoryAccessLevel == MemoryAccessLevel.READ;
+			// return true;
 		} else if (isInRange(address, endAddress, appExecutableLibraries)) // Depends on game
 		{
 			return memoryAccessLevel == MemoryAccessLevel.READ;

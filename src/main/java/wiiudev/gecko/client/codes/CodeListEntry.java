@@ -39,6 +39,13 @@ public class CodeListEntry implements Serializable
 		return comment;
 	}
 
+	public byte[] getCheatCodeBytes()
+	{
+		CheatCodeFormatting cheatCodeFormatting = new CheatCodeFormatting(cheatCode);
+
+		return cheatCodeFormatting.getBytes();
+	}
+
 	@Override
 	public String toString()
 	{

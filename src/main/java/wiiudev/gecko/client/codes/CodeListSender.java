@@ -3,6 +3,7 @@ package wiiudev.gecko.client.codes;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -13,7 +14,7 @@ public class CodeListSender
 {
 	private CodeListInformationReader codeListInformationReader;
 
-	private List<CodeListEntry> codesList;
+	private List<CodeListEntry> codeListEntries;
 	private MemoryWriter memoryWriter;
 	private int codeListStartingAddress;
 
@@ -39,9 +40,9 @@ public class CodeListSender
 	}
 
 	/**
-	 * Clears all codes from the memory AND optionally sends the fresh list
+	 * Clears all codes from the memory and optionally sends the fresh list
 	 *
-	 * @param sendCodes Whether to send codes OR not
+	 * @param sendCodes Whether to send codes or not
 	 */
 	private void clearCodes(boolean sendCodes) throws IOException
 	{
@@ -70,9 +71,9 @@ public class CodeListSender
 		memoryWriter.writeBytes(codeListStartingAddress, zeros);
 	}
 
-	public void setCodesList(List<CodeListEntry> codeListEntries)
+	public void setCodeListEntries(List<CodeListEntry> codeListEntries)
 	{
-		this.codesList = codeListEntries;
+		this.codeListEntries = codeListEntries;
 	}
 
 	/**
@@ -82,22 +83,17 @@ public class CodeListSender
 	{
 		memoryWriter = new MemoryWriter();
 
-		// Start at the beginning of the code list
-		int codeListAddress = codeListStartingAddress;
+		ByteArrayOutputStream codeBytesBuffer = new ByteArrayOutputStream();
 
-		for (CodeListEntry codeListEntry : codesList)
+		for (CodeListEntry codeListEntry : codeListEntries)
 		{
-			String code = codeListEntry.getCode();
-			CheatCodeFormatting cheatCodeFormatting = new CheatCodeFormatting(code);
-			byte[] cheatCodeBytes = cheatCodeFormatting.getBytes();
-			int cheatCodeBytesLength = cheatCodeBytes.length;
-
-			// Write the cheat code bytes
-			memoryWriter.writeBytes(codeListAddress, cheatCodeBytes);
-
-			// Advance to write the next cheat code
-			codeListAddress += cheatCodeBytesLength;
+			byte[] cheatCodeBytes = codeListEntry.getCheatCodeBytes();
+			codeBytesBuffer.write(cheatCodeBytes);
 		}
+
+		// Send all cheat code bytes at once
+		byte[] codeBytes = codeBytesBuffer.toByteArray();
+		memoryWriter.writeBytes(codeListStartingAddress, codeBytes);
 
 		setCodeHandlerEnabled(true);
 	}

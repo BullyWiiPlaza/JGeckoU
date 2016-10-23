@@ -155,18 +155,19 @@ public class MemoryWriter extends TCPGecko
 		for (byte[] bytesChunk : partitionedBytes)
 		{
 			// The end address is the next starting address
-			address = uploadBytes(address, bytesChunk);
+			address = uploadBytes(address, bytesChunk, Commands.MEMORY_UPLOAD);
 		}
 	}
 
-	private int uploadBytes(int address, byte[] bytes) throws IOException
+	private int uploadBytes(int address, byte[] bytes, Commands command) throws IOException
 	{
+		assertMemoryUploadCommand(command);
 		AddressRange.assertValidAccess(address, bytes.length, MemoryAccessLevel.WRITE);
 		int endAddress = address + bytes.length;
 
 		try (CloseableReentrantLock ignored = TCPGecko.reentrantLock.acquire())
 		{
-			sendCommand(Commands.MEMORY_UPLOAD);
+			sendCommand(command);
 			dataSender.writeInt(address);
 			dataSender.writeInt(endAddress);
 			dataSender.write(bytes);
@@ -177,6 +178,15 @@ public class MemoryWriter extends TCPGecko
 		}
 
 		return endAddress;
+	}
+
+	private void assertMemoryUploadCommand(Commands command)
+	{
+		if (!command.equals(Commands.MEMORY_UPLOAD))
+				// && !command.equals(Commands.MEMORY_KERNEL_UPLOAD))
+		{
+			throw new IllegalArgumentException("Must be a memory upload command!");
+		}
 	}
 
 	/**
@@ -201,6 +211,18 @@ public class MemoryWriter extends TCPGecko
 
 		writeBytes(address, bytes);
 	}
+
+	/*public void kernelUploadInts(int address, int[] ints) throws IOException
+	{
+		byte[] bytes = Conversions.toByteArray(ints);
+		List<byte[]> partitionedBytes = ByteUtilities.partition(bytes, MAXIMUM_MEMORY_CHUNK_SIZE);
+
+		for (byte[] bytesChunk : partitionedBytes)
+		{
+			// The end address is the next starting address
+			address = uploadBytes(address, bytesChunk, Commands.MEMORY_KERNEL_UPLOAD);
+		}
+	}*/
 
 	public void kernelWriteInt(int address, int value) throws IOException
 	{
@@ -237,16 +259,16 @@ public class MemoryWriter extends TCPGecko
 		return byteBuffer.array();
 	}
 
-	public static class ByteUtilities
+	private static class ByteUtilities
 	{
-		public static List<byte[]> readPartitionedBytes(Path sourcePath, int chunkSize) throws IOException
+		static List<byte[]> readPartitionedBytes(Path sourcePath, int chunkSize) throws IOException
 		{
 			byte[] fileBytes = Files.readAllBytes(sourcePath);
 
 			return partition(fileBytes, chunkSize);
 		}
 
-		public static List<byte[]> partition(byte[] bytes, int chunkSize)
+		static List<byte[]> partition(byte[] bytes, int chunkSize)
 		{
 			List<byte[]> byteArrayChunks = new ArrayList<>();
 			int startingIndex = 0;

@@ -1,16 +1,24 @@
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 
 public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
-		System.exit(0);
-
 		Connector.getInstance().connect("192.168.178.35");
 
+		MemoryWriter memoryWriter = new MemoryWriter();
+		int address = 0x11000000;
+		memoryWriter.writeBytes(address, new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
 		MemoryReader memoryReader = new MemoryReader();
-		memoryReader.disassembleRange(0x02000000, 0x10);
+		int i = memoryReader.readInt(address);
+		System.out.println(Integer.toHexString(i).toUpperCase());
+		address += 4;
+		i = memoryReader.readInt(address);
+		System.out.println(Integer.toHexString(i).toUpperCase());
+		/*MemoryReader memoryReader = new MemoryReader();
+		memoryReader.disassembleRange(0x02000000, 0x10);*/
 		Connector.getInstance().closeConnection();
 		// System.out.println(removeScientificNotation("3.0103E-7"));
 	}

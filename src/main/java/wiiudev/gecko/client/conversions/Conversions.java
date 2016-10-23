@@ -353,4 +353,13 @@ public class Conversions
 		coordinatesBuilder.append("]");
 		return coordinatesBuilder.toString();
 	}
+
+	public static byte[] toByteArray(int[] ints)
+	{
+		ByteBuffer byteBuffer = ByteBuffer.allocate(ints.length * 4);
+		IntBuffer intBuffer = byteBuffer.asIntBuffer();
+		intBuffer.put(ints);
+
+		return byteBuffer.array();
+	}
 }

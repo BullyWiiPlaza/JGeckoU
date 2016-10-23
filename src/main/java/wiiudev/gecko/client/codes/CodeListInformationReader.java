@@ -15,10 +15,11 @@ public class CodeListInformationReader
 		components = new int[codeListInformationLines.length];
 		int componentIndex = 0;
 
-		for(String codeListInformationLine : codeListInformationLines)
+		for (String codeListInformationLine : codeListInformationLines)
 		{
-			String[] lineComponents = codeListInformationLine.split("= ");
+			String[] lineComponents = codeListInformationLine.split("=");
 			String address = lineComponents[1];
+			address = address.trim();
 			components[componentIndex] = Integer.parseUnsignedInt(address, 16);
 			componentIndex++;
 		}

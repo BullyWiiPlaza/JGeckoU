@@ -3161,7 +3161,7 @@ public class JGeckoUGUI extends JFrame
 		try
 		{
 			List<CodeListEntry> codeListEntries = codesListManager.getActiveCodes();
-			codeListSender.setCodesList(codeListEntries);
+			codeListSender.setCodeListEntries(codeListEntries);
 			codeListSender.applyCodes();
 
 			JOptionPane.showMessageDialog(rootPane,
