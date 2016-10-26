@@ -1,0 +1,3 @@
+Code List Starting Address = 10015000
+Code List End Address = 10017000
+Code Handler Enabled Address = 10014CFC
