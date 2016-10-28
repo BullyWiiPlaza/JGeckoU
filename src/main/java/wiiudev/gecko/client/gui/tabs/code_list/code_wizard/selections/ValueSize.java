@@ -1,6 +1,9 @@
 package wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections;
 
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
+
+import java.io.IOException;
 
 public enum ValueSize
 {
@@ -46,5 +49,27 @@ public enum ValueSize
 	public String toString()
 	{
 		return text;
+	}
+
+	public String readValue(int address) throws IOException
+	{
+		long readValue = -1;
+		MemoryReader memoryReader = new MemoryReader();
+
+		switch (this)
+		{
+			case EIGHT_BIT:
+				readValue = memoryReader.read(address);
+				break;
+			case SIXTEEN_BIT:
+				readValue = memoryReader.readShort(address);
+				break;
+
+			case THIRTY_TWO_BIT:
+				readValue = memoryReader.readInt(address);
+				break;
+		}
+
+		return new Hexadecimal((int) readValue, 8).toString();
 	}
 }

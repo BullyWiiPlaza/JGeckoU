@@ -1,6 +1,6 @@
 package wiiudev.gecko.client.tcpgecko.main;
 
-import wiiudev.gecko.client.tcpgecko.main.enumerations.Commands;
+import wiiudev.gecko.client.tcpgecko.main.enumerations.Command;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.DataConversions;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
@@ -24,9 +24,9 @@ public class MemoryWriter extends TCPGecko
 	 *
 	 * @param address The address to write to
 	 * @param value   The value to write
-	 * @param command The {@link Commands} to execute
+	 * @param command The {@link Command} to execute
 	 */
-	private void sendWriteCommand(int address, int value, Commands command) throws IOException
+	private void sendWriteCommand(int address, int value, Command command) throws IOException
 	{
 		int integerLength = 4;
 		AddressRange.assertValidAccess(address, integerLength, MemoryAccessLevel.WRITE);
@@ -48,7 +48,7 @@ public class MemoryWriter extends TCPGecko
 	 */
 	public void write(int address, byte value) throws IOException
 	{
-		sendWriteCommand(address, value, Commands.MEMORY_POKE_8);
+		sendWriteCommand(address, value, Command.MEMORY_POKE_8);
 	}
 
 	/**
@@ -59,7 +59,7 @@ public class MemoryWriter extends TCPGecko
 	 */
 	public void writeShort(int address, short value) throws IOException
 	{
-		sendWriteCommand(address, value, Commands.MEMORY_POKE_16);
+		sendWriteCommand(address, value, Command.MEMORY_POKE_16);
 	}
 
 	/**
@@ -70,7 +70,7 @@ public class MemoryWriter extends TCPGecko
 	 */
 	public void writeInt(int address, int value) throws IOException
 	{
-		sendWriteCommand(address, value, Commands.MEMORY_POKE_32);
+		sendWriteCommand(address, value, Command.MEMORY_POKE_32);
 	}
 
 	/**
@@ -155,11 +155,11 @@ public class MemoryWriter extends TCPGecko
 		for (byte[] bytesChunk : partitionedBytes)
 		{
 			// The end address is the next starting address
-			address = uploadBytes(address, bytesChunk, Commands.MEMORY_UPLOAD);
+			address = uploadBytes(address, bytesChunk, Command.MEMORY_UPLOAD);
 		}
 	}
 
-	private int uploadBytes(int address, byte[] bytes, Commands command) throws IOException
+	private int uploadBytes(int address, byte[] bytes, Command command) throws IOException
 	{
 		assertMemoryUploadCommand(command);
 		AddressRange.assertValidAccess(address, bytes.length, MemoryAccessLevel.WRITE);
@@ -180,10 +180,10 @@ public class MemoryWriter extends TCPGecko
 		return endAddress;
 	}
 
-	private void assertMemoryUploadCommand(Commands command)
+	private void assertMemoryUploadCommand(Command command)
 	{
-		if (!command.equals(Commands.MEMORY_UPLOAD))
-				// && !command.equals(Commands.MEMORY_KERNEL_UPLOAD))
+		if (!command.equals(Command.MEMORY_UPLOAD))
+				// && !command.equals(Command.MEMORY_KERNEL_UPLOAD))
 		{
 			throw new IllegalArgumentException("Must be a memory upload command!");
 		}
@@ -220,7 +220,7 @@ public class MemoryWriter extends TCPGecko
 		for (byte[] bytesChunk : partitionedBytes)
 		{
 			// The end address is the next starting address
-			address = uploadBytes(address, bytesChunk, Commands.MEMORY_KERNEL_UPLOAD);
+			address = uploadBytes(address, bytesChunk, Command.MEMORY_KERNEL_UPLOAD);
 		}
 	}*/
 
@@ -228,7 +228,7 @@ public class MemoryWriter extends TCPGecko
 	{
 		try (CloseableReentrantLock ignored = TCPGecko.reentrantLock.acquire())
 		{
-			sendCommand(Commands.MEMORY_KERNEL_WRITE);
+			sendCommand(Command.MEMORY_KERNEL_WRITE);
 			dataSender.writeInt(address);
 			dataSender.writeInt(value);
 			dataSender.flush();

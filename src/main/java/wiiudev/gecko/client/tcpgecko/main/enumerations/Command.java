@@ -5,7 +5,7 @@ package wiiudev.gecko.client.tcpgecko.main.enumerations;
  *
  * @author gudenau
  */
-public enum Commands
+public enum Command
 {
 	MEMORY_POKE_8(0x01),
 	MEMORY_POKE_16(0x02),
@@ -21,6 +21,7 @@ public enum Commands
 	RPC(0x70),
 	GET_SYMBOL(0x71),
 	MEMORY_SEARCH_32(0x72),
+	MEMORY_SEARCH(0x73),
 	RPC_BIG(0x80),
 	GET_VERSION(0x99),
 	GET_OS_VERSION(0x9A),
@@ -28,7 +29,7 @@ public enum Commands
 
 	public final byte value;
 
-	Commands(int value)
+	Command(int value)
 	{
 		this.value = (byte) value;
 	}

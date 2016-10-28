@@ -3,7 +3,7 @@ package wiiudev.gecko.client.tcpgecko.rpl;
 import wiiudev.gecko.client.tcpgecko.main.CloseableReentrantLock;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
-import wiiudev.gecko.client.tcpgecko.main.enumerations.Commands;
+import wiiudev.gecko.client.tcpgecko.main.enumerations.Command;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,7 +26,7 @@ public class RemoteProcedureCall extends TCPGecko
 
 		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
-			sendCommand(Commands.GET_SYMBOL);
+			sendCommand(Command.GET_SYMBOL);
 
 			dataSender.writeByte(symbolRequest.size());
 			dataSender.write(symbolRequest.toByteArray());
@@ -112,8 +112,8 @@ public class RemoteProcedureCall extends TCPGecko
 		int paddingIntegersCount = getPaddingIntegersCount(parameters);
 		int totalParametersCount = parameters.length + paddingIntegersCount;
 
-		Commands command = totalParametersCount == SMALL_RPC_PARAMETERS_COUNT
-				? Commands.RPC : Commands.RPC_BIG;
+		Command command = totalParametersCount == SMALL_RPC_PARAMETERS_COUNT
+				? Command.RPC : Command.RPC_BIG;
 
 
 		int functionAddress = exportedSymbol.getAddress();

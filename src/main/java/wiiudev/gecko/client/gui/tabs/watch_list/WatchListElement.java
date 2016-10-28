@@ -2,7 +2,6 @@ package wiiudev.gecko.client.gui.tabs.watch_list;
 
 import wiiudev.gecko.client.gui.MemoryPointerExpression;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.ValueSize;
-import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 
 import java.io.IOException;
 import java.util.Vector;
@@ -52,8 +51,7 @@ public class WatchListElement
 			return "INVALID";
 		} else
 		{
-			MemoryReader memoryReader = new MemoryReader();
-			return memoryReader.readValue(destinationAddress, valueSize);
+			return valueSize.readValue(destinationAddress);
 		}
 	}
 }

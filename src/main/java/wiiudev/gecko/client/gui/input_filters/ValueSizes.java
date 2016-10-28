@@ -1,5 +1,9 @@
 package wiiudev.gecko.client.gui.input_filters;
 
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
+
+import java.io.IOException;
+
 public enum ValueSizes
 {
 	EIGHT_BIT("8-Bit", 2),
@@ -24,5 +28,28 @@ public enum ValueSizes
 	public String toString()
 	{
 		return text;
+	}
+
+	public int readValue(int targetAddress) throws IOException
+	{
+		int currentValue = -1;
+		MemoryReader memoryReader = new MemoryReader();
+
+		switch (this)
+		{
+			case EIGHT_BIT:
+				currentValue = memoryReader.read(targetAddress);
+				break;
+
+			case SIXTEEN_BIT:
+				currentValue = memoryReader.readShort(targetAddress);
+				break;
+
+			case THIRTY_TWO_BIT:
+				currentValue = memoryReader.readInt(targetAddress);
+				break;
+		}
+
+		return currentValue;
 	}
 }

@@ -10,7 +10,7 @@ public class AddressRange
 	// Use default values at first
 	public static MemoryRange appExecutableLibraries = new MemoryRange(0x01800000, 0x10000000 - 1);
 	public static MemoryRange mem2Region = new MemoryRange(0x10000000, 0x50000000);
-	public static MemoryRange kernelMapping = new MemoryRange(0xA0000000, 0xB0000000);
+	private static MemoryRange kernelMapping = new MemoryRange(0xA0000000, 0xB0000000);
 
 	public static void assertValidAccess(int address, int length, MemoryAccessLevel memoryAccessLevel)
 	{

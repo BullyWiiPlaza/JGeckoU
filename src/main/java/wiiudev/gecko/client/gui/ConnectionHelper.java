@@ -23,7 +23,7 @@ public class ConnectionHelper
 
 		addHyperLinkListener(aboutPane);
 
-		JOptionPane.showMessageDialog(rootPane, aboutPane, "Connector Help", JOptionPane.INFORMATION_MESSAGE);
+		JOptionPane.showMessageDialog(rootPane, aboutPane, "Connection Help", JOptionPane.INFORMATION_MESSAGE);
 	}
 
 	public static void addHyperLinkListener(JEditorPane editorPane)

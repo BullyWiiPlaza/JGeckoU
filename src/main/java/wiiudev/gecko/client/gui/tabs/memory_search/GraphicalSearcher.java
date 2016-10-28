@@ -54,12 +54,12 @@ public class GraphicalSearcher
 					// Read in chunks
 					while (length > 0)
 					{
-						int bytesToDump = Math.min(length, TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
-						byte[] readBytes = memoryReader.readBytes(bytesToDump);
+						int bytesToRead = Math.min(length, TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
+						byte[] readBytes = memoryReader.readBytes(bytesToRead);
 						dumpedBytesStream.write(readBytes);
 
-						length -= bytesToDump;
-						bytesDumped += bytesToDump;
+						length -= bytesToRead;
+						bytesDumped += bytesToRead;
 						ProgressVisualization.updateProgress("Dumped Bytes", bytesDumped, startingBytesCount);
 
 						if (JGeckoUGUI.getInstance().isDumpingCanceled())

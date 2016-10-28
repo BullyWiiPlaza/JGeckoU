@@ -1,11 +1,8 @@
 package wiiudev.gecko.client.tcpgecko.main;
 
-import wiiudev.gecko.client.gui.input_filters.ValueSizes;
-import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.ValueSize;
-import wiiudev.gecko.client.tcpgecko.main.enumerations.Commands;
+import wiiudev.gecko.client.tcpgecko.main.enumerations.Command;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Status;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.DataConversions;
-import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
 
@@ -76,7 +73,7 @@ public class MemoryReader extends TCPGecko
 	{
 		byte[] bytesRead;
 		StringBuilder stringBuilder = new StringBuilder();
-		int byteBufferSize = 100; // The amount of bytes to read AND inspect at once
+		int byteBufferSize = 100; // The amount of bytes to read and inspect at once
 
 		while (true)
 		{
@@ -117,7 +114,7 @@ public class MemoryReader extends TCPGecko
 	{
 		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
-			sendCommand(Commands.GET_OS_VERSION);
+			sendCommand(Command.GET_OS_VERSION);
 			dataSender.flush();
 
 			return dataReceiver.readInt();
@@ -128,23 +125,46 @@ public class MemoryReader extends TCPGecko
 	 * Searches the server's memory starting at <code>address</code> for <code>value</code> for <code>length</code> amount of bytes
 	 *
 	 * @param address The address to start searching at
-	 * @param value   The value to search_old for
-	 * @param length  The maximum range of the search_old
-	 * @return The address where <code>value</code> occurred the first time OR 0 if not found
+	 * @param length  The maximum range of the search
+	 * @param value   The value to search for
+	 * @return The address where <code>value</code> occurred the first time or 0 if not found
 	 */
-	public int search(int address, int value, int length) throws IOException
+	public int search(int address, int length, int value) throws IOException
 	{
 		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
-			AddressRange.assertValidAccess(address, 4, MemoryAccessLevel.READ);
+			AddressRange.assertValidAccess(address, length, MemoryAccessLevel.READ);
 
-			sendCommand(Commands.MEMORY_SEARCH_32);
-			dataSender.write(address);
-			dataSender.write(value);
-			dataSender.write(length);
+			sendCommand(Command.MEMORY_SEARCH_32);
+			dataSender.writeInt(address);
+			dataSender.writeInt(value);
+			dataSender.writeInt(length);
 			dataSender.flush();
 
-			return dataReceiver.read();
+			return dataReceiver.readInt();
+		}
+	}
+
+	public int search(int address, int length, byte[] bytes) throws IOException
+	{
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
+		{
+			AddressRange.assertValidAccess(address, length + bytes.length, MemoryAccessLevel.READ);
+
+			sendCommand(Command.MEMORY_SEARCH);
+
+			ByteBuffer byteBuffer = ByteBuffer.allocate(TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
+			byteBuffer.putInt(address);
+			byteBuffer.putInt(address + length);
+			byteBuffer.putInt(bytes.length);
+			byteBuffer.put(bytes);
+			byte[] paddingBytes = new byte[TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE - byteBuffer.array().length];
+			byteBuffer.put(paddingBytes);
+			// System.out.println(Arrays.toString(byteBuffer.array()));
+			dataSender.write(byteBuffer.array());
+			dataSender.flush();
+
+			return dataReceiver.readInt();
 		}
 	}
 
@@ -152,7 +172,7 @@ public class MemoryReader extends TCPGecko
 	{
 		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
-			sendCommand(Commands.GET_STATUS);
+			sendCommand(Command.GET_STATUS);
 			dataSender.flush();
 
 			Status receivedStatus = readStatus();
@@ -169,7 +189,7 @@ public class MemoryReader extends TCPGecko
 		{
 			AddressRange.assertValidAccess(address, 4, MemoryAccessLevel.READ);
 
-			sendCommand(Commands.MEMORY_KERNEL_READ);
+			sendCommand(Command.MEMORY_KERNEL_READ);
 			dataSender.writeInt(address);
 			dataSender.flush();
 
@@ -237,7 +257,7 @@ public class MemoryReader extends TCPGecko
 
 		try
 		{
-			sendCommand(Commands.MEMORY_READ);
+			sendCommand(Command.MEMORY_READ);
 			dataSender.writeInt(address);
 			dataSender.writeInt(address + length);
 			dataSender.flush();
@@ -264,7 +284,7 @@ public class MemoryReader extends TCPGecko
 	{
 		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
-			sendCommand(Commands.MEMORY_KERNEL_READ);
+			sendCommand(Command.MEMORY_KERNEL_READ);
 			dataSender.writeInt(address);
 			dataSender.flush();
 
@@ -272,55 +292,11 @@ public class MemoryReader extends TCPGecko
 		}
 	}
 
-	public int readValue(int targetAddress, ValueSizes valueSize) throws IOException
-	{
-		int currentValue = -1;
-
-		// TODO Refactor this "redundancy"
-		switch (valueSize)
-		{
-			case EIGHT_BIT:
-				currentValue = read(targetAddress);
-				break;
-
-			case SIXTEEN_BIT:
-				currentValue = readShort(targetAddress);
-				break;
-
-			case THIRTY_TWO_BIT:
-				currentValue = readInt(targetAddress);
-				break;
-		}
-
-		return currentValue;
-	}
-
-	public String readValue(int address, ValueSize valueSize) throws IOException
-	{
-		long readValue = -1;
-
-		switch (valueSize)
-		{
-			case EIGHT_BIT:
-				readValue = read(address);
-				break;
-			case SIXTEEN_BIT:
-				readValue = readShort(address);
-				break;
-
-			case THIRTY_TWO_BIT:
-				readValue = readInt(address);
-				break;
-		}
-
-		return new Hexadecimal((int) readValue, 8).toString();
-	}
-
 	public void disassembleRange(int address, int length) throws IOException
 	{
 		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
-			sendCommand(Commands.MEMORY_DISASSEMBLE);
+			sendCommand(Command.MEMORY_DISASSEMBLE);
 			dataSender.writeInt(address);
 			dataSender.writeInt(address + length);
 			dataSender.flush();

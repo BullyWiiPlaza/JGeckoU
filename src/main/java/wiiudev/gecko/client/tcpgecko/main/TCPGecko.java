@@ -1,6 +1,6 @@
 package wiiudev.gecko.client.tcpgecko.main;
 
-import wiiudev.gecko.client.tcpgecko.main.enumerations.Commands;
+import wiiudev.gecko.client.tcpgecko.main.enumerations.Command;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Status;
 
 import java.io.DataInputStream;
@@ -12,7 +12,7 @@ public abstract class TCPGecko
 	protected DataOutputStream dataSender;
 	protected DataInputStream dataReceiver;
 	public static final CloseableReentrantLock reentrantLock = new CloseableReentrantLock();
-	public static final int MAXIMUM_MEMORY_CHUNK_SIZE = 0x400;
+	public static int MAXIMUM_MEMORY_CHUNK_SIZE = runningFromIntelliJ() ? 0x5000 : 0x400;
 	public static boolean enforceMemoryAccessProtection = true;
 	public static boolean hasRequestedBytes = false;
 
@@ -49,13 +49,19 @@ public abstract class TCPGecko
 		}
 	}
 
+	private static boolean runningFromIntelliJ()
+	{
+		String classPath = System.getProperty("java.class.path");
+		return classPath.contains("IntelliJ IDEA");
+	}
+
 	/**
 	 * Sends a command to the Wii U
 	 *
 	 * @param command The command to send
 	 * @throws IOException If there was an error writing to the Wii U
 	 */
-	protected void sendCommand(Commands command) throws IOException
+	protected void sendCommand(Command command) throws IOException
 	{
 		dataSender.write(command.value);
 	}

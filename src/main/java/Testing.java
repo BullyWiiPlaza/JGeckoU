@@ -1,6 +1,5 @@
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
-import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 
 public class Testing
 {
@@ -8,6 +7,20 @@ public class Testing
 	{
 		Connector.getInstance().connect("192.168.178.35");
 
+		// RemoteDisassembler.disassembleRange(0x01000000, 0x8);
+
+		MemoryReader memoryReader = new MemoryReader();
+		int address = memoryReader.search(0x10000000, 0x1000000, new byte[]{0x73, 0x68, 0x6F, 0x75});
+		System.out.println(Integer.toHexString(address));
+
+		/*MemoryReader memoryReader = new MemoryReader();
+		byte[] bytes = memoryReader.readBytes(0x10000000, 0x2000);
+		Files.write(Paths.get("file4.bin"), bytes);*/
+
+
+
+		/*MemoryWriter memoryWriter = new MemoryWriter();
+		memoryWriter.kernelWriteInt(0x01100000, 0x60000000);
 		MemoryWriter memoryWriter = new MemoryWriter();
 		int address = 0x11000000;
 		memoryWriter.writeBytes(address, new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08});
@@ -16,7 +29,7 @@ public class Testing
 		System.out.println(Integer.toHexString(i).toUpperCase());
 		address += 4;
 		i = memoryReader.readInt(address);
-		System.out.println(Integer.toHexString(i).toUpperCase());
+		System.out.println(Integer.toHexString(i).toUpperCase());*/
 		/*MemoryReader memoryReader = new MemoryReader();
 		memoryReader.disassembleRange(0x02000000, 0x10);*/
 		Connector.getInstance().closeConnection();

@@ -1,7 +1,4 @@
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
@@ -51,21 +48,20 @@ public class TCPGeckoTesting
 		long titleID = CoreInit.getTitleID();
 		System.out.println(titleID);
 
-		/*if(TitleDatabaseManager.isPlaying("Call of Duty: Black Ops II"))
-		{
-			RemoteProcedureCall remoteProcedureCall = new RemoteProcedureCall();
-			ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("t6mp_cafef_rpl.rpl", "Com_SessionMode_IsPublicOnlineGame");
-			System.out.println(new Hexadecimal(exportedSymbol.getAddress()));
-			// long result = exportedSymbol.callInt();
-			// System.out.println(result);
-		}*/
+		boolean readable = CoreInit.isAddressReadable(0x01000000);
+		Assert.assertTrue(readable);
+		readable = CoreInit.isAddressReadable(0x01000000 - 1);
+		Assert.assertFalse(readable);
+
+		int cores = CoreInit.getOSCoreCount();
+		Assert.assertEquals(cores, 3);
 	}
 
 	@Test
 	public void testRemoteDisassembler() throws IOException
 	{
 		String disassembled = RemoteDisassembler.disassembleValue(0x60000000);
-		Assert.assertEquals(disassembled, "ori r0, r0, 0");
+		Assert.assertEquals(disassembled, "nop");
 
 		disassembled = RemoteDisassembler.disassembleAddress(0x01087BC0);
 		Assert.assertEquals(disassembled, "addi r11, r11, 4");
@@ -83,7 +79,7 @@ public class TCPGeckoTesting
 		Assert.assertEquals(allocated, allocated2);
 	}
 
-	@Test
+	@Ignore
 	public void testThreads() throws Exception
 	{
 		List<OSThread> osThreads = OSThread.readThreads();
@@ -113,7 +109,7 @@ public class TCPGeckoTesting
 		}
 	}
 
-	@Test
+	@Ignore
 	public void testFileSystem() throws IOException
 	{
 		List<DirectoryEntry> directoryEntries = new ArrayList<>();
@@ -312,6 +308,13 @@ public class TCPGeckoTesting
 		Path path = getDumpFile();
 		byte[] savedBytes = Files.readAllBytes(path);
 		Assert.assertTrue(Arrays.equals(largeBytes, savedBytes));
+
+		int kernelInt = memoryReader.kernelReadInt(0x01000000);
+		Assert.assertEquals(kernelInt, 0x38005E00);
+
+		int ret = memoryReader.search(0x10000000, 0x10000, 0x4E554C4C);
+		System.out.println(ret);
+		Assert.assertEquals(ret, 0x10004744);
 	}
 
 	private Path getDumpFile() throws URISyntaxException
@@ -373,6 +376,13 @@ public class TCPGeckoTesting
 		memoryWriter.writeShort(0x1000003A, (short) 0);
 		readShort = memoryReader.readInt(0x10000038);
 		Assert.assertEquals(readShort, 0x2E0A0000);
+
+		/*memoryWriter.kernelWriteInt(0x01100000, 0x12345678);
+		int readKernelInt = memoryReader.kernelReadInt(0x01100000);
+		Assert.assertEquals(readKernelInt, 0x12345678);
+		memoryWriter.kernelWriteInt(0x01100000, 0x0);
+		readKernelInt = memoryReader.kernelReadInt(0x01100000);
+		Assert.assertEquals(readKernelInt, 0);*/
 	}
 
 	@AfterClass

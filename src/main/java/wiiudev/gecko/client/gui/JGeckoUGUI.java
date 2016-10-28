@@ -75,7 +75,6 @@ public class JGeckoUGUI extends JFrame
 {
 	private JPanel rootPanel;
 	private JButton connectButton;
-	private JButton disconnectButton;
 	private JTextField searchStartingAddressField;
 	private JTextField searchEndingAddressField;
 	private JComboBox<SearchConditions> searchConditionComboBox;
@@ -94,7 +93,6 @@ public class JGeckoUGUI extends JFrame
 	private JButton updateGameTitlesButton;
 	private JList<JCheckBox> codesListBoxes;
 	private JButton storeCodeListButton;
-	private JButton reconnectButton;
 	private JButton loadCodeListButton;
 	private JButton hexadecimalUTF8Button;
 	private JButton UTF8HexadecimalButton;
@@ -192,6 +190,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton cancelDumpButton;
 	private JCheckBox interruptsCheckBox;
 	private JCheckBox searchAlignedCheckBox;
+	private JButton coresCountButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -217,9 +216,12 @@ public class JGeckoUGUI extends JFrame
 	private static JGeckoUGUI instance;
 	private boolean dumpingCanceled;
 	private boolean dumpingMemory;
+	private Connector connector;
 
 	private JGeckoUGUI()
 	{
+		connector = Connector.getInstance();
+
 		addFormDesignerPanel();
 		setFrameProperties();
 		addTabsChangedListener();
@@ -1186,7 +1188,7 @@ public class JGeckoUGUI extends JFrame
 		convertEffectiveToPhysicalButton.addActionListener(actionEvent ->
 		{
 			String suppliedInput = JOptionPane.showInputDialog(this,
-					"Please enter the effective hexadecimal address to FLOAT_TO_INT:",
+					"Please enter the effective hexadecimal address to convert:",
 					convertEffectiveToPhysicalButton.getText(),
 					JOptionPane.INFORMATION_MESSAGE);
 
@@ -1196,9 +1198,12 @@ public class JGeckoUGUI extends JFrame
 				{
 					int address = Integer.parseUnsignedInt(suppliedInput, 16);
 					int physical = CoreInit.getEffectiveToPhysical(address);
+					boolean readable = CoreInit.isAddressReadable(address);
 
 					JOptionPane.showMessageDialog(this,
-							new Hexadecimal(physical, 8),
+							"Physical Address: " + new Hexadecimal(physical, 8)
+									+ System.lineSeparator()
+									+ "Readable: " + readable,
 							convertEffectiveToPhysicalButton.getText(),
 							JOptionPane.INFORMATION_MESSAGE);
 				} catch (Exception exception)
@@ -1349,6 +1354,21 @@ public class JGeckoUGUI extends JFrame
 								+ "MEM2 Region: " + AddressRange.mem2Region,
 						memoryBoundsButton.getText(),
 						JOptionPane.INFORMATION_MESSAGE));
+
+		coresCountButton.addActionListener(e ->
+		{
+			try
+			{
+				int coresCount = CoreInit.getOSCoreCount();
+				JOptionPane.showMessageDialog(this,
+						coresCount,
+						coresCountButton.getText(),
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (IOException exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
 	}
 
 	private void configureMiscellaneousTab()
@@ -2322,7 +2342,7 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		memoryViewerValueField.setDocument(new InputLengthFilter(ValueSizes.THIRTY_TWO_BIT.getSize()));
+		HexadecimalInputFilter.setHexadecimalInputFilter(memoryViewerValueField, ValueSizes.THIRTY_TWO_BIT.getSize());
 		new DefaultContextMenu().addTo(memoryViewerValueField);
 
 		memoryViewerValueField.addKeyListener(new KeyAdapter()
@@ -2337,6 +2357,7 @@ public class JGeckoUGUI extends JFrame
 
 			public void keyPressed(KeyEvent keyEvent)
 			{
+				// Press Enter to poke
 				if (keyEvent.getKeyCode() == KeyEvent.VK_ENTER
 						&& updateMemoryViewerButton.isEnabled())
 				{
@@ -2430,7 +2451,8 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		new DefaultContextMenu().addTo(searchLengthField);
+		HexadecimalInputFilter.setHexadecimalInputFilter(searchLengthField);
+		DefaultContextMenu.addDefaultContextMenu(searchLengthField);
 
 		searchLengthField.getDocument().addDocumentListener(new DocumentListener()
 		{
@@ -2453,7 +2475,7 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		searchLengthField.setText("1000");
+		searchLengthField.setText("10000000");
 	}
 
 	private void setMemoryViewerSearchButtonAvailability()
@@ -2488,7 +2510,7 @@ public class JGeckoUGUI extends JFrame
 	private void changePokeValueSize(int byteValueSize)
 	{
 		String currentValue = memoryViewerValueField.getText();
-		memoryViewerValueField.setDocument(new InputLengthFilter(byteValueSize));
+		HexadecimalInputFilter.setHexadecimalInputFilter(memoryViewerValueField, byteValueSize);
 
 		// Cut the value if it is too big
 		if (currentValue.length() > byteValueSize)
@@ -2508,26 +2530,27 @@ public class JGeckoUGUI extends JFrame
 
 	private void performMemoryViewerSearch()
 	{
-		int selectedAddress = Conversions.toDecimal(memoryViewerAddressField.getText());
-		int searchValue = Conversions.toDecimal(memoryViewerValueField.getText());
+		int address = Conversions.toDecimal(memoryViewerAddressField.getText());
+		int value = Conversions.toDecimal(memoryViewerValueField.getText());
 		int length = Conversions.toDecimal(searchLengthField.getText());
 		MemoryReader memoryReader = new MemoryReader();
 
 		try
 		{
-			int foundAddress = memoryReader.search(selectedAddress, searchValue, length);
+			int foundAddress = memoryReader.search(address + 4, length, value);
 
 			// Value found in the given range?
 			if (foundAddress != 0)
 			{
 				// Yes, update the cells
-				memoryViewerTableManager.updateCells(foundAddress, false);
+				// memoryViewerTableManager.updateCells(foundAddress, false);
 				memoryViewerAddressField.setText(Conversions.toHexadecimal(foundAddress));
+				updateMemoryViewer(false, true);
 			} else
 			{
 				// No, tell the user
 				JOptionPane.showMessageDialog(rootPane,
-						"Value " + Conversions.toHexadecimal(searchValue) + " has not been found between address " + Conversions.toHexadecimal(selectedAddress) + " and " + Conversions.toHexadecimal(selectedAddress + length) + "!",
+						"Value " + Conversions.toHexadecimal(value) + " has not been found between address " + Conversions.toHexadecimal(address) + " and " + Conversions.toHexadecimal(address + length) + "!",
 						"Error",
 						JOptionPane.INFORMATION_MESSAGE);
 			}
@@ -2684,8 +2707,6 @@ public class JGeckoUGUI extends JFrame
 		new DefaultContextMenu().addTo(ipAddressField);
 		connectButton.addActionListener(actionEvent -> connect());
 		autoDetectCheckBox.addActionListener(actionEvent -> setConnectionButtonsAvailability());
-		reconnectButton.addActionListener(actionEvent -> reconnect());
-		disconnectButton.addActionListener(actionEvent -> disconnect());
 		connectionHelpButton.addActionListener(actionEvent -> displayConnectionHelperMessage());
 		codesListManager = new CodesListManager(codesListBoxes, rootPane);
 		codesListManager.addCodeListEntryClickedListener();
@@ -2765,7 +2786,7 @@ public class JGeckoUGUI extends JFrame
 		{
 			ValueSizes valueSize = (ValueSizes) valueSizePokeComboBox.getSelectedItem();
 			int targetAddress = Conversions.toDecimal(memoryViewerAddressField.getText());
-			int currentValue = new MemoryReader().readValue(targetAddress, valueSize);
+			int currentValue = valueSize.readValue(targetAddress);
 			int newValue = applySelectedPokeOperation(currentValue);
 			MemoryWriter memoryWriter = new MemoryWriter();
 
@@ -3302,11 +3323,10 @@ public class JGeckoUGUI extends JFrame
 	{
 		try
 		{
-			Connector.getInstance().closeConnection();
+			connector.closeConnection();
 			connectButton.setText(connectButtonText);
 			setTitle(programName);
 			setConnectionButtonsAvailability();
-			// codesListManager.clearCodeList();
 		} catch (Exception ioException)
 		{
 			StackTraceUtils.handleException(rootPane, ioException);
@@ -3318,63 +3338,74 @@ public class JGeckoUGUI extends JFrame
 	 */
 	private void connect()
 	{
-		new SwingWorker<String, String>()
+		if (TCPGecko.isConnected())
 		{
-			@Override
-			protected String doInBackground() throws Exception
+			disconnect();
+		} else
+		{
+			connectButton.setText("Connecting...");
+			connecting = true;
+			setConnectionButtonsAvailability();
+
+			new SwingWorker<String, String>()
 			{
-				programTabs.setEnabled(false);
-				connectButton.setText("Connecting...");
-				connecting = true;
-				setConnectionButtonsAvailability();
-
-				try
+				@Override
+				protected String doInBackground() throws Exception
 				{
-					String detectedIPAddress;
-
-					if (autoDetectCheckBox.isSelected())
+					try
 					{
-						if (connectedIPAddress == null)
+						String ipAddress;
+
+						if (autoDetectCheckBox.isSelected())
 						{
-							// Find the Wii U in the network and connect to it
-							detectedIPAddress = WiiUFinder.getNintendoWiiUInternetProtocolAddress();
-							connect(detectedIPAddress, true);
+							if (connectedIPAddress == null)
+							{
+								// Find the Wii U in the network and connect to it
+								ipAddress = WiiUFinder.getNintendoWiiUInternetProtocolAddress();
+								connect(ipAddress, true);
+							} else
+							{
+								// Since we were connected already, we can use that IP address instead of scanning the network
+								ipAddress = connectedIPAddress;
+								connect(ipAddress, false);
+							}
 						} else
 						{
-							// Since we were connected already, we can use that IP address instead of scanning the network
-							detectedIPAddress = connectedIPAddress;
-							connect(detectedIPAddress, false);
+							// Use the given IP address
+							ipAddress = ipAddressField.getText();
+							connect(ipAddress, false);
 						}
-					} else
+
+						connectButton.setText("Disconnect");
+						populateComponents();
+					} catch (Exception exception)
 					{
-						// Use the given IP address
-						detectedIPAddress = ipAddressField.getText();
-						connect(detectedIPAddress, false);
+						connectButton.setText(connectButtonText);
+						StackTraceUtils.handleException(rootPane, exception);
+						displayConnectionHelperMessage();
+					} finally
+					{
+						connecting = false;
+						setConnectionButtonsAvailability();
 					}
 
-					boolean interruptsEnabled = OSThreadRPC.areInterruptsEnabled();
-					interruptsCheckBox.setSelected(interruptsEnabled);
-					considerUpdatingTabs();
-				} catch (Exception exception)
-				{
-					connectButton.setText(connectButtonText);
-					StackTraceUtils.handleException(rootPane, exception);
-				} finally
-				{
-					programTabs.setEnabled(true);
-					connecting = false;
-					setConnectionButtonsAvailability();
+					return null;
 				}
 
-				return null;
-			}
+				@Override
+				public void done()
+				{
+					tryRunningMemoryViewerUpdater();
+				}
+			}.execute();
+		}
+	}
 
-			@Override
-			public void done()
-			{
-				tryRunningMemoryViewerUpdater();
-			}
-		}.execute();
+	private void populateComponents() throws IOException
+	{
+		boolean interruptsEnabled = OSThreadRPC.areInterruptsEnabled();
+		interruptsCheckBox.setSelected(interruptsEnabled);
+		considerUpdatingTabs();
 	}
 
 	private void considerUpdatingTabs()
@@ -3410,7 +3441,7 @@ public class JGeckoUGUI extends JFrame
 	{
 		if (!skipRealConnecting)
 		{
-			Connector.getInstance().connect(ipAddress);
+			connector.connect(ipAddress);
 		}
 
 		MemoryRangeAdjustment memoryRangeAdjustment = new MemoryRangeAdjustment(titleDatabaseManager);
@@ -3546,8 +3577,7 @@ public class JGeckoUGUI extends JFrame
 		boolean isValidIPAddress = IPAddressValidator.validateIPv4Address(inputtedIPAddress);
 		boolean isAutoDetect = autoDetectCheckBox.isSelected();
 		boolean mayConnect = (isValidIPAddress || isAutoDetect);
-		boolean shouldEnableConnectButton = !connected
-				&& mayConnect && !connecting && titlesInitialized;
+		boolean shouldEnableConnectButton = mayConnect && !connecting && titlesInitialized;
 		connectButton.setEnabled(shouldEnableConnectButton);
 		memoryBoundsButton.setEnabled(connected);
 		processPFIDButton.setEnabled(connected);
@@ -3559,16 +3589,14 @@ public class JGeckoUGUI extends JFrame
 		shutdownButton.setEnabled(connected);
 		osIDButton.setEnabled(connected);
 		appFlagsButton.setEnabled(connected);
+		coresCountButton.setEnabled(connected);
 		titleIDButton.setEnabled(connected);
 		remoteDisassemblerButton.setEnabled(connected);
 		displayMessageButton.setEnabled(connected);
-		disconnectButton.setEnabled(connected);
 		osTimeButton.setEnabled(connected);
 		assembleInstructionButton.setEnabled(connected && !assembling);
 		readThreadsButton.setEnabled(connected && !readingThreads);
 		interruptsCheckBox.setEnabled(connected);
-		reconnectButton.setEnabled(!connectButton.isEnabled()
-				&& disconnectButton.isEnabled());
 		ipAddressField.setEnabled(!isAutoDetect);
 		updateDisassemblerButton.setEnabled(connected);
 		setSendCodesButtonAvailability();
@@ -3663,7 +3691,7 @@ public class JGeckoUGUI extends JFrame
 		programName = "JGecko U";
 		setTitle(programName);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		setSize(900, 450);
+		setSize(900, 550);
 		setLocationRelativeTo(null);
 		WindowUtilities.setIconImage(this);
 	}

@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="rootPanel" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="855" height="905"/>
+      <xy x="20" y="20" width="855" height="1023"/>
     </constraints>
     <properties>
       <font/>
@@ -152,7 +152,7 @@
               </component>
             </children>
           </grid>
-          <grid id="879b4" binding="memoryViewerTab" layout-manager="GridLayoutManager" row-count="23" column-count="8" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="879b4" binding="memoryViewerTab" layout-manager="GridLayoutManager" row-count="25" column-count="8" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <tabbedpane title="Memory Viewer"/>
@@ -162,7 +162,7 @@
             <children>
               <scrollpane id="103a">
                 <constraints>
-                  <grid row="1" column="1" row-span="21" col-span="6" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="1" column="1" row-span="24" col-span="6" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <toolTipText value="The memory values"/>
@@ -239,43 +239,16 @@
                   </component>
                 </children>
               </grid>
-              <component id="a8fec" class="javax.swing.JButton" binding="searchMemoryViewerButton">
-                <constraints>
-                  <grid row="22" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Search"/>
-                  <toolTipText value="Search the memory for value starting at address with a maximum length"/>
-                </properties>
-              </component>
               <grid id="74d3e" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <grid row="21" column="7" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="24" column="7" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
                 <children/>
               </grid>
-              <component id="e1b20" class="javax.swing.JTextField" binding="searchLengthField">
-                <constraints>
-                  <grid row="22" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                    <preferred-size width="150" height="-1"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <toolTipText value="The maximum length for the search"/>
-                </properties>
-              </component>
-              <component id="a6940" class="javax.swing.JLabel">
-                <constraints>
-                  <grid row="22" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Length:"/>
-                </properties>
-              </component>
-              <grid id="5f6df" layout-manager="GridLayoutManager" row-count="8" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="5f6df" layout-manager="GridLayoutManager" row-count="9" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -395,6 +368,43 @@
                     </constraints>
                     <properties>
                       <text value="Address:"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+              <grid id="d968e" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="a6940" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Length:"/>
+                    </properties>
+                  </component>
+                  <component id="7514d" class="javax.swing.JButton" binding="searchMemoryViewerButton">
+                    <constraints>
+                      <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Search"/>
+                      <toolTipText value="Search the memory for value starting at address with a maximum length"/>
+                    </properties>
+                  </component>
+                  <component id="94ebf" class="javax.swing.JTextField" binding="searchLengthField">
+                    <constraints>
+                      <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                        <preferred-size width="150" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <toolTipText value="The maximum length for the search"/>
                     </properties>
                   </component>
                 </children>
@@ -1443,6 +1453,14 @@
                       <toolTipText value="Shows the game's dynamic memory bounds"/>
                     </properties>
                   </component>
+                  <component id="d53a5" class="javax.swing.JButton" binding="coresCountButton" default-binding="true">
+                    <constraints>
+                      <grid row="8" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Cores Count"/>
+                    </properties>
+                  </component>
                 </children>
               </grid>
             </children>
@@ -1575,7 +1593,7 @@
           </grid>
         </children>
       </tabbedpane>
-      <grid id="866ec" layout-manager="GridLayoutManager" row-count="1" column-count="7" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="866ec" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="1" column="0" row-span="2" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -1618,30 +1636,12 @@
             </constraints>
             <properties>
               <text value="Connect"/>
-              <toolTipText value="Connects to the Wii U using the given settings"/>
-            </properties>
-          </component>
-          <component id="46991" class="javax.swing.JButton" binding="reconnectButton" default-binding="true">
-            <constraints>
-              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Reconnect"/>
-              <toolTipText value="Disconnects and connects again"/>
-            </properties>
-          </component>
-          <component id="3c787" class="javax.swing.JButton" binding="disconnectButton" default-binding="true">
-            <constraints>
-              <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <text value="Disconnect"/>
-              <toolTipText value="Disconnects from the Wii U"/>
+              <toolTipText value="Connects to/disconnects from the Wii U using the given settings"/>
             </properties>
           </component>
           <component id="58b9c" class="javax.swing.JButton" binding="connectionHelpButton" default-binding="true">
             <constraints>
-              <grid row="0" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text value="Help"/>
