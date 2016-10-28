@@ -816,7 +816,7 @@ public class JGeckoUGUI extends JFrame
 	private void addTabsChangedListener()
 	{
 		programTabs.addChangeListener(changeEvent ->
-				considerUpdatingTabs());
+				considerUpdatingTabsAsynchronously());
 	}
 
 	private void configureDisassemblerTab()
@@ -1355,7 +1355,7 @@ public class JGeckoUGUI extends JFrame
 						memoryBoundsButton.getText(),
 						JOptionPane.INFORMATION_MESSAGE));
 
-		coresCountButton.addActionListener(e ->
+		coresCountButton.addActionListener(actionEvent ->
 		{
 			try
 			{
@@ -2428,6 +2428,30 @@ public class JGeckoUGUI extends JFrame
 
 	private void configureMemoryViewerSearchListeners()
 	{
+		searchLengthField.getDocument().addDocumentListener(new DocumentListener()
+		{
+			@Override
+			public void insertUpdate(DocumentEvent documentEvent)
+			{
+				setMemoryViewerSearchLengthFieldBackgroundColor();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent documentEvent)
+			{
+				setMemoryViewerSearchLengthFieldBackgroundColor();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent documentEvent)
+			{
+				setMemoryViewerSearchLengthFieldBackgroundColor();
+			}
+		});
+
+		searchLengthField.setText("10000000");
+		setMemoryViewerSearchLengthFieldBackgroundColor();
+
 		searchMemoryViewerButton.addActionListener(actionEvent -> performMemoryViewerSearch());
 
 		memoryViewerValueField.getDocument().addDocumentListener(new DocumentListener()
@@ -2474,8 +2498,21 @@ public class JGeckoUGUI extends JFrame
 				setMemoryViewerSearchButtonAvailability();
 			}
 		});
+	}
 
-		searchLengthField.setText("10000000");
+	private void setMemoryViewerSearchLengthFieldBackgroundColor()
+	{
+		boolean validAccess = isMemoryViewerSearchRangeValid();
+		searchLengthField.setBackground(validAccess ? Color.GREEN : Color.RED);
+		setMemoryViewerSearchButtonAvailability();
+	}
+
+	private boolean isMemoryViewerSearchRangeValid()
+	{
+		int searchLength = Conversions.toDecimal(searchLengthField.getText());
+		int startingAddress = Conversions.toDecimal(memoryViewerAddressField.getText());
+
+		return AddressRange.isValidAccess(startingAddress, searchLength, MemoryAccessLevel.READ);
 	}
 
 	private void setMemoryViewerSearchButtonAvailability()
@@ -2484,6 +2521,7 @@ public class JGeckoUGUI extends JFrame
 		boolean searchValueValid = isValidSearchValue();
 		searchMemoryViewerButton.setEnabled(validLength
 				&& searchValueValid
+				&& isMemoryViewerSearchRangeValid()
 				&& TCPGecko.isConnected());
 	}
 
@@ -3387,6 +3425,7 @@ public class JGeckoUGUI extends JFrame
 					{
 						connecting = false;
 						setConnectionButtonsAvailability();
+						setMemoryViewerSearchLengthFieldBackgroundColor();
 					}
 
 					return null;
@@ -3405,30 +3444,39 @@ public class JGeckoUGUI extends JFrame
 	{
 		boolean interruptsEnabled = OSThreadRPC.areInterruptsEnabled();
 		interruptsCheckBox.setSelected(interruptsEnabled);
-		considerUpdatingTabs();
+		considerUpdatingTabsAsynchronously();
 	}
 
-	private void considerUpdatingTabs()
+	private void considerUpdatingTabsAsynchronously()
 	{
-		if (TCPGecko.isConnected())
+		new SwingWorker<String, String>()
 		{
-			if (memoryViewerTab.isShowing())
+			@Override
+			protected String doInBackground() throws Exception
 			{
-				updateMemoryViewer(true, false);
-			}
+				if (TCPGecko.isConnected())
+				{
+					if (memoryViewerTab.isShowing())
+					{
+						updateMemoryViewer(true, false);
+					}
 
-			if (disassemblerTab.isShowing())
-			{
-				updateDisassembler();
-			}
+					if (disassemblerTab.isShowing())
+					{
+						updateDisassembler();
+					}
 
-			if (watchListTab.isShowing())
-			{
-				updateWatchList();
-			}
-		}
+					if (watchListTab.isShowing())
+					{
+						updateWatchList();
+					}
+				}
 
-		considerUpdatingRegisters();
+				considerUpdatingRegisters();
+
+				return null;
+			}
+		}.execute();
 	}
 
 	/**
@@ -3614,7 +3662,6 @@ public class JGeckoUGUI extends JFrame
 		saveWatchListButton.setEnabled(connected);
 		remoteProcedureCallButton.setEnabled(connected);
 		convertEffectiveToPhysicalButton.setEnabled(connected);
-
 		setMemoryViewerSearchButtonAvailability();
 
 		if (isAutoDetect)

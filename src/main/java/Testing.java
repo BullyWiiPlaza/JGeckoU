@@ -17,8 +17,6 @@ public class Testing
 		byte[] bytes = memoryReader.readBytes(0x10000000, 0x2000);
 		Files.write(Paths.get("file4.bin"), bytes);*/
 
-
-
 		/*MemoryWriter memoryWriter = new MemoryWriter();
 		memoryWriter.kernelWriteInt(0x01100000, 0x60000000);
 		MemoryWriter memoryWriter = new MemoryWriter();

@@ -350,6 +350,7 @@
                     </constraints>
                     <properties>
                       <text value="Kernel Read"/>
+                      <toolTipText value="Reads with kernel permissions"/>
                     </properties>
                   </component>
                   <component id="d3683" class="javax.swing.JTextField" binding="kernelReadAddressField">
@@ -394,7 +395,7 @@
                     </constraints>
                     <properties>
                       <text value="Search"/>
-                      <toolTipText value="Search the memory for value starting at address with a maximum length"/>
+                      <toolTipText value="Searches the memory quickly for value starting at address with a maximum length"/>
                     </properties>
                   </component>
                   <component id="94ebf" class="javax.swing.JTextField" binding="searchLengthField">
