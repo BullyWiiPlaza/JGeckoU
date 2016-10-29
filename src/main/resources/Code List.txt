@@ -1,3 +1,3 @@
-Code List Starting Address = 10015000
-Code List End Address = 10017000
+Code List Starting Address = 01133000
+Code List End Address = 01134300
 Code Handler Enabled Address = 10014CFC
