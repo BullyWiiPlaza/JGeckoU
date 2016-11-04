@@ -31,12 +31,6 @@ public class DisassembledInstruction
 		return instruction;
 	}
 
-	@Override
-	public String toString()
-	{
-		return new Hexadecimal(address, 8) + ": " + new Hexadecimal(value, 8) + " " + instruction;
-	}
-
 	public int getBranchDestination()
 	{
 		if (!isBranchWithDestination())
@@ -59,5 +53,11 @@ public class DisassembledInstruction
 	public boolean isLoadImmediateShifted()
 	{
 		return instruction.startsWith("lis");
+	}
+
+	@Override
+	public String toString()
+	{
+		return new Hexadecimal(address, 8) + ": " + new Hexadecimal(value, 8) + " " + instruction;
 	}
 }

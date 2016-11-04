@@ -1,7 +1,7 @@
 package wiiudev.gecko.client.tcpgecko.rpl.filesystem.structures;
 
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.RemoteFileSystem;
-import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.ErrorHandling;
+import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.FileSystemReturnFlag;
 
 import java.io.IOException;
 
@@ -31,7 +31,7 @@ public class FileSystemClient extends FileSystemObject
 
 		if (isRegistered())
 		{
-			remoteFileSystem.unregisterClient(this, ErrorHandling.NONE);
+			remoteFileSystem.unRegisterClient(this, FileSystemReturnFlag.NONE);
 		}
 	}
 }

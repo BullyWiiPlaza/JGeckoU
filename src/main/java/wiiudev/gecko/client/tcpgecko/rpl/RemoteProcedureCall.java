@@ -38,7 +38,7 @@ public class RemoteProcedureCall extends TCPGecko
 			if (isPointer)
 			{
 				// Dereference the pointer if we need to
-				address = MemoryReader.dereference(address);
+				address = MemoryReader.deReference(address);
 			}
 
 			return new ExportedSymbol(address, rplName, symbolName);

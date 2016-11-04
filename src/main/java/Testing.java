@@ -1,10 +1,22 @@
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
+		Path rawFile = Paths.get("raw.txt");
+		Path compressedFile = Paths.get("raw.lzma");
+
+		LzmaCompressor lzmaCompressor = new LzmaCompressor(rawFile, compressedFile);
+		lzmaCompressor.compress();
+		// lzmaCompressor.decompress();
+
+		System.exit(0);
+
 		Connector.getInstance().connect("192.168.178.35");
 
 		// RemoteDisassembler.disassembleRange(0x01000000, 0x8);

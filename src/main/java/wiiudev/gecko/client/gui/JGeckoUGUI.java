@@ -2226,8 +2226,9 @@ public class JGeckoUGUI extends JFrame
 
 		String targetFilePath = dumpFilePathField.getText();
 		boolean validTargetFile = !targetFilePath.equals("");
-		boolean validStartingAddress = isAddressInputValid(dumpStartingAddressField.getText());
-		boolean validEndingAddress = isAddressInputValid(dumpEndingAddressField.getText());
+		boolean validAccess = AddressRange.isValidAccess(Conversions.toDecimal(dumpStartingAddressField.getText()), Conversions.toDecimal(dumpEndingAddressField.getText()) - Conversions.toDecimal(dumpStartingAddressField.getText()), MemoryAccessLevel.READ);
+		boolean validStartingAddress = isAddressInputValid(dumpStartingAddressField.getText()) & validAccess;
+		boolean validEndingAddress = isAddressInputValid(dumpEndingAddressField.getText()) & validAccess;
 		dumpStartingAddressField.setBackground(validStartingAddress ? Color.GREEN : Color.RED);
 		dumpEndingAddressField.setBackground(validEndingAddress ? Color.GREEN : Color.RED);
 		dumpMemoryButton.setEnabled(TCPGecko.isConnected() && validMemoryAddresses

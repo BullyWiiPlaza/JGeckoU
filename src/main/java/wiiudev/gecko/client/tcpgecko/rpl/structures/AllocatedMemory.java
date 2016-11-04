@@ -12,8 +12,9 @@ public class AllocatedMemory implements Closeable
 
 	public AllocatedMemory(int size, int alignment) throws IOException
 	{
-		address = CoreInit.allocateDefaultHeapMemory(size, alignment);
 		this.size = size;
+
+		address = CoreInit.allocateDefaultHeapMemory(size, alignment);
 	}
 
 	public int getAddress()

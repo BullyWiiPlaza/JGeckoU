@@ -209,7 +209,7 @@ public class MemoryReader extends TCPGecko
 		}
 	}*/
 
-	public static int dereference(int address) throws IOException
+	public static int deReference(int address) throws IOException
 	{
 		MemoryReader memoryReader = new MemoryReader();
 		return memoryReader.readInt(address);

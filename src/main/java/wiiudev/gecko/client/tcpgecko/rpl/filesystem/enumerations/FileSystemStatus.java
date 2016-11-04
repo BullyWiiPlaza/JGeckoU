@@ -41,6 +41,6 @@ public enum FileSystemStatus
 			}
 		}
 
-		return null;
+		throw new IllegalArgumentException("No file system status associated with " + value + "!");
 	}
 }

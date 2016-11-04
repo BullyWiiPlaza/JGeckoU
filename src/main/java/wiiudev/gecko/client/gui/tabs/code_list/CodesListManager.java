@@ -16,7 +16,7 @@ public class CodesListManager
 	private DefaultListModel<JCheckBox> codeListModel;
 	private List<CodeListEntry> codeListEntries;
 	private JRootPane rootPane;
-	private CodeListContextMenu contextMenu;
+	private CodeListContextMenu codeListContextMenu;
 
 	@SuppressWarnings("unchecked")
 	public CodesListManager(JList<JCheckBox> checkboxList, JRootPane rootPane)
@@ -27,8 +27,8 @@ public class CodesListManager
 		this.checkboxList = checkboxList;
 		codeListModel = (DefaultListModel<JCheckBox>) checkboxList.getModel();
 		this.rootPane = rootPane;
-		contextMenu = new CodeListContextMenu(this);
-		contextMenu.addContextMenu();
+		codeListContextMenu = new CodeListContextMenu(this);
+		codeListContextMenu.addContextMenu();
 		addContextMenuListener();
 	}
 
@@ -57,7 +57,7 @@ public class CodesListManager
 				checkboxList.setSelectedIndex(checkboxList.locationToIndex(mouseEvent.getPoint()));
 
 				// Show the context menu
-				contextMenu.show(mouseEvent.getComponent(),
+				codeListContextMenu.show(mouseEvent.getComponent(),
 						mouseEvent.getX(),
 						mouseEvent.getY());
 			}
@@ -102,7 +102,8 @@ public class CodesListManager
 			String existingCode = codeListEntry.getCode();
 			String existingTitle = codeListEntry.getTitle();
 
-			if (existingCode.equals(code) && codeTitle.equals(existingTitle))
+			if (existingCode.equals(code)
+					&& codeTitle.equals(existingTitle))
 			{
 				return true;
 			}
@@ -122,12 +123,9 @@ public class CodesListManager
 				{
 					int index = checkboxList.locationToIndex(mouseEvent.getPoint());
 
-					if (index != -1)
-					{
-						JCheckBox checkbox = checkboxList.getModel().getElementAt(index);
-						checkbox.setSelected(!checkbox.isSelected());
-						checkboxList.repaint();
-					}
+					JCheckBox checkbox = checkboxList.getModel().getElementAt(index);
+					checkbox.setSelected(!checkbox.isSelected());
+					checkboxList.repaint();
 				}
 			}
 		});

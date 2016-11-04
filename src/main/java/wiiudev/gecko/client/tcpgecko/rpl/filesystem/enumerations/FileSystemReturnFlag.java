@@ -1,6 +1,6 @@
 package wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations;
 
-public enum ErrorHandling
+public enum FileSystemReturnFlag
 {
 	NONE(0x0),
 	MAX(0x1),
@@ -19,7 +19,7 @@ public enum ErrorHandling
 
 	private int value;
 
-	ErrorHandling(int value)
+	FileSystemReturnFlag(int value)
 	{
 		this.value = value;
 	}

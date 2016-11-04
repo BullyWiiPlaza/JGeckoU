@@ -4,8 +4,9 @@ import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.rpl.ExportedSymbol;
+import wiiudev.gecko.client.tcpgecko.rpl.RPL;
 import wiiudev.gecko.client.tcpgecko.rpl.RemoteProcedureCall;
-import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.ErrorHandling;
+import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.FileSystemReturnFlag;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.FileSystemStatus;
 import wiiudev.gecko.client.tcpgecko.rpl.filesystem.structures.*;
 import wiiudev.gecko.client.tcpgecko.rpl.structures.AllocatedMemory;
@@ -26,28 +27,28 @@ public class RemoteFileSystem extends TCPGecko
 	 */
 	public FileSystemStatus initialize() throws IOException
 	{
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSInit");
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(RPL.CORE_INIT.toString(), "FSInit");
 		int status = remoteProcedureCall.callInt(exportedSymbol);
 
 		return FileSystemStatus.getStatus(status);
 	}
 
-	public FileSystemStatus addClient(FileSystemClient fileSystemClient, ErrorHandling errorHandling) throws IOException
+	public FileSystemStatus registerClient(FileSystemClient fileSystemClient, FileSystemReturnFlag returnFlag) throws IOException
 	{
 		if (fileSystemClient.isRegistered())
 		{
 			throw new IllegalArgumentException("The client is already registered!");
 		} else
 		{
-			return registerClient(fileSystemClient, errorHandling, true);
+			return registerClient(fileSystemClient, returnFlag, true);
 		}
 	}
 
-	public FileSystemStatus unregisterClient(FileSystemClient fileSystemClient, ErrorHandling errorHandling) throws IOException
+	public FileSystemStatus unRegisterClient(FileSystemClient fileSystemClient, FileSystemReturnFlag returnFlag) throws IOException
 	{
 		if (fileSystemClient.isRegistered())
 		{
-			return registerClient(fileSystemClient, errorHandling, false);
+			return registerClient(fileSystemClient, returnFlag, false);
 		} else
 		{
 			throw new IllegalArgumentException("The client is not registered yet!");
@@ -55,13 +56,13 @@ public class RemoteFileSystem extends TCPGecko
 	}
 
 	private FileSystemStatus registerClient(FileSystemClient client,
-	                                        ErrorHandling errorHandling,
+	                                        FileSystemReturnFlag returnFlag,
 	                                        boolean register) throws IOException
 	{
 		int clientAddress = client.getAddress();
 		String symbolName = register ? "FSAddClient" : "FSDelClient";
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", symbolName);
-		int status = remoteProcedureCall.callInt(exportedSymbol, clientAddress, errorHandling.getValue());
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(RPL.CORE_INIT.toString(), symbolName);
+		int status = remoteProcedureCall.callInt(exportedSymbol, clientAddress, returnFlag.getValue());
 		client.setRegistered(this);
 
 		return FileSystemStatus.getStatus(status);
@@ -71,12 +72,12 @@ public class RemoteFileSystem extends TCPGecko
 	                                      FileSystemCommandBlock commandBlock,
 	                                      FileSystemPath path,
 	                                      FileSystemHandle directoryHandle,
-	                                      ErrorHandling errorHandling) throws IOException
+	                                      FileSystemReturnFlag returnFlag) throws IOException
 	{
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSOpenDir");
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(RPL.CORE_INIT.toString(), "FSOpenDir");
 		int status = remoteProcedureCall.callInt(exportedSymbol, client.getAddress(),
 				commandBlock.getAddress(), path.getAddress(),
-				directoryHandle.getAddress(), errorHandling.getValue());
+				directoryHandle.getAddress(), returnFlag.getValue());
 		FileSystemStatus fileSystemFileSystemStatus = FileSystemStatus.getStatus(status);
 		System.out.println("File system status: " + fileSystemFileSystemStatus);
 
@@ -90,37 +91,37 @@ public class RemoteFileSystem extends TCPGecko
 	public void initializeCommandBlock(FileSystemCommandBlock commandBlock) throws IOException
 	{
 		int address = commandBlock.getAddress();
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSInitCmdBlock");
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(RPL.CORE_INIT.toString(), "FSInitCmdBlock");
 		remoteProcedureCall.call(exportedSymbol, address);
 	}
 
 	public FileSystemStatus openFile(FileSystemClient client,
 	                                 FileSystemCommandBlock commandBlock,
 	                                 FileSystemPath path,
-	                                 AccessMode accessMode,
+	                                 FileSystemAccessMode accessMode,
 	                                 FileSystemHandle handle,
-	                                 ErrorHandling errorHandling) throws IOException
+	                                 FileSystemReturnFlag returnFlag) throws IOException
 	{
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSOpenFile");
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(RPL.CORE_INIT.toString(), "FSOpenFile");
 		int status = remoteProcedureCall.callInt(exportedSymbol,
 				client.getAddress(),
 				commandBlock.getAddress(),
 				path.getAddress(),
 				accessMode.getAddress(),
 				handle.getAddress(),
-				errorHandling.getValue());
+				returnFlag.getValue());
 
 		return FileSystemStatus.getStatus(status);
 	}
 
 	public int readFile(FileSystemClient client,
-	                                 FileSystemCommandBlock commandBlock,
-	                                 AllocatedMemory destinationBuffer,
-	                                 FileSystemHandle handle,
-	                                 ErrorHandling errorHandling) throws IOException
+	                    FileSystemCommandBlock commandBlock,
+	                    AllocatedMemory destinationBuffer,
+	                    FileSystemHandle handle,
+	                    FileSystemReturnFlag returnFlag) throws IOException
 
 	{
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSReadFile");
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(RPL.CORE_INIT.toString(), "FSReadFile");
 
 		return remoteProcedureCall.callInt(exportedSymbol,
 				client.getAddress(),
@@ -128,23 +129,24 @@ public class RemoteFileSystem extends TCPGecko
 				destinationBuffer.getAddress(),
 				0x1,
 				destinationBuffer.getSize(),
-				handle.getAddress(),
+				handle.dereference(),
 				0,
-				errorHandling.getValue());
+				returnFlag.getValue());
 	}
 
 	public FileSystemStatus readDirectory(FileSystemClient client,
 	                                      FileSystemCommandBlock commandBlock,
 	                                      FileSystemHandle directoryHandle,
 	                                      DirectoryEntry directoryEntry,
-	                                      ErrorHandling errorHandling) throws IOException
+	                                      FileSystemReturnFlag returnFlag) throws IOException
 	{
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSReadDir");
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(RPL.CORE_INIT.toString(), "FSReadDir");
+
 		int status = remoteProcedureCall.callInt(exportedSymbol, client.getAddress(),
 				commandBlock.getAddress(),
 				directoryHandle.dereference(),
 				directoryEntry.getAddress(),
-				errorHandling.getValue());
+				returnFlag.getValue());
 
 		directoryEntry.retrieveData();
 
@@ -154,28 +156,28 @@ public class RemoteFileSystem extends TCPGecko
 	public FileSystemStatus closeDirectory(FileSystemClient client,
 	                                       FileSystemCommandBlock commandBlock,
 	                                       FileSystemHandle directoryHandle,
-	                                       ErrorHandling errorHandling) throws IOException
+	                                       FileSystemReturnFlag returnFlag) throws IOException
 	{
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSCloseDir");
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(RPL.CORE_INIT.toString(), "FSCloseDir");
 		int status = remoteProcedureCall.callInt(exportedSymbol, client.getAddress(),
 				commandBlock.getAddress(),
 				directoryHandle.dereference(),
-				errorHandling.getValue());
+				returnFlag.getValue());
 
 		return FileSystemStatus.getStatus(status);
 	}
 
 	public FileSystemStatus closeFile(FileSystemClient client,
 	                                  FileSystemCommandBlock commandBlock,
-	                                  FileSystemHandle directoryHandle,
-	                                  ErrorHandling errorHandling) throws IOException
+	                                  FileSystemHandle handle,
+	                                  FileSystemReturnFlag returnFlag) throws IOException
 	{
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol("coreinit.rpl", "FSCloseFile");
+		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(RPL.CORE_INIT.toString(), "FSCloseFile");
 		int status = remoteProcedureCall.callInt(exportedSymbol,
 				client.getAddress(),
 				commandBlock.getAddress(),
-				directoryHandle.dereference(),
-				errorHandling.getValue());
+				handle.dereference(),
+				returnFlag.getValue());
 
 		return FileSystemStatus.getStatus(status);
 	}

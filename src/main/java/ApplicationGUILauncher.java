@@ -4,6 +4,7 @@ import javax.swing.*;
 
 public class ApplicationGUILauncher
 {
+	// TODO Refine search button when not first search
 	// TODO Read compressed bytes from server?
 	// TODO Watch list implement context menu (like for the codes tab)
 	// TODO File system access tab (extract and replace files)
@@ -11,6 +12,8 @@ public class ApplicationGUILauncher
 	// TODO Disassembler Regex Search (+ Cancel Button)
 	// TODO Remote range disassembler (implement on TCP Gecko server?)
 	// TODO Only toggle cheat code checkbox when clicked on that checkbox
+	// TODO A bug report: JGecko U freezes when selecting "memory viewer" when connected and code(s) activated
+	// TODO Disassemble file on file system
 	public static void main(String[] arguments) throws Exception
 	{
 		// Sets the system look and feel

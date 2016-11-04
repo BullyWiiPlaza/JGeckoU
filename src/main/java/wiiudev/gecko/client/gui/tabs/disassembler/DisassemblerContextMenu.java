@@ -31,6 +31,7 @@ public class DisassemblerContextMenu extends JPopupMenu
 		KeyStroke searchKeyStroke = PopupMenuUtilities.addOption(this, "Search", "control S", actionEvent -> switchToSearchTab());
 		KeyStroke copyCellsKeyStroke = PopupMenuUtilities.addOption(this, "Copy Cells", "control C", actionEvent -> copyCells());
 		KeyStroke functionStartKeyStroke = PopupMenuUtilities.addOption(this, "Function Start", "control T", actionEvent -> selectFunctionStart());
+		KeyStroke copyFunctionKeyStroke = PopupMenuUtilities.addOption(this, "Copy Function", "control F", actionEvent -> copyFunction());
 
 		DisassembledInstruction disassembledInstruction = tableManager.getSelectedInstruction();
 		KeyStroke parseImmediateKeyStroke = KeyStroke.getKeyStroke("control D");
@@ -79,10 +80,51 @@ public class DisassemblerContextMenu extends JPopupMenu
 					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, functionStartKeyStroke))
 					{
 						selectFunctionStart();
+					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, copyFunctionKeyStroke))
+					{
+						copyFunction();
 					}
 				}
 			}
 		});
+	}
+
+	private void copyFunction()
+	{
+		List<DisassembledInstruction> disassembledInstructions = new ArrayList<>();
+		int address = tableManager.getSelectedInstruction().getAddress();
+		int length = MemoryReader.MAXIMUM_MEMORY_CHUNK_SIZE;
+
+		try
+		{
+			doneCollectingInstructions:
+			{
+				while (true)
+				{
+					// Prepend the new elements
+					List<DisassembledInstruction> newlyDisassembledInstructions = Disassembler.disassemble(address, length);
+					for (int newlyDisassembledInstructionsIndex = 0; newlyDisassembledInstructionsIndex < newlyDisassembledInstructions.size(); newlyDisassembledInstructionsIndex++)
+					{
+						DisassembledInstruction disassembledInstruction = newlyDisassembledInstructions.get(newlyDisassembledInstructionsIndex);
+						disassembledInstructions.add(newlyDisassembledInstructionsIndex, disassembledInstruction);
+
+						// Function end reached?
+						String instruction = disassembledInstruction.getInstruction();
+						if (instruction.equals("blr"))
+						{
+							break doneCollectingInstructions;
+						}
+					}
+
+					address += length;
+				}
+			}
+		} catch (Exception exception)
+		{
+			StackTraceUtils.handleException(getRootPane(), exception);
+		}
+
+		copyDisassembledInstructions(disassembledInstructions);
 	}
 
 	private void selectFunctionStart()
@@ -218,6 +260,11 @@ public class DisassemblerContextMenu extends JPopupMenu
 	private void copyCells()
 	{
 		List<DisassembledInstruction> disassembledInstructions = tableManager.getDisassembledInstructions();
+		copyDisassembledInstructions(disassembledInstructions);
+	}
+
+	private void copyDisassembledInstructions(List<DisassembledInstruction> disassembledInstructions)
+	{
 		StringBuilder copyCellsBuilder = new StringBuilder();
 
 		for (DisassembledInstruction disassembledInstruction : disassembledInstructions)

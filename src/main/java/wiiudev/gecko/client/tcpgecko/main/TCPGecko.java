@@ -12,7 +12,7 @@ public abstract class TCPGecko
 	protected DataOutputStream dataSender;
 	protected DataInputStream dataReceiver;
 	public static final CloseableReentrantLock reentrantLock = new CloseableReentrantLock();
-	public static int MAXIMUM_MEMORY_CHUNK_SIZE = runningFromIntelliJ() ? 0x5000 : 0x400;
+	public static int MAXIMUM_MEMORY_CHUNK_SIZE = 0x400; // runningFromIntelliJ() ? 0x5000 : 0x400;
 	public static boolean enforceMemoryAccessProtection = true;
 	public static boolean hasRequestedBytes = false;
 

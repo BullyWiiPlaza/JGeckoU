@@ -10,7 +10,8 @@ public class PopupMenuUtilities
 	{
 		int targetKeyCode = keyStroke.getKeyCode();
 
-		return event.getKeyCode() == targetKeyCode && (event.getModifiers() & KeyEvent.CTRL_MASK) != 0;
+		return event.getKeyCode() == targetKeyCode
+				&& (event.getModifiers() & KeyEvent.CTRL_MASK) != 0;
 	}
 
 	public static KeyStroke addOption(JPopupMenu popupMenu, String text, String key, ActionListener actionListener)
