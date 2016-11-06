@@ -193,6 +193,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton coresCountButton;
 	private JFormattedTextField memoryRequestSizeField;
 	private JLabel codeHandlerWarningLabel;
+	private JLabel memoryRequestSizeLabel;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -1376,6 +1377,21 @@ public class JGeckoUGUI extends JFrame
 
 	private void configureMiscellaneousTab()
 	{
+		memoryRequestSizeLabel.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent mouseEvent)
+			{
+				try
+				{
+					Desktop.getDesktop().browse(new URI("http://gbatemp.net/threads/post-your-wiiu-cheat-codes-here.395443/page-201#post-6805712"));
+				} catch (Exception exception)
+				{
+					exception.printStackTrace();
+				}
+			}
+		});
+
 		addFirmwareVersionButtonListener();
 		updateGameTitlesButton.addActionListener(actionEvent -> updateGameTitles());
 
@@ -3799,7 +3815,7 @@ public class JGeckoUGUI extends JFrame
 		programName = "JGecko U";
 		setTitle(programName);
 		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		setSize(900, 550);
+		setSize(950, 550);
 		setLocationRelativeTo(null);
 		WindowUtilities.setIconImage(this);
 	}
