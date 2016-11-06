@@ -3,6 +3,7 @@ package wiiudev.gecko.client.gui.tabs.memory_search;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.memory_search.SearchQueryOptimizer;
+import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 
 import javax.swing.*;
 import java.nio.ByteBuffer;
@@ -61,7 +62,10 @@ public class GraphicalRefiner
 
 					bytesDumped += dumped.length;
 
-					ProgressVisualization.updateProgress("Dumped Bytes", bytesDumped, bytesToDump);
+					if (bytesDumped % TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE * 10 == 0)
+					{
+						ProgressVisualization.updateProgress("Dumped Bytes", bytesDumped, bytesToDump);
+					}
 
 					if (JGeckoUGUI.getInstance().isDumpingCanceled())
 					{

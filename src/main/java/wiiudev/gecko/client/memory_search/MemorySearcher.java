@@ -92,11 +92,14 @@ public class MemorySearcher
 					}
 				}
 
-				ProgressVisualization.updateProgress("Evaluated Bytes", position, limit);
-
-				if (JGeckoUGUI.getInstance().isDumpingCanceled())
+				if (position % 1000000 == 0)
 				{
-					return null;
+					ProgressVisualization.updateProgress("Evaluated Bytes", position, limit);
+
+					if (JGeckoUGUI.getInstance().isDumpingCanceled())
+					{
+						return null;
+					}
 				}
 			}
 
@@ -127,9 +130,12 @@ public class MemorySearcher
 
 				searchResultsIndex++;
 
-				ProgressVisualization.updateProgress("Evaluated Search Results",
-						searchResultsIndex,
-						searchResults.size());
+				if (searchResultsIndex % 1000 == 0)
+				{
+					ProgressVisualization.updateProgress("Evaluated Search Results",
+							searchResultsIndex,
+							searchResults.size());
+				}
 
 				if (JGeckoUGUI.getInstance().isDumpingCanceled())
 				{

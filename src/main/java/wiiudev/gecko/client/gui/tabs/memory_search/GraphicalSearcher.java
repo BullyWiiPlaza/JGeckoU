@@ -60,7 +60,11 @@ public class GraphicalSearcher
 
 						length -= bytesToRead;
 						bytesDumped += bytesToRead;
-						ProgressVisualization.updateProgress("Dumped Bytes", bytesDumped, startingBytesCount);
+
+						if (bytesDumped % TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE * 10 == 0)
+						{
+							ProgressVisualization.updateProgress("Dumped Bytes", bytesDumped, startingBytesCount);
+						}
 
 						if (JGeckoUGUI.getInstance().isDumpingCanceled())
 						{
