@@ -1,6 +1,5 @@
 package wiiudev.gecko.client.gui.utilities;
 
-import wiiudev.gecko.client.codes.CodeListStorage;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 
 import javax.swing.*;
@@ -44,20 +43,30 @@ public class JFileChooserUtilities
 		fileChooser.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("DELETE"), "delAction");
 	}
 
-	public static void setXMLFileChooser(JFileChooser fileChooser)
+	public static void setZippedXMLFileChooser(JFileChooser fileChooser)
+	{
+		setFileFilter(fileChooser, "Zipped XML", "xml.zip");
+	}
+
+	private static void setFileFilter(JFileChooser fileChooser, String description, String extension)
 	{
 		fileChooser.setFileFilter(new FileFilter()
 		{
 			public String getDescription()
 			{
-				return "XML (*." + CodeListStorage.fileExtension + ")";
+				return description + " (*." + extension + ")";
 			}
 
 			public boolean accept(File file)
 			{
 				String filename = file.getName().toLowerCase();
-				return filename.endsWith("." + CodeListStorage.fileExtension);
+				return filename.endsWith("." + extension);
 			}
 		});
+	}
+
+	public static void setXMLFileChooser(JFileChooser fileChooser)
+	{
+		setFileFilter(fileChooser, "XML", "xml");
 	}
 }

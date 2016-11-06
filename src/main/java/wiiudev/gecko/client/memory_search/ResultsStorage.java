@@ -16,51 +16,85 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ResultsStorage
 {
-	private String filePath;
+	private String documentFilePath;
+	private String archiveFilePath;
+	private static final String ARCHIVE_EXTENSION = "zip";
+	private static final String DOCUMENT_EXTENSION = "xml";
 
 	public ResultsStorage(String filePath) throws Exception
 	{
-		this.filePath = filePath;
+		String extension = "." + DOCUMENT_EXTENSION + "." + ARCHIVE_EXTENSION;
+		if (!filePath.endsWith(extension))
+		{
+			filePath += extension;
+		}
+
+		documentFilePath = filePath;
+		archiveFilePath = filePath;
+
+		// Remove the archive extension if necessary
+		if (documentFilePath.endsWith("." + ARCHIVE_EXTENSION))
+		{
+			documentFilePath = documentFilePath.substring(0, documentFilePath.length() - (ARCHIVE_EXTENSION.length() + 1));
+		}
+
+		// Add the archive extension if necessary
+		if (archiveFilePath.endsWith("." + DOCUMENT_EXTENSION))
+		{
+			archiveFilePath = archiveFilePath + "." + ARCHIVE_EXTENSION;
+		}
 	}
 
 	public SearchBackup readResults() throws Exception
 	{
-		File xmlFile = new File(filePath);
-		Document document = XMLHelper.getDocument(xmlFile);
+		File zippedXMLFile = new File(archiveFilePath);
+		ArchivingUtilities.unpack(zippedXMLFile.getAbsolutePath());
 
-		String valueSizeText = getElementText(document, "value_size");
-		ValueSize valueSize = ValueSize.parse(valueSizeText);
+		File xmlFile = new File(documentFilePath);
 
-		int startingAddress = Conversions.toDecimal(getElementText(document, "start_address"));
-		int length = Conversions.toDecimal(getElementText(document, "end_address")) - startingAddress;
-		SearchBounds searchBounds = new SearchBounds(startingAddress, length);
-
-		List<SearchResult> searchResults = new ArrayList<>();
-		NodeList results = getNodesList("result");
-
-		for (int nodeIndex = 0; nodeIndex < results.getLength(); nodeIndex++)
+		try
 		{
-			Node node = results.item(nodeIndex);
+			Document document = XMLHelper.getDocument(xmlFile);
 
-			if (node.getNodeType() == Node.ELEMENT_NODE)
+			String valueSizeText = getElementText(document, "value_size");
+			ValueSize valueSize = ValueSize.parse(valueSizeText);
+
+			int startingAddress = Conversions.toDecimal(getElementText(document, "start_address"));
+			int length = Conversions.toDecimal(getElementText(document, "end_address")) - startingAddress;
+			SearchBounds searchBounds = new SearchBounds(startingAddress, length);
+
+			List<SearchResult> searchResults = new ArrayList<>();
+			NodeList results = getNodesList("result");
+
+			for (int nodeIndex = 0; nodeIndex < results.getLength(); nodeIndex++)
 			{
-				Element element = (Element) node;
+				Node node = results.item(nodeIndex);
 
-				int address = Conversions.toDecimal(element.getAttribute("address"));
-				BigInteger previous = new BigInteger(XMLHelper.getText(element, "previous_value"), 16);
-				BigInteger current = new BigInteger(XMLHelper.getText(element, "current_value"), 16);
+				if (node.getNodeType() == Node.ELEMENT_NODE)
+				{
+					Element element = (Element) node;
 
-				SearchResult searchResult = new SearchResult(address, previous, current, valueSize);
-				searchResults.add(searchResult);
+					int address = Conversions.toDecimal(element.getAttribute("address"));
+					BigInteger previous = new BigInteger(XMLHelper.getText(element, "previous_value"), 16);
+					BigInteger current = new BigInteger(XMLHelper.getText(element, "current_value"), 16);
+
+					SearchResult searchResult = new SearchResult(address, previous, current, valueSize);
+					searchResults.add(searchResult);
+				}
 			}
-		}
 
-		return new SearchBackup(searchBounds, valueSize, searchResults);
+			return new SearchBackup(searchBounds, valueSize, searchResults);
+		} finally
+		{
+			Files.delete(xmlFile.toPath());
+		}
 	}
 
 	private String getElementText(Document document, String tagName)
@@ -72,7 +106,7 @@ public class ResultsStorage
 
 	private NodeList getNodesList(String tagName) throws ParserConfigurationException, SAXException, IOException
 	{
-		File xmlFile = new File(filePath);
+		File xmlFile = new File(documentFilePath);
 		Document document = XMLHelper.getDocument(xmlFile);
 
 		return document.getElementsByTagName(tagName);
@@ -120,10 +154,16 @@ public class ResultsStorage
 		}
 
 		xMLStreamWriter.writeEndElement();
-
 		xMLStreamWriter.writeEndDocument();
-		filePath = forceExtension(filePath, "xml");
-		XMLHelper.writeFile(stringWriter, filePath);
+
+		// Write the XML file
+		XMLHelper.writeFile(stringWriter, documentFilePath);
+
+		// Now zip it
+		ArchivingUtilities.pack(new File(archiveFilePath), documentFilePath);
+
+		// Delete the original XML file
+		Files.delete(Paths.get(documentFilePath));
 	}
 
 	private String forceExtension(String filePath, String extension)
@@ -136,8 +176,8 @@ public class ResultsStorage
 		return filePath;
 	}
 
-	public String getFilePath()
+	public String getArchiveFilePath()
 	{
-		return filePath;
+		return archiveFilePath;
 	}
 }

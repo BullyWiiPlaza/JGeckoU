@@ -1,3 +1,4 @@
+import wiiudev.gecko.client.memory_search.ArchivingUtilities;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 
@@ -8,6 +9,10 @@ public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
+		ArchivingUtilities.unpack("D:\\Programs\\Source Codes\\Java\\IntelliJ\\JGecko U\\searches\\AMKP01\\Character 2.xml.zip");
+
+		System.exit(0);
+
 		Path rawFile = Paths.get("raw.txt");
 		Path compressedFile = Paths.get("raw.lzma");
 

@@ -38,7 +38,7 @@ public class TCPGeckoTesting
 	@Test
 	public void testRemoteProcedureCalls() throws Exception
 	{
-		CoreInit.getOSTime(); // Can't check this but just run it
+		CoreInit.getOSTime(); // Can't check correctness but just run it
 
 		int physical = CoreInit.getEffectiveToPhysical(0x10000000);
 		Assert.assertEquals(0x50000000, physical);

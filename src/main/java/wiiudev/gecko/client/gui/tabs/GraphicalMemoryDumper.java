@@ -61,6 +61,7 @@ public class GraphicalMemoryDumper
 		@Override
 		protected Long doInBackground() throws Exception
 		{
+			// long startingTime = System.currentTimeMillis();
 			progressBar.setValue(0);
 			String dumpText = dumpMemoryButton.getText();
 			dumpMemoryButton.setText("Dumping...");
@@ -110,6 +111,9 @@ public class GraphicalMemoryDumper
 				setProgress((int) progress);
 
 				Toolkit.getDefaultToolkit().beep();
+
+				/*long endTime = System.currentTimeMillis();
+				System.out.println("Took " + ((endTime - startingTime) / (double) 1000) + " seconds");*/
 
 				return bytesDumped;
 			} catch (Exception exception)

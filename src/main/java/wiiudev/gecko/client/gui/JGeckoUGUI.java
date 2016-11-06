@@ -191,6 +191,8 @@ public class JGeckoUGUI extends JFrame
 	private JCheckBox interruptsCheckBox;
 	private JCheckBox searchAlignedCheckBox;
 	private JButton coresCountButton;
+	private JFormattedTextField memoryRequestSizeField;
+	private JLabel codeHandlerWarningLabel;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -407,7 +409,7 @@ public class JGeckoUGUI extends JFrame
 			JFileChooser fileChooser = new JFileChooser();
 			fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			JFileChooserUtilities.registerDeleteAction(fileChooser);
-			JFileChooserUtilities.setXMLFileChooser(fileChooser);
+			JFileChooserUtilities.setZippedXMLFileChooser(fileChooser);
 
 			try
 			{
@@ -442,7 +444,7 @@ public class JGeckoUGUI extends JFrame
 			JFileChooser fileChooser = new JFileChooser();
 			fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			JFileChooserUtilities.registerDeleteAction(fileChooser);
-			JFileChooserUtilities.setXMLFileChooser(fileChooser);
+			JFileChooserUtilities.setZippedXMLFileChooser(fileChooser);
 
 			try
 			{
@@ -452,7 +454,8 @@ public class JGeckoUGUI extends JFrame
 				if (selectedOption == JOptionPane.OK_OPTION)
 				{
 					File selectedFile = fileChooser.getSelectedFile();
-					ResultsStorage resultsStorage = new ResultsStorage(selectedFile.getAbsolutePath());
+					String selectedFilePath = selectedFile.getAbsolutePath();
+					ResultsStorage resultsStorage = new ResultsStorage(selectedFilePath);
 					List<SearchResult> searchResults = searchResultsTableManager.getSearchResults();
 					SearchBounds searchBounds = new SearchBounds(Conversions.toDecimal(searchStartingAddressField.getText()),
 							Conversions.toDecimal(searchEndingAddressField.getText())
@@ -461,7 +464,7 @@ public class JGeckoUGUI extends JFrame
 
 					JOptionPane.showMessageDialog(this,
 							"Search results written to\n"
-									+ resultsStorage.getFilePath(),
+									+ resultsStorage.getArchiveFilePath().replace(System.getProperty("user.dir") + File.separator, ""),
 							"Success",
 							JOptionPane.INFORMATION_MESSAGE);
 				}
@@ -1378,6 +1381,41 @@ public class JGeckoUGUI extends JFrame
 
 		memoryAddressProtectionCheckBox.addChangeListener(changeEvent ->
 				TCPGecko.enforceMemoryAccessProtection = memoryAddressProtectionCheckBox.isSelected());
+
+		memoryRequestSizeField.getDocument().addDocumentListener(new DocumentListener()
+		{
+			@Override
+			public void insertUpdate(DocumentEvent documentEvent)
+			{
+				setTCPGeckoMemoryRequestSize();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent documentEvent)
+			{
+				setTCPGeckoMemoryRequestSize();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent documentEvent)
+			{
+				setTCPGeckoMemoryRequestSize();
+			}
+		});
+
+		memoryRequestSizeField.setValue(0x400);
+	}
+
+	private void setTCPGeckoMemoryRequestSize()
+	{
+		try
+		{
+			TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE = Integer.parseUnsignedInt(memoryRequestSizeField.getText().replaceAll(",", ""));
+			// System.out.println("SIZE: " + TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
+		} catch (NumberFormatException exception)
+		{
+			// exception.printStackTrace();
+		}
 	}
 
 	private void removeUnfinishedTabs()
@@ -1740,6 +1778,7 @@ public class JGeckoUGUI extends JFrame
 			simpleProperties.put("SEARCH_VALUE_SIZE", searchValueSizeComboBox.getSelectedItem().toString());
 			simpleProperties.put("SEARCH_MODE", searchModeComboBox.getSelectedItem().toString());
 			simpleProperties.put("SEARCH_CONDITION", searchConditionComboBox.getSelectedItem().toString());
+			simpleProperties.put("MEMORY_REQUEST_SIZE", memoryRequestSizeField.getText());
 
 			simpleProperties.writeToFile();
 		}));
@@ -1867,6 +1906,12 @@ public class JGeckoUGUI extends JFrame
 		{
 			SearchConditions condition = SearchConditions.parse(searchCondition);
 			searchConditionComboBox.setSelectedItem(condition);
+		}
+
+		String memoryRequestSize = simpleProperties.get("MEMORY_REQUEST_SIZE");
+		if (memoryRequestSize != null)
+		{
+			memoryRequestSizeField.setText(memoryRequestSize);
 		}
 	}
 
@@ -2602,6 +2647,21 @@ public class JGeckoUGUI extends JFrame
 	private void configureCodesTab()
 	{
 		codeListSender = new CodeListSender();
+
+		codeHandlerWarningLabel.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent mouseEvent)
+			{
+				try
+				{
+					Desktop.getDesktop().browse(new URI("http://gbatemp.net/threads/post-your-wiiu-cheat-codes-here.395443/"));
+				} catch (Exception exception)
+				{
+					exception.printStackTrace();
+				}
+			}
+		});
 
 		JList<JCheckBox> checkBoxesList = codesListManager.getCheckBoxList();
 		checkBoxesList.addMouseListener(new MouseAdapter()

@@ -4,6 +4,7 @@ import javax.swing.*;
 
 public class ApplicationGUILauncher
 {
+	// TODO Use ZIP for saving search results
 	// TODO Refine search button when not first search
 	// TODO Read compressed bytes from server?
 	// TODO Watch list implement context menu (like for the codes tab)

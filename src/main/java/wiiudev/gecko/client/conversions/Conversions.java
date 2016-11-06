@@ -46,7 +46,15 @@ public class Conversions
 		for (int hexadecimalBytesIndex = 0; hexadecimalBytesIndex < hexadecimal.length(); hexadecimalBytesIndex += 2)
 		{
 			String subString = hexadecimal.substring(hexadecimalBytesIndex, hexadecimalBytesIndex + 2);
-			textBuilder.append((char) Integer.parseInt(subString, 16));
+			char character = (char) Integer.parseInt(subString, 16);
+
+			// Use dots to indicate "empty" characters
+			if (character == '\u0000')
+			{
+				character = '.';
+			}
+
+			textBuilder.append(character);
 		}
 
 		return textBuilder.toString();
