@@ -35,14 +35,14 @@ public class CodeDatabaseDownloader
 	{
 		Elements elements = webDocument.select("body");
 		String bodyHTML = elements.toString();
-		bodyHTML = stripHeaderAndFooter(bodyHTML);
-		String plainText = parsePlainTextFromHTML(bodyHTML);
+		bodyHTML = HTMLUtilities.stripHeaderAndFooter(bodyHTML);
+		String plainText = HTMLUtilities.parsePlainTextFromHTML(bodyHTML);
 		String[] parsedCodes = plainText.split(lineBreak + lineBreak);
 
 		for (String parsedCode : parsedCodes)
 		{
 			// No codes found?
-			if(parsedCode.contains("No codes found."))
+			if (parsedCode.contains("No codes found."))
 			{
 				return;
 			}
@@ -105,46 +105,50 @@ public class CodeDatabaseDownloader
 		return code;
 	}
 
-	private String stripHeaderAndFooter(String bodyHTML)
+	private static class HTMLUtilities
 	{
-		int separatorLineIndex = bodyHTML.indexOf("<hr>");
-		bodyHTML = bodyHTML.substring(separatorLineIndex);
-		separatorLineIndex = bodyHTML.lastIndexOf("<hr>");
-		bodyHTML = bodyHTML.substring(0, separatorLineIndex);
-		return bodyHTML;
-	}
-
-	private String parsePlainTextFromHTML(String html) throws IOException
-	{
-		StringBuilder stringBuilder = new StringBuilder();
-
-		HTMLEditorKit.ParserCallback parserCallback = new HTMLEditorKit.ParserCallback()
+		private static String stripHeaderAndFooter(String bodyHTML)
 		{
-			@Override
-			public void handleText(char[] data, int pos)
-			{
-				String string = new String(data);
-				stringBuilder.append(string.trim());
-			}
+			int separatorLineIndex = bodyHTML.indexOf("<hr>");
+			bodyHTML = bodyHTML.substring(separatorLineIndex);
+			separatorLineIndex = bodyHTML.lastIndexOf("<hr>");
+			bodyHTML = bodyHTML.substring(0, separatorLineIndex);
 
-			@Override
-			public void handleStartTag(HTML.Tag t, MutableAttributeSet a, int pos)
+			return bodyHTML;
+		}
+
+		private static String parsePlainTextFromHTML(String html) throws IOException
+		{
+			StringBuilder stringBuilder = new StringBuilder();
+
+			HTMLEditorKit.ParserCallback parserCallback = new HTMLEditorKit.ParserCallback()
 			{
-				if (t == HTML.Tag.DIV || t == HTML.Tag.BR || t == HTML.Tag.P)
+				@Override
+				public void handleText(char[] data, int pos)
 				{
-					stringBuilder.append("\n");
+					String string = new String(data);
+					stringBuilder.append(string.trim());
 				}
-			}
 
-			@Override
-			public void handleSimpleTag(HTML.Tag t, MutableAttributeSet a, int pos)
-			{
-				handleStartTag(t, a, pos);
-			}
-		};
+				@Override
+				public void handleStartTag(HTML.Tag t, MutableAttributeSet a, int pos)
+				{
+					if (t == HTML.Tag.DIV || t == HTML.Tag.BR || t == HTML.Tag.P)
+					{
+						stringBuilder.append("\n");
+					}
+				}
 
-		new ParserDelegator().parse(new StringReader(html), parserCallback, false);
+				@Override
+				public void handleSimpleTag(HTML.Tag t, MutableAttributeSet a, int pos)
+				{
+					handleStartTag(t, a, pos);
+				}
+			};
 
-		return stringBuilder.toString().trim();
+			new ParserDelegator().parse(new StringReader(html), parserCallback, false);
+
+			return stringBuilder.toString().trim();
+		}
 	}
 }

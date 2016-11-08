@@ -31,6 +31,11 @@ public class GraphicalSearcher
 		// Wait till done
 		task.get();
 
+		if (dumpedBytes == null)
+		{
+			throw new IllegalStateException("Failed dumping bytes for the search");
+		}
+
 		return dumpedBytes;
 	}
 

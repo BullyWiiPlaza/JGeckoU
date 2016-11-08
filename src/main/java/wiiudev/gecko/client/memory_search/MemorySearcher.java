@@ -151,7 +151,7 @@ public class MemorySearcher
 		isFirstSearch = false;
 
 		// Do not smash the RAM
-		if (searchResults.size() < 9999)
+		if (searchResults.size() < SearchResult.SEARCH_RESULTS_THRESHOLD)
 		{
 			pushSearchResults();
 		}

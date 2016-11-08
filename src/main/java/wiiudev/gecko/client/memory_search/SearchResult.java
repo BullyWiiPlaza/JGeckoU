@@ -8,13 +8,16 @@ import java.math.BigInteger;
 
 public class SearchResult implements Cloneable, Comparable
 {
+	public static final int SEARCH_RESULTS_THRESHOLD = 99999;
+
 	private int address;
 	private ValueSize valueSize;
 	private BigInteger previousValue;
 	private BigInteger currentValue;
 	private BigInteger valueDifference;
 
-	public SearchResult(int address, BigInteger previousValue, BigInteger currentValue, ValueSize valueSize)
+	public SearchResult(int address, BigInteger previousValue,
+	                    BigInteger currentValue, ValueSize valueSize)
 	{
 		this.address = address;
 		this.valueSize = valueSize;

@@ -72,7 +72,7 @@ public class SearchResultsTableManager
 		removeAllRows();
 
 		// Do not populate the table when results are numerous to avoid delay
-		if (searchResults.size() < 99999)
+		if (searchResults.size() < SearchResult.SEARCH_RESULTS_THRESHOLD)
 		{
 			searchResults.forEach(this::addRow);
 		}

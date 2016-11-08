@@ -1,11 +1,13 @@
 package wiiudev.gecko.client.titles;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import wiiudev.gecko.client.gui.utilities.InternetAvailabilityChecker;
 import wiiudev.gecko.client.gui.utilities.XMLHelper;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -39,11 +41,12 @@ public class TitleDatabaseManager
 		titleDatabaseFilePath = "Titles.xml";
 
 		boolean titleDatabaseFileExists = new File(titleDatabaseFilePath).exists();
+		boolean isInternetAvailable = InternetAvailabilityChecker.isInternetAvailable();
 
 		if (titleDatabaseFileExists)
 		{
 			restore();
-		} else
+		} else if (isInternetAvailable)
 		{
 			update();
 		}
@@ -159,7 +162,7 @@ public class TitleDatabaseManager
 
 		// Connect to the website and parse the table
 		String titleDatabaseURL = "http://wiiubrew.org/wiki/Title_database";
-		org.jsoup.nodes.Document titleDatabaseDocument = Jsoup.connect(titleDatabaseURL).get();
+		Document titleDatabaseDocument = Jsoup.connect(titleDatabaseURL).get();
 		Elements titlesTable = titleDatabaseDocument.select("#mw-content-text > table:nth-child(16) > tbody");
 		Elements rows = titlesTable.select("tr");
 		int rowsCount = rows.size();
@@ -231,7 +234,7 @@ public class TitleDatabaseManager
 	{
 		TitleNotFoundException(String titleId)
 		{
-			super("The title id " + titleId + " has not been found in the database");
+			super("The title id " + titleId + " has not been found in the database!");
 		}
 	}
 }
