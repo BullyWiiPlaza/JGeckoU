@@ -1,5 +1,7 @@
 package wiiudev.gecko.client.tcpgecko.main.enumerations;
 
+import java.util.Arrays;
+
 /**
  * An enumeration of all known status codes
  *
@@ -35,5 +37,13 @@ public enum Status
 		}
 
 		throw new IllegalStateException("Illegal status received: " + statusByte);
+	}
+
+	public void assertStatus(Status... statuses)
+	{
+		if (!Arrays.asList(statuses).contains(this))
+		{
+			throw new IllegalStateException("Expected " + Arrays.toString(statuses) + " but got " + this + "!");
+		}
 	}
 }

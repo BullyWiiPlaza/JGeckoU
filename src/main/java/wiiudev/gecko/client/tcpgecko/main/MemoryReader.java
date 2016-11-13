@@ -73,7 +73,7 @@ public class MemoryReader extends TCPGecko
 	{
 		byte[] bytesRead;
 		StringBuilder stringBuilder = new StringBuilder();
-		int byteBufferSize = 100; // The amount of bytes to read and inspect at once
+		int byteBufferSize = TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE; // The amount of bytes to read and inspect at once
 
 		while (true)
 		{
@@ -153,19 +153,26 @@ public class MemoryReader extends TCPGecko
 
 			sendCommand(Command.MEMORY_SEARCH);
 
-			ByteBuffer byteBuffer = ByteBuffer.allocate(TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
-			byteBuffer.putInt(address);
-			byteBuffer.putInt(address + length);
-			byteBuffer.putInt(bytes.length);
-			byteBuffer.put(bytes);
-			byte[] paddingBytes = new byte[TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE - byteBuffer.array().length];
-			byteBuffer.put(paddingBytes);
-			// System.out.println(Arrays.toString(byteBuffer.array()));
-			dataSender.write(byteBuffer.array());
+			byte[] byteBuffer = getSearchBytesRequest(address, length, bytes);
+			dataSender.write(byteBuffer);
 			dataSender.flush();
 
 			return dataReceiver.readInt();
 		}
+	}
+
+	private byte[] getSearchBytesRequest(int address, int length, byte[] bytes)
+	{
+		ByteBuffer byteBuffer = ByteBuffer.allocate(TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
+		byteBuffer.putInt(address);
+		byteBuffer.putInt(address + length);
+		byteBuffer.putInt(bytes.length);
+		byteBuffer.put(bytes);
+		byte[] paddingBytes = new byte[TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE - byteBuffer.array().length];
+		byteBuffer.put(paddingBytes);
+		// System.out.println(Arrays.toString(byteBuffer.array()));
+
+		return byteBuffer.array();
 	}
 
 	public boolean isRunning() throws IOException
@@ -208,12 +215,6 @@ public class MemoryReader extends TCPGecko
 			reentrantLock.unlock();
 		}
 	}*/
-
-	public static int deReference(int address) throws IOException
-	{
-		MemoryReader memoryReader = new MemoryReader();
-		return memoryReader.readInt(address);
-	}
 
 	/**
 	 * Reads a block of memory with length <code>bytes</code> starting at <code>address</code>
@@ -270,9 +271,12 @@ public class MemoryReader extends TCPGecko
 	public byte[] readBytes(int length) throws IOException
 	{
 		Status status = readStatus();
+		status.assertStatus(Status.OK, Status.OK_EMPTY);
+
 		byte[] received = new byte[length];
 
-		if (status == Status.OK)
+		// Only read the data when it's non-empty
+		if (!status.equals(Status.OK_EMPTY))
 		{
 			dataReceiver.readFully(received);
 		}
@@ -292,7 +296,7 @@ public class MemoryReader extends TCPGecko
 		}
 	}
 
-	public void disassembleRange(int address, int length) throws IOException
+	/*public void disassembleRange(int address, int length) throws IOException
 	{
 		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
@@ -301,5 +305,5 @@ public class MemoryReader extends TCPGecko
 			dataSender.writeInt(address + length);
 			dataSender.flush();
 		}
-	}
+	}*/
 }

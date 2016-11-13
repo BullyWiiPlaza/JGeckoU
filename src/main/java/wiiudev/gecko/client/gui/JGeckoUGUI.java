@@ -191,6 +191,7 @@ public class JGeckoUGUI extends JFrame
 	private JFormattedTextField memoryRequestSizeField;
 	private JLabel codeHandlerWarningLabel;
 	private JLabel memoryRequestSizeLabel;
+	private JButton universalOffsetPorterButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -817,7 +818,7 @@ public class JGeckoUGUI extends JFrame
 	private void addTabsChangedListener()
 	{
 		programTabs.addChangeListener(changeEvent ->
-				considerUpdatingTabsAsynchronously());
+				considerUpdatingTabs());
 	}
 
 	private void configureDisassemblerTab()
@@ -917,7 +918,7 @@ public class JGeckoUGUI extends JFrame
 					MemoryWriter memoryWriter = new MemoryWriter();
 					int address = disassembledInstruction.getAddress();
 					int value = Integer.parseUnsignedInt(assembled, 16);
-					memoryWriter.kernelWriteInt(address, value);
+					memoryWriter.writeInt(address, value);
 
 					updateDisassembler();
 				} catch (AssemblerFilesException | AssemblerException exception)
@@ -1957,6 +1958,7 @@ public class JGeckoUGUI extends JFrame
 	{
 		powerPCAssemblyCompilerButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/PowerPC-Assembly-Compiler/blob/master/PowerPC-Assembly-Compiler.jar?raw=true", actionEvent));
 		pointerSearchApplicationButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/Universal-Pointer-Searcher/blob/master/Universal-Pointer-Searcher.jar?raw=true", actionEvent));
+		universalOffsetPorterButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/Universal-Offset-Porter/blob/master/Universal%20Offset%20Porter.jar?raw=true", actionEvent));
 		addStartHexEditorButtonListener();
 		addStartScientificCalculatorListener();
 	}
@@ -2940,7 +2942,7 @@ public class JGeckoUGUI extends JFrame
 				case THIRTY_TWO_BIT:
 					if (kernelWriteCheckBox.isSelected())
 					{
-						memoryWriter.kernelWriteInt(targetAddress, newValue);
+						memoryWriter.writeInt(targetAddress, newValue);
 					} else
 					{
 						memoryWriter.writeInt(targetAddress, newValue);
@@ -3543,39 +3545,30 @@ public class JGeckoUGUI extends JFrame
 	{
 		boolean interruptsEnabled = OSThreadRPC.areInterruptsEnabled();
 		interruptsCheckBox.setSelected(interruptsEnabled);
-		considerUpdatingTabsAsynchronously();
+		considerUpdatingTabs();
 	}
 
-	private void considerUpdatingTabsAsynchronously()
+	private void considerUpdatingTabs()
 	{
-		new SwingWorker<String, String>()
+		if (TCPGecko.isConnected())
 		{
-			@Override
-			protected String doInBackground() throws Exception
+			if (memoryViewerTab.isShowing())
 			{
-				if (TCPGecko.isConnected())
-				{
-					if (memoryViewerTab.isShowing())
-					{
-						updateMemoryViewer(true, false);
-					}
-
-					if (disassemblerTab.isShowing())
-					{
-						updateDisassembler();
-					}
-
-					if (watchListTab.isShowing())
-					{
-						updateWatchList();
-					}
-				}
-
-				considerUpdatingRegisters();
-
-				return null;
+				updateMemoryViewer(true, false);
 			}
-		}.execute();
+
+			if (disassemblerTab.isShowing())
+			{
+				updateDisassembler();
+			}
+
+			if (watchListTab.isShowing())
+			{
+				updateWatchList();
+			}
+		}
+
+		considerUpdatingRegisters();
 	}
 
 	/**

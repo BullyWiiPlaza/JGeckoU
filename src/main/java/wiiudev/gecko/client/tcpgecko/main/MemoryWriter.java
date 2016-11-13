@@ -1,6 +1,7 @@
 package wiiudev.gecko.client.tcpgecko.main;
 
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Command;
+import wiiudev.gecko.client.tcpgecko.main.enumerations.Status;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.DataConversions;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
@@ -150,43 +151,34 @@ public class MemoryWriter extends TCPGecko
 		writePartitionedBytes(address, partitionedBytes);
 	}
 
-	private void writePartitionedBytes(int address, List<byte[]> partitionedBytes) throws IOException
+	private void writePartitionedBytes(int address, List<byte[]> bytesChunks) throws IOException
 	{
-		for (byte[] bytesChunk : partitionedBytes)
+		for (byte[] bytesChunk : bytesChunks)
 		{
 			// The end address is the next starting address
-			address = uploadBytes(address, bytesChunk, Command.MEMORY_UPLOAD);
+			address = uploadBytes(address, bytesChunk);
 		}
 	}
 
-	private int uploadBytes(int address, byte[] bytes, Command command) throws IOException
+	private int uploadBytes(int address, byte[] bytes) throws IOException
 	{
-		assertMemoryUploadCommand(command);
 		AddressRange.assertValidAccess(address, bytes.length, MemoryAccessLevel.WRITE);
 		int endAddress = address + bytes.length;
 
 		try (CloseableReentrantLock ignored = TCPGecko.reentrantLock.acquire())
 		{
-			sendCommand(command);
+			sendCommand(Command.MEMORY_UPLOAD);
 			dataSender.writeInt(address);
 			dataSender.writeInt(endAddress);
 			dataSender.write(bytes);
 			dataSender.flush();
 
-			// No need to check the status but we need to read it at least
-			readStatus();
+			// Read the status and make sure it's the right one
+			Status status = readStatus();
+			status.assertStatus(Status.GC_ACK);
 		}
 
 		return endAddress;
-	}
-
-	private void assertMemoryUploadCommand(Command command)
-	{
-		if (!command.equals(Command.MEMORY_UPLOAD))
-				// && !command.equals(Command.MEMORY_KERNEL_UPLOAD))
-		{
-			throw new IllegalArgumentException("Must be a memory upload command!");
-		}
 	}
 
 	/**
@@ -212,19 +204,7 @@ public class MemoryWriter extends TCPGecko
 		writeBytes(address, bytes);
 	}
 
-	/*public void kernelUploadInts(int address, int[] ints) throws IOException
-	{
-		byte[] bytes = Conversions.toByteArray(ints);
-		List<byte[]> partitionedBytes = ByteUtilities.partition(bytes, MAXIMUM_MEMORY_CHUNK_SIZE);
-
-		for (byte[] bytesChunk : partitionedBytes)
-		{
-			// The end address is the next starting address
-			address = uploadBytes(address, bytesChunk, Command.MEMORY_KERNEL_UPLOAD);
-		}
-	}*/
-
-	public void kernelWriteInt(int address, int value) throws IOException
+	/*public void kernelWriteInt(int address, int value) throws IOException
 	{
 		try (CloseableReentrantLock ignored = TCPGecko.reentrantLock.acquire())
 		{
@@ -233,7 +213,7 @@ public class MemoryWriter extends TCPGecko
 			dataSender.writeInt(value);
 			dataSender.flush();
 		}
-	}
+	}*/
 
 	public void serialWrite(int address, int value, int writesCount) throws IOException
 	{

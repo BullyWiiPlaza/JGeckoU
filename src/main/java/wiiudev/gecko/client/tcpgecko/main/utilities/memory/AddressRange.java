@@ -53,7 +53,8 @@ public class AddressRange
 			return true;
 		} else if (isInRange(address, endAddress, appExecutableLibraries)) // Depends on game
 		{
-			return memoryAccessLevel == MemoryAccessLevel.READ;
+			return true;
+			// return memoryAccessLevel == MemoryAccessLevel.READ;
 		} else if (isInRange(address, endAddress, mem2Region)) // Not fully till the end
 		{
 			return true;

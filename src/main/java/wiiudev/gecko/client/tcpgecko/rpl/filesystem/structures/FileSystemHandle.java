@@ -14,6 +14,10 @@ public class FileSystemHandle extends FileSystemObject
 	public int dereference() throws IOException
 	{
 		int address = getAddress();
-		return MemoryReader.deReference(address);
+
+		MemoryReader memoryReader = new MemoryReader();
+		address = memoryReader.readInt(address);
+
+		return address;
 	}
 }

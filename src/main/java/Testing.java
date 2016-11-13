@@ -1,6 +1,5 @@
-import wiiudev.gecko.client.memory_search.ArchivingUtilities;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
-import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -9,26 +8,22 @@ public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
-		ArchivingUtilities.unpack("D:\\Programs\\Source Codes\\Java\\IntelliJ\\JGecko U\\searches\\AMKP01\\Character 2.xml.zip");
-
-		System.exit(0);
-
-		Path rawFile = Paths.get("raw.txt");
-		Path compressedFile = Paths.get("raw.lzma");
-
-		LzmaCompressor lzmaCompressor = new LzmaCompressor(rawFile, compressedFile);
-		lzmaCompressor.compress();
-		// lzmaCompressor.decompress();
-
-		System.exit(0);
-
 		Connector.getInstance().connect("192.168.178.35");
 
 		// RemoteDisassembler.disassembleRange(0x01000000, 0x8);
 
+		MemoryWriter memoryWriter = new MemoryWriter();
+		memoryWriter.writeInt(0x10000004, 0x48344120);
+
+		/*
 		MemoryReader memoryReader = new MemoryReader();
-		int address = memoryReader.search(0x10000000, 0x1000000, new byte[]{0x73, 0x68, 0x6F, 0x75});
-		System.out.println(Integer.toHexString(address));
+		byte[] bytes = memoryReader.readBytes(0x01000000, 0x4);
+		System.out.println(Conversions.toHexadecimal(bytes, ValueSize.THIRTY_TWO_BIT));
+		memoryWriter.writeInt(0x01000000, 0x38005E00);*/
+		// memoryWriter.writeInt(0x10000000, 1001);
+		// MemoryReader memoryReader = new MemoryReader();
+		// int address = memoryReader.search(0x10000000, 0x1000000, new byte[]{0x73, 0x68, 0x6F, 0x75});
+		// System.out.println(Integer.toHexString(memoryReader.readInt(0x10000000)));
 
 		/*MemoryReader memoryReader = new MemoryReader();
 		byte[] bytes = memoryReader.readBytes(0x10000000, 0x2000);
@@ -48,6 +43,19 @@ public class Testing
 		/*MemoryReader memoryReader = new MemoryReader();
 		memoryReader.disassembleRange(0x02000000, 0x10);*/
 		Connector.getInstance().closeConnection();
+
+		// ArchivingUtilities.unpack("D:\\Programs\\Source Codes\\Java\\IntelliJ\\JGecko U\\searches\\AMKP01\\Character 2.xml.zip");
+
+		System.exit(0);
+
+		Path rawFile = Paths.get("raw.txt");
+		Path compressedFile = Paths.get("raw.lzma");
+
+		LzmaCompressor lzmaCompressor = new LzmaCompressor(rawFile, compressedFile);
+		lzmaCompressor.compress();
+		// lzmaCompressor.decompress();
+
+		System.exit(0);
 		// System.out.println(removeScientificNotation("3.0103E-7"));
 	}
 	// System.out.println(decimalToHex(-20f));

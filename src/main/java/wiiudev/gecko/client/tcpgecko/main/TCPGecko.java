@@ -37,24 +37,13 @@ public abstract class TCPGecko
 
 	protected Status readStatus() throws IOException
 	{
-		reentrantLock.lock();
-
-		try
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
 			byte serverStatus = dataReceiver.readByte();
 			return Status.getStatus(serverStatus);
-		} finally
-		{
-			reentrantLock.unlock();
 		}
 	}
-
-	private static boolean runningFromIntelliJ()
-	{
-		String classPath = System.getProperty("java.class.path");
-		return classPath.contains("IntelliJ IDEA");
-	}
-
+	
 	/**
 	 * Sends a command to the Wii U
 	 *
