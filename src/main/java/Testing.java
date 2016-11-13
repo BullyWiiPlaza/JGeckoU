@@ -1,5 +1,5 @@
 import wiiudev.gecko.client.tcpgecko.main.Connector;
-import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,10 +10,14 @@ public class Testing
 	{
 		Connector.getInstance().connect("192.168.178.35");
 
+		MemoryReader memoryReader = new MemoryReader();
+		int size = memoryReader.getDataBufferSize();
+		System.out.println(size);
+
 		// RemoteDisassembler.disassembleRange(0x01000000, 0x8);
 
-		MemoryWriter memoryWriter = new MemoryWriter();
-		memoryWriter.writeInt(0x10000004, 0x48344120);
+		// MemoryWriter memoryWriter = new MemoryWriter();
+		// memoryWriter.writeInt(0x10000004, 0x48344120);
 
 		/*
 		MemoryReader memoryReader = new MemoryReader();

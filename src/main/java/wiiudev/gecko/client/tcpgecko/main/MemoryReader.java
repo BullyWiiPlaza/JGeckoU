@@ -296,6 +296,17 @@ public class MemoryReader extends TCPGecko
 		}
 	}
 
+	public int getDataBufferSize() throws IOException
+	{
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
+		{
+			sendCommand(Command.DATA_BUFFER_SIZE);
+			dataSender.flush();
+
+			return dataReceiver.readInt();
+		}
+	}
+
 	/*public void disassembleRange(int address, int length) throws IOException
 	{
 		try (CloseableReentrantLock ignored = reentrantLock.acquire())

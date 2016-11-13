@@ -188,9 +188,8 @@ public class JGeckoUGUI extends JFrame
 	private JCheckBox interruptsCheckBox;
 	private JCheckBox searchAlignedCheckBox;
 	private JButton coresCountButton;
-	private JFormattedTextField memoryRequestSizeField;
+	private JTextField dataBufferSizeField;
 	private JLabel codeHandlerWarningLabel;
-	private JLabel memoryRequestSizeLabel;
 	private JButton universalOffsetPorterButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
@@ -1375,21 +1374,6 @@ public class JGeckoUGUI extends JFrame
 
 	private void configureMiscellaneousTab()
 	{
-		memoryRequestSizeLabel.addMouseListener(new MouseAdapter()
-		{
-			@Override
-			public void mouseClicked(MouseEvent mouseEvent)
-			{
-				try
-				{
-					Desktop.getDesktop().browse(new URI("http://gbatemp.net/threads/post-your-wiiu-cheat-codes-here.395443/page-201#post-6805712"));
-				} catch (Exception exception)
-				{
-					exception.printStackTrace();
-				}
-			}
-		});
-
 		addFirmwareVersionButtonListener();
 		runGameTitlesUpdateServerCheckerThread();
 
@@ -1398,9 +1382,9 @@ public class JGeckoUGUI extends JFrame
 		memoryAddressProtectionCheckBox.addChangeListener(changeEvent ->
 				TCPGecko.enforceMemoryAccessProtection = memoryAddressProtectionCheckBox.isSelected());
 
-		memoryRequestSizeField.setValue(TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
+		dataBufferSizeField.setText(Conversions.toHexadecimalNoPadding(TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE));
 
-		memoryRequestSizeField.getDocument().addDocumentListener(new DocumentListener()
+		dataBufferSizeField.getDocument().addDocumentListener(new DocumentListener()
 		{
 			@Override
 			public void insertUpdate(DocumentEvent documentEvent)
@@ -1449,8 +1433,8 @@ public class JGeckoUGUI extends JFrame
 	{
 		try
 		{
-			TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE = Integer.parseUnsignedInt(memoryRequestSizeField.getText().replaceAll(",", ""));
-			// System.out.println("SIZE: " + TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
+			TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE = Integer.parseUnsignedInt(dataBufferSizeField.getText().replaceAll(",", ""), 16);
+			// System.out.println("SIZE: " + Integer.toHexString(TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE).toUpperCase());
 		} catch (NumberFormatException exception)
 		{
 			// exception.printStackTrace();
@@ -1817,7 +1801,7 @@ public class JGeckoUGUI extends JFrame
 			simpleProperties.put("SEARCH_VALUE_SIZE", searchValueSizeComboBox.getSelectedItem().toString());
 			simpleProperties.put("SEARCH_MODE", searchModeComboBox.getSelectedItem().toString());
 			simpleProperties.put("SEARCH_CONDITION", searchConditionComboBox.getSelectedItem().toString());
-			simpleProperties.put("MEMORY_REQUEST_SIZE", memoryRequestSizeField.getText());
+			simpleProperties.put("DATA_BUFFER_SIZE", dataBufferSizeField.getText());
 
 			simpleProperties.writeToFile();
 		}));
@@ -1947,10 +1931,10 @@ public class JGeckoUGUI extends JFrame
 			searchConditionComboBox.setSelectedItem(condition);
 		}
 
-		String memoryRequestSize = simpleProperties.get("MEMORY_REQUEST_SIZE");
+		String memoryRequestSize = simpleProperties.get("DATA_BUFFER_SIZE");
 		if (memoryRequestSize != null)
 		{
-			memoryRequestSizeField.setText(memoryRequestSize);
+			dataBufferSizeField.setText(memoryRequestSize);
 		}
 	}
 
@@ -3546,6 +3530,14 @@ public class JGeckoUGUI extends JFrame
 		boolean interruptsEnabled = OSThreadRPC.areInterruptsEnabled();
 		interruptsCheckBox.setSelected(interruptsEnabled);
 		considerUpdatingTabs();
+		setDataBufferSize();
+	}
+
+	private void setDataBufferSize() throws IOException
+	{
+		MemoryReader memoryReader = new MemoryReader();
+		int size = memoryReader.getDataBufferSize();
+		dataBufferSizeField.setText(Conversions.toHexadecimalNoPadding(size));
 	}
 
 	private void considerUpdatingTabs()
