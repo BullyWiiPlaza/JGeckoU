@@ -191,6 +191,7 @@ public class JGeckoUGUI extends JFrame
 	private JTextField dataBufferSizeField;
 	private JLabel codeHandlerWarningLabel;
 	private JButton universalOffsetPorterButton;
+	private JCheckBox recognizeDataBufferSizeCheckBox;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -1931,6 +1932,13 @@ public class JGeckoUGUI extends JFrame
 			searchConditionComboBox.setSelectedItem(condition);
 		}
 
+		String recognizeDataBufferSize = simpleProperties.get("GET_DATA_BUFFER_SIZE");
+		if (recognizeDataBufferSize != null)
+		{
+			boolean selected = Boolean.parseBoolean(recognizeDataBufferSize);
+			recognizeDataBufferSizeCheckBox.setSelected(selected);
+		}
+
 		String memoryRequestSize = simpleProperties.get("DATA_BUFFER_SIZE");
 		if (memoryRequestSize != null)
 		{
@@ -3530,7 +3538,11 @@ public class JGeckoUGUI extends JFrame
 		boolean interruptsEnabled = OSThreadRPC.areInterruptsEnabled();
 		interruptsCheckBox.setSelected(interruptsEnabled);
 		considerUpdatingTabs();
-		setDataBufferSize();
+
+		if (recognizeDataBufferSizeCheckBox.isSelected())
+		{
+			setDataBufferSize();
+		}
 	}
 
 	private void setDataBufferSize() throws IOException
