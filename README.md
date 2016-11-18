@@ -19,7 +19,7 @@ I setup a [GBATemp topic](http://gbatemp.net/threads/development-of-new-wii-u-ra
 
 ## Who gets credit for all this?
 [BullyWiiPlaza](http://gbatemp.net/members/bullywiiplaza.352259/) for creating and programming `JGecko U`  
-[The libwiiu team](https://github.com/wiiudev/libwiiu) for the kernel and browser exploits 
+[The libwiiu team](https://github.com/wiiudev/libwiiu) for the kernel and browser exploits  
 [The pyGecko team](https://github.com/wiiudev/pyGecko) for the original `TCP Gecko Installer`  
 [CosmoCortney](https://github.com/CosmoCortney/PPC-Cheat-Code-Handler/blob/master/PPC_Code.txt) for the code handler  
 [wj44](https://gbatemp.net/members/wj44.367152/) for `TCPGecko.elf` development  
