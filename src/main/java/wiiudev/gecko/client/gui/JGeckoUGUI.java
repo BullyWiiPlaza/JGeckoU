@@ -3642,8 +3642,6 @@ public class JGeckoUGUI extends JFrame
 
 		try
 		{
-			TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
-
 			Title title;
 
 			if (gameId == null)

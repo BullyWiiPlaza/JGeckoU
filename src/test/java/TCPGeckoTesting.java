@@ -37,6 +37,51 @@ public class TCPGeckoTesting
 	}
 
 	@Test
+	public void testAddressValidity() throws IOException
+	{
+		MemoryReader memoryReader = new MemoryReader();
+		boolean isAddressValid;
+
+		// Valid address
+		isAddressValid = memoryReader.validateAddress(0x10000000);
+		Assert.assertTrue(isAddressValid);
+
+		// (Valid) executable data address
+		isAddressValid = memoryReader.validateAddress(0x01000000);
+		Assert.assertTrue(isAddressValid);
+
+		// Invalid address
+		isAddressValid = memoryReader.validateAddress(0x50000000);
+		Assert.assertFalse(isAddressValid);
+
+		// Valid address range
+		isAddressValid = memoryReader.validateAddressRange(0x10800000, 0x10801000);
+		Assert.assertTrue(isAddressValid);
+
+		// Valid start but invalid end
+		isAddressValid = memoryReader.validateAddressRange(0x40000000, 0x50000000);
+		Assert.assertFalse(isAddressValid);
+
+		// Invalid address range input
+		try
+		{
+			memoryReader.validateAddressRange(0x1, 0x0);
+			Assert.fail("Invalid range input not handled!");
+		} catch (IllegalArgumentException ignored)
+		{
+
+		}
+
+		// Range of one valid address
+		isAddressValid = memoryReader.validateAddressRange(0x10000001, 0x10000001);
+		Assert.assertTrue(isAddressValid);
+
+		// Range of one invalid address
+		isAddressValid = memoryReader.validateAddressRange(0x1, 0x1);
+		Assert.assertFalse(isAddressValid);
+	}
+
+	@Test
 	public void testRemoteProcedureCalls() throws Exception
 	{
 		CoreInit.getOSTime(); // Can't check correctness but just run it

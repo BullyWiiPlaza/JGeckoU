@@ -307,6 +307,36 @@ public class MemoryReader extends TCPGecko
 		}
 	}
 
+	public boolean validateAddress(int address) throws IOException
+	{
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
+		{
+			sendCommand(Command.VALIDATE_ADDRESS);
+			dataSender.writeInt(address);
+			dataSender.flush();
+
+			return dataReceiver.readBoolean();
+		}
+	}
+
+	public boolean validateAddressRange(int startingAddress, int endingAddress) throws IOException
+	{
+		if (startingAddress > endingAddress)
+		{
+			throw new IllegalArgumentException("The starting address must be before the ending address!");
+		}
+
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
+		{
+			sendCommand(Command.VALIDATE_ADDRESS_RANGE);
+			dataSender.writeInt(startingAddress);
+			dataSender.writeInt(endingAddress);
+			dataSender.flush();
+
+			return dataReceiver.readBoolean();
+		}
+	}
+
 	/*public void disassembleRange(int address, int length) throws IOException
 	{
 		try (CloseableReentrantLock ignored = reentrantLock.acquire())

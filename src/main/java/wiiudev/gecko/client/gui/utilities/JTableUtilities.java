@@ -1,12 +1,8 @@
 package wiiudev.gecko.client.gui.utilities;
 
-import wiiudev.gecko.client.gui.tabs.watch_list.HeaderRenderer;
-
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableModel;
+import javax.swing.table.*;
+import java.awt.*;
 import java.awt.event.KeyListener;
 
 public class JTableUtilities
@@ -105,6 +101,27 @@ public class JTableUtilities
 		@Override
 		public void removeSelectionInterval(int start, int end)
 		{
+		}
+	}
+
+	private static class HeaderRenderer implements TableCellRenderer
+	{
+		private DefaultTableCellRenderer renderer;
+
+		HeaderRenderer(JTable table)
+		{
+			renderer = (DefaultTableCellRenderer)
+					table.getTableHeader().getDefaultRenderer();
+			renderer.setHorizontalAlignment(JLabel.CENTER);
+		}
+
+		@Override
+		public Component getTableCellRendererComponent(
+				JTable table, Object value, boolean isSelected,
+				boolean hasFocus, int row, int col)
+		{
+			return renderer.getTableCellRendererComponent(
+					table, value, isSelected, hasFocus, row, col);
 		}
 	}
 }

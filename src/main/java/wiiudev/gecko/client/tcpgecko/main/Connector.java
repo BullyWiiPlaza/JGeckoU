@@ -50,6 +50,7 @@ public class Connector
 	public void connect(String ipAddress) throws IOException
 	{
 		clientSocket = new Socket(ipAddress, 7331);
+		clientSocket.setSoTimeout(1000);
 
 		dataSender = new DataOutputStream(new BufferedOutputStream(clientSocket.getOutputStream()));
 		dataReceiver = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
