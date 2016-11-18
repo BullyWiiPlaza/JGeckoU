@@ -17,6 +17,9 @@ Since this is an [`IntelliJ IDEA`](https://www.jetbrains.com/idea/) project you 
 ## Where can I discuss the development of this application?
 I setup a [GBATemp topic](http://gbatemp.net/threads/development-of-new-wii-u-ram-debugger.413477/) dedicated to this.
 
+## Where do I get help/support?
+[This](http://gbatemp.net/threads/post-your-wiiu-cheat-codes-here.395443/) is a good thread.
+
 ## Who gets credit for all this?
 [BullyWiiPlaza](http://gbatemp.net/members/bullywiiplaza.352259/) for creating and programming `JGecko U`  
 [The libwiiu team](https://github.com/wiiudev/libwiiu) for the kernel and browser exploits  
