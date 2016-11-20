@@ -281,7 +281,7 @@ public class MemoryWriter extends TCPGecko
 	private int allocateHookingMemory(int insertedAssemblySize) throws IOException
 	{
 		MemoryReader memoryReader = new MemoryReader();
-		int insertAssemblyAddress = memoryReader.readCodeHandlerInstallationAddress() + 0x3000;
+		int insertAssemblyAddress = 0x10F7000; // memoryReader.readCodeHandlerInstallationAddress() + 0x3000;
 		int chunkSize = TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
 
 		while (true)
