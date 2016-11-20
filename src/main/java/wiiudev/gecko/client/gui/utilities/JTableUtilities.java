@@ -20,7 +20,7 @@ public class JTableUtilities
 		}
 	}
 
-	public static void setHeaderAlignment(JTable table)
+	private static void setHeaderAlignment(JTable table)
 	{
 		JTableHeader header = table.getTableHeader();
 		HeaderRenderer headerRenderer = new HeaderRenderer(table);
@@ -123,5 +123,28 @@ public class JTableUtilities
 			return renderer.getTableCellRendererComponent(
 					table, value, isSelected, hasFocus, row, col);
 		}
+	}
+
+	public static void setSelectedRow(JTable table, int rowIndex, int columnIndex)
+	{
+		table.setRowSelectionInterval(rowIndex, columnIndex);
+
+		try
+		{
+			Thread.sleep(10);
+		} catch (InterruptedException exception)
+		{
+			exception.printStackTrace();
+		}
+
+		scrollToSelectedRow(table);
+	}
+
+	private static void scrollToSelectedRow(JTable table)
+	{
+		JViewport viewport = (JViewport) table.getParent();
+		Rectangle cellRectangle = table.getCellRect(table.getSelectedRow(), 0, true);
+		Rectangle visibleRectangle = viewport.getVisibleRect();
+		table.scrollRectToVisible(new Rectangle(cellRectangle.x, cellRectangle.y, (int) visibleRectangle.getWidth(), (int) visibleRectangle.getHeight()));
 	}
 }

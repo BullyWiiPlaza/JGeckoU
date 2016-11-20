@@ -192,6 +192,8 @@ public class JGeckoUGUI extends JFrame
 	private JLabel codeHandlerWarningLabel;
 	private JButton universalOffsetPorterButton;
 	private JCheckBox detectDataBufferSizeCheckBox;
+	private JScrollPane disassemblerTableScrollPane;
+	private JButton codeHandlerInstallationAddressButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -1384,6 +1386,19 @@ public class JGeckoUGUI extends JFrame
 				TCPGecko.enforceMemoryAccessProtection = memoryAddressProtectionCheckBox.isSelected());
 
 		dataBufferSizeField.setText(Conversions.toHexadecimalNoPadding(TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE));
+
+		codeHandlerInstallationAddressButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				MemoryReader memoryReader = new MemoryReader();
+				int address = memoryReader.readCodeHandlerInstallationAddress();
+				selectInDisassembler(address);
+			} catch (Exception exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
 
 		dataBufferSizeField.getDocument().addDocumentListener(new DocumentListener()
 		{
@@ -3757,6 +3772,7 @@ public class JGeckoUGUI extends JFrame
 		saveWatchListButton.setEnabled(connected);
 		remoteProcedureCallButton.setEnabled(connected);
 		convertEffectiveToPhysicalButton.setEnabled(connected);
+		codeHandlerInstallationAddressButton.setEnabled(connected);
 		setMemoryViewerSearchButtonAvailability();
 
 		if (isAutoDetect)

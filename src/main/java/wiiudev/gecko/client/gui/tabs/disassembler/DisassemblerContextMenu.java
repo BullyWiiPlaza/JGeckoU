@@ -50,7 +50,7 @@ public class DisassemblerContextMenu extends JPopupMenu
 		{
 			JMenuItem option = new JMenuItem("Follow Branch");
 			option.setAccelerator(followBranchKeyStroke);
-			option.addActionListener(actionEvent -> followBranch(tableManager));
+			option.addActionListener(actionEvent -> DisassemblerTableManager.followBranch(tableManager));
 			add(option);
 		}
 
@@ -94,7 +94,7 @@ public class DisassemblerContextMenu extends JPopupMenu
 						copyCells();
 					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, followBranchKeyStroke))
 					{
-						followBranch(tableManager);
+						DisassemblerTableManager.followBranch(tableManager);
 					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, parseImmediateKeyStroke))
 					{
 						parseImmediate(tableManager);
@@ -308,17 +308,6 @@ public class DisassemblerContextMenu extends JPopupMenu
 		JGeckoUGUI jGeckoUGUI = JGeckoUGUI.getInstance();
 		DisassembledInstruction disassembledInstruction = tableManager.getSelectedInstruction();
 		jGeckoUGUI.setupSearch(disassembledInstruction);
-	}
-
-	static void followBranch(DisassemblerTableManager tableManager)
-	{
-		DisassembledInstruction disassembledInstruction = tableManager.getSelectedInstruction();
-
-		if (disassembledInstruction.isBranchWithDestination())
-		{
-			int address = disassembledInstruction.getBranchDestination();
-			JGeckoUGUI.getInstance().updateDisassembler(address);
-		}
 	}
 
 	private void copyCells()

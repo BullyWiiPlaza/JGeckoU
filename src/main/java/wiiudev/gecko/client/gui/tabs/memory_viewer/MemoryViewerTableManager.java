@@ -175,7 +175,8 @@ public class MemoryViewerTableManager
 	{
 		MemoryReader memoryReader = new MemoryReader();
 		int normalizedAddress = normalize(memoryAddress);
-		byte[] readBytes = memoryReader.readBytes(normalizedAddress, getDisplayedBytes());
+		int length = getDisplayedBytes();
+		byte[] readBytes = memoryReader.readBytes(normalizedAddress, length);
 		cellValues = Conversions.toIntegerArray(readBytes);
 
 		setAddressesRowLabels(normalizedAddress);

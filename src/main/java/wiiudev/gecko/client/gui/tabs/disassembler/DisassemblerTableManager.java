@@ -1,5 +1,6 @@
 package wiiudev.gecko.client.gui.tabs.disassembler;
 
+import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Disassembler;
 import wiiudev.gecko.client.gui.utilities.JTableUtilities;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
@@ -30,9 +31,7 @@ public class DisassemblerTableManager
 
 		addDoubleClickListener();
 
-		int rowsCount = 100;
-		int integerBytesCount = 4;
-		length = rowsCount * integerBytesCount;
+		length = TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
 	}
 
 	private void addDoubleClickListener()
@@ -47,10 +46,21 @@ public class DisassemblerTableManager
 
 				if (rowIndex != -1 && mouseEvent.getClickCount() == 2)
 				{
-					DisassemblerContextMenu.followBranch(DisassemblerTableManager.this);
+					followBranch(DisassemblerTableManager.this);
 				}
 			}
 		});
+	}
+
+	public static void followBranch(DisassemblerTableManager tableManager)
+	{
+		DisassembledInstruction disassembledInstruction = tableManager.getSelectedInstruction();
+
+		if (disassembledInstruction.isBranchWithDestination())
+		{
+			int address = disassembledInstruction.getBranchDestination();
+			JGeckoUGUI.getInstance().updateDisassembler(address);
+		}
 	}
 
 	public List<DisassembledInstruction> getDisassembledInstructions()
@@ -99,21 +109,14 @@ public class DisassemblerTableManager
 
 	public void updateRows(int address) throws Exception
 	{
-		// int selectedRow = table.getSelectedRow();
 		disassembledInstructions.clear();
 
-		disassembledInstructions = Disassembler.disassemble(address, length);
+		disassembledInstructions = Disassembler.disassemble(address - length / 2, length);
 		JTableUtilities.deleteAllRows(table);
 		disassembledInstructions.forEach(this::addRow);
 
-		/*if (selectedRow == -1)
-		{
-			selectedRow = 0;
-		}
-
-		table.setRowSelectionInterval(selectedRow, selectedRow);*/
-
-		resetViewSelection();
+		int index = (length / 4) / 2;
+		JTableUtilities.setSelectedRow(table, index, index);
 	}
 
 	private void addRow(DisassembledInstruction disassembledInstruction)
@@ -145,23 +148,5 @@ public class DisassemblerTableManager
 	public JTable getTable()
 	{
 		return table;
-	}
-
-	public void resetViewSelection()
-	{
-		table.setRowSelectionInterval(0, 0);
-
-		scroll();
-	}
-
-	public void scroll()
-	{
-		JViewport viewport = (JViewport) table.getParent();
-		int rowIndex = table.getSelectedRow();
-		Rectangle rectangle = table.getCellRect(rowIndex, 0, true);
-		Point point = viewport.getViewPosition();
-
-		rectangle.setLocation(rectangle.x - point.x, rectangle.y - point.y);
-		table.scrollRectToVisible(rectangle);
 	}
 }
