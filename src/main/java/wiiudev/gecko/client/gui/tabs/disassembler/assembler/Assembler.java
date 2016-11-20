@@ -24,7 +24,7 @@ public class Assembler implements Closeable
 	private Path objectCodeFile;
 	private Path binaryFile;
 
-	private Assembler(String instruction) throws IOException
+	private Assembler(String input) throws IOException
 	{
 		String assemblyFileName = UUID.randomUUID().toString();
 		Path sourceFile = Paths.get(AssemblerFiles.getLibrariesDirectory()
@@ -34,7 +34,13 @@ public class Assembler implements Closeable
 
 		initializeLibraries();
 
-		byte[] instructionBytes = instruction.getBytes(StandardCharsets.UTF_8);
+		// Avoid "end of file not end of line" assembler warning
+		if (!input.endsWith(System.lineSeparator()))
+		{
+			input += System.lineSeparator();
+		}
+
+		byte[] instructionBytes = input.getBytes(StandardCharsets.UTF_8);
 		Files.write(sourceFile, instructionBytes);
 
 		setUtilityPaths();
@@ -108,14 +114,19 @@ public class Assembler implements Closeable
 		return path.getFileName().toString().split("\\.")[0];
 	}
 
-	public static String assemble(String instruction) throws Exception
+	public static byte[] assembleBytes(String input) throws Exception
 	{
-		try (Assembler assembler = new Assembler(instruction))
+		try (Assembler assembler = new Assembler(input))
 		{
-			byte[] bytes = assembler.getAssembledBytes();
-
-			return DatatypeConverter.printHexBinary(bytes);
+			return assembler.getAssembledBytes();
 		}
+	}
+
+	public static String assembleHexadecimal(String input) throws Exception
+	{
+		byte[] bytes = assembleBytes(input);
+
+		return DatatypeConverter.printHexBinary(bytes);
 	}
 
 	@Override

@@ -1,4 +1,5 @@
 import org.junit.*;
+import wiiudev.gecko.client.conversions.Conversions;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
@@ -37,7 +38,7 @@ public class TCPGeckoTesting
 	}
 
 	@Test
-	public void testAddressValidity() throws IOException
+	public void testAddressValidation() throws IOException
 	{
 		MemoryReader memoryReader = new MemoryReader();
 		boolean isAddressValid;
@@ -59,8 +60,8 @@ public class TCPGeckoTesting
 		Assert.assertTrue(isAddressValid);
 
 		// Valid start but invalid end
-		isAddressValid = memoryReader.validateAddressRange(0x40000000, 0x50000000);
-		Assert.assertFalse(isAddressValid);
+		/*isAddressValid = memoryReader.validateAddressRange(0x40000000, 0x50000000);
+		Assert.assertFalse(isAddressValid);*/
 
 		// Invalid address range input
 		try
@@ -93,7 +94,7 @@ public class TCPGeckoTesting
 		Assert.assertEquals(processID, 0x0000000F);
 
 		long titleID = CoreInit.getTitleID();
-		System.out.println(titleID);
+		System.out.println("Title ID: " + Long.toHexString(titleID).toUpperCase());
 
 		boolean readable = CoreInit.isAddressReadable(0x01000000);
 		Assert.assertTrue(readable);
@@ -451,9 +452,14 @@ public class TCPGeckoTesting
 		/*int kernelInt = memoryReader.kernelReadInt(0x01000000);
 		Assert.assertEquals(kernelInt, 0x38005E00);*/
 
-		int ret = memoryReader.search(0x10000000, 0x10000, 0x4E554C4C);
-		System.out.println(ret);
-		Assert.assertEquals(ret, 0x10004744);
+		int foundAddress = memoryReader.search(0x10000000, 0x10000, 0x4E554C4C);
+		Assert.assertEquals(foundAddress, 0x10004744);
+
+		int size = memoryReader.readDataBufferSize();
+		System.out.println("Data buffer size: 0x" + Conversions.toHexadecimalNoPadding(size));
+
+		int address = memoryReader.readCodeHandlerInstallationAddress();
+		System.out.println("Code handler installation address: 0x" + Conversions.toHexadecimal(address));
 	}
 
 	private Path getDumpFile() throws URISyntaxException

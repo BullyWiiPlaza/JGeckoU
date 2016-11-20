@@ -1,5 +1,7 @@
 package wiiudev.gecko.client.tcpgecko.main;
 
+import wiiudev.gecko.client.gui.tabs.disassembler.DisassembledInstruction;
+import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Assembler;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Command;
 import wiiudev.gecko.client.tcpgecko.main.enumerations.Status;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.DataConversions;
@@ -214,6 +216,103 @@ public class MemoryWriter extends TCPGecko
 			dataSender.flush();
 		}
 	}*/
+
+	public boolean isHooked(int address) throws Exception
+	{
+		DisassembledInstruction disassembledInstruction = DisassembledInstruction.parse(address);
+
+		return isHooked(disassembledInstruction);
+	}
+
+	private boolean isHooked(DisassembledInstruction disassembledInstruction)
+	{
+		return disassembledInstruction.isUnconditionalBranch();
+	}
+
+	public void unHook(int address) throws Exception
+	{
+		DisassembledInstruction disassembledInstruction = DisassembledInstruction.parse(address);
+
+		if (!isHooked(disassembledInstruction))
+		{
+			throw new IllegalArgumentException("Address has not been hooked!");
+		}
+
+		// Restore the original instruction
+		int branchDestination = disassembledInstruction.getBranchDestination();
+		MemoryReader memoryReader = new MemoryReader();
+		int defaultInstruction = memoryReader.readInt(branchDestination);
+		writeInt(address, defaultInstruction);
+	}
+
+	public void hook(int address, byte[] assembly) throws Exception
+	{
+		int assemblyLength = assembly.length;
+
+		// Check for valid instructions size
+		if (assemblyLength == 0 ||
+				assemblyLength % 4 != 0)
+		{
+			throw new IllegalArgumentException("Invalid bytes length");
+		}
+
+		MemoryReader memoryReader = new MemoryReader();
+		int insertedAssemblySize = 4 + assemblyLength + 4;
+
+		int insertAssemblyAddress = allocateHookingMemory(insertedAssemblySize);
+
+		int originalInstruction = memoryReader.readInt(address);
+		int backJumpOffset = address - insertAssemblyAddress - assemblyLength;
+		byte[] returnJumpBytes = Assembler.assembleBytes("b " + backJumpOffset);
+
+		ByteBuffer insertedBytesBuilder = ByteBuffer.allocate(insertedAssemblySize);
+		insertedBytesBuilder.putInt(originalInstruction);
+		insertedBytesBuilder.put(assembly);
+		insertedBytesBuilder.put(returnJumpBytes);
+		byte[] insertedBytes = insertedBytesBuilder.array();
+		writeBytes(insertAssemblyAddress, insertedBytes);
+
+		// Write jump to inserted instructions
+		int jumpOffset = insertAssemblyAddress - address;
+		byte[] jumpBytes = Assembler.assembleBytes("b " + jumpOffset);
+		writeBytes(address, jumpBytes);
+	}
+
+	private int allocateHookingMemory(int insertedAssemblySize) throws IOException
+	{
+		MemoryReader memoryReader = new MemoryReader();
+		int insertAssemblyAddress = memoryReader.readCodeHandlerInstallationAddress() + 0x3000;
+		int chunkSize = TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
+
+		while (true)
+		{
+			byte[] destinationBytes = memoryReader.readBytes(insertAssemblyAddress, chunkSize);
+
+			int countedNullBytes = 0;
+			for (int destinationBytesIndex = 0; destinationBytesIndex < destinationBytes.length; destinationBytesIndex++)
+			{
+				if (destinationBytes[destinationBytesIndex] != 0)
+				{
+					countedNullBytes = 0;
+
+					// Round up to the next aligned 32-bit index
+					destinationBytesIndex = (destinationBytesIndex & -4) + 4 - 1;
+				} else
+				{
+					countedNullBytes++;
+
+					// Enough space found?
+					if (countedNullBytes == insertedAssemblySize)
+					{
+						insertAssemblyAddress += destinationBytesIndex + 1 - countedNullBytes;
+						return insertAssemblyAddress;
+					}
+				}
+			}
+
+			insertAssemblyAddress += chunkSize;
+		}
+	}
 
 	public void serialWrite(int address, int value, int writesCount) throws IOException
 	{

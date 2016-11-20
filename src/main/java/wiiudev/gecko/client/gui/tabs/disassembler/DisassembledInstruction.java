@@ -1,6 +1,7 @@
 package wiiudev.gecko.client.gui.tabs.disassembler;
 
 import wiiudev.gecko.client.conversions.Conversions;
+import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Disassembler;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 
 public class DisassembledInstruction
@@ -44,6 +45,11 @@ public class DisassembledInstruction
 		return Conversions.toDecimal(address);
 	}
 
+	public boolean isUnconditionalBranch()
+	{
+		return instruction.startsWith("b ");
+	}
+
 	public boolean isBranchWithDestination()
 	{
 		char firstCharacter = instruction.charAt(0);
@@ -59,5 +65,10 @@ public class DisassembledInstruction
 	public String toString()
 	{
 		return new Hexadecimal(address, 8) + ": " + new Hexadecimal(value, 8) + " " + instruction;
+	}
+
+	public static DisassembledInstruction parse(int address) throws Exception
+	{
+		return Disassembler.disassemble(address, 4).get(0);
 	}
 }

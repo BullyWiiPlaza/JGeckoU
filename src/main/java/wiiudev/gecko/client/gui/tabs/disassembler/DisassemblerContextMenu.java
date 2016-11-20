@@ -8,6 +8,7 @@ import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Disassembler;
 import wiiudev.gecko.client.gui.utilities.JTableUtilities;
 import wiiudev.gecko.client.gui.utilities.PopupMenuUtilities;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 
 import javax.swing.*;
@@ -53,6 +54,26 @@ public class DisassemblerContextMenu extends JPopupMenu
 			add(option);
 		}
 
+		// Only possible on non-branch instructions
+		KeyStroke hookKeyStroke = KeyStroke.getKeyStroke("control H");
+		if (!disassembledInstruction.isBranchWithDestination())
+		{
+			JMenuItem option = new JMenuItem("Insert Hook");
+			option.setAccelerator(hookKeyStroke);
+			option.addActionListener(actionEvent -> hookAddress());
+			add(option);
+		}
+
+		// Only applicable on always branches
+		KeyStroke unHookKeyStroke = KeyStroke.getKeyStroke("control U");
+		if (disassembledInstruction.isUnconditionalBranch())
+		{
+			JMenuItem option = new JMenuItem("Delete Hook");
+			option.setAccelerator(unHookKeyStroke);
+			option.addActionListener(actionEvent -> unHookAddress());
+			add(option);
+		}
+
 		JTable table = tableManager.getTable();
 		JTableUtilities.removeAllKeyListeners(table);
 		table.addKeyListener(new KeyAdapter()
@@ -83,10 +104,53 @@ public class DisassemblerContextMenu extends JPopupMenu
 					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, copyFunctionKeyStroke))
 					{
 						copyFunction();
+					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, hookKeyStroke))
+					{
+						hookAddress();
+					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, unHookKeyStroke))
+					{
+						unHookAddress();
 					}
 				}
 			}
 		});
+	}
+
+	private void unHookAddress()
+	{
+		try
+		{
+			int address = tableManager.getSelectedInstruction().getAddress();
+			MemoryWriter memoryWriter = new MemoryWriter();
+			memoryWriter.unHook(address);
+			JGeckoUGUI.getInstance().updateDisassembler(address);
+		} catch (Exception exception)
+		{
+			StackTraceUtils.handleException(getRootPane(), exception);
+		}
+	}
+
+	private void hookAddress()
+	{
+		InsertHookDialog insertHookDialog = new InsertHookDialog();
+		insertHookDialog.setLocationRelativeTo(this);
+		insertHookDialog.setVisible(true);
+
+		byte[] assemblyBytes = insertHookDialog.getAssemblyBytes();
+
+		if (assemblyBytes != null)
+		{
+			try
+			{
+				int address = tableManager.getSelectedInstruction().getAddress();
+				MemoryWriter memoryWriter = new MemoryWriter();
+				memoryWriter.hook(address, assemblyBytes);
+				JGeckoUGUI.getInstance().updateDisassembler(address);
+			} catch (Exception exception)
+			{
+				StackTraceUtils.handleException(getRootPane(), exception);
+			}
+		}
 	}
 
 	private void copyFunction()

@@ -15,7 +15,7 @@ public class TestAssembler
 	@Test
 	public void testAssembler() throws Exception
 	{
-		String assembled = Assembler.assemble("nop");
+		String assembled = Assembler.assembleHexadecimal("nop");
 		Assert.assertTrue(assembled.equals("60000000"));
 		assertCleanDirectory();
 	}
@@ -44,7 +44,7 @@ public class TestAssembler
 	{
 		try
 		{
-			Assembler.assemble("nonsense");
+			Assembler.assembleHexadecimal("nonsense");
 			Assert.fail();
 		} catch (AssemblerException ignored)
 		{
@@ -64,7 +64,7 @@ public class TestAssembler
 
 		try
 		{
-			Assembler.assemble("");
+			Assembler.assembleHexadecimal("");
 			Assert.fail();
 		} catch (AssemblerFilesException ignored)
 		{

@@ -191,7 +191,7 @@ public class JGeckoUGUI extends JFrame
 	private JTextField dataBufferSizeField;
 	private JLabel codeHandlerWarningLabel;
 	private JButton universalOffsetPorterButton;
-	private JCheckBox recognizeDataBufferSizeCheckBox;
+	private JCheckBox detectDataBufferSizeCheckBox;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -913,7 +913,7 @@ public class JGeckoUGUI extends JFrame
 
 				try
 				{
-					String assembled = Assembler.assemble(instruction);
+					String assembled = Assembler.assembleHexadecimal(instruction);
 					DisassembledInstruction disassembledInstruction = disassemblerTableManager.getSelectedInstruction();
 					MemoryWriter memoryWriter = new MemoryWriter();
 					int address = disassembledInstruction.getAddress();
@@ -1802,7 +1802,7 @@ public class JGeckoUGUI extends JFrame
 			simpleProperties.put("SEARCH_VALUE_SIZE", searchValueSizeComboBox.getSelectedItem().toString());
 			simpleProperties.put("SEARCH_MODE", searchModeComboBox.getSelectedItem().toString());
 			simpleProperties.put("SEARCH_CONDITION", searchConditionComboBox.getSelectedItem().toString());
-			simpleProperties.put("DATA_BUFFER_SIZE", dataBufferSizeField.getText());
+			simpleProperties.put("DETECT_DATA_BUFFER_SIZE", String.valueOf(detectDataBufferSizeCheckBox.isSelected()));
 
 			simpleProperties.writeToFile();
 		}));
@@ -1932,17 +1932,17 @@ public class JGeckoUGUI extends JFrame
 			searchConditionComboBox.setSelectedItem(condition);
 		}
 
-		String recognizeDataBufferSize = simpleProperties.get("GET_DATA_BUFFER_SIZE");
-		if (recognizeDataBufferSize != null)
-		{
-			boolean selected = Boolean.parseBoolean(recognizeDataBufferSize);
-			recognizeDataBufferSizeCheckBox.setSelected(selected);
-		}
-
 		String memoryRequestSize = simpleProperties.get("DATA_BUFFER_SIZE");
 		if (memoryRequestSize != null)
 		{
 			dataBufferSizeField.setText(memoryRequestSize);
+		}
+
+		String detectDataBufferSize = simpleProperties.get("DETECT_DATA_BUFFER_SIZE");
+		if (detectDataBufferSize != null)
+		{
+			boolean selected = Boolean.parseBoolean(detectDataBufferSize);
+			detectDataBufferSizeCheckBox.setSelected(selected);
 		}
 	}
 
@@ -3508,6 +3508,12 @@ public class JGeckoUGUI extends JFrame
 						}
 
 						connectButton.setText("Disconnect");
+
+						if (detectDataBufferSizeCheckBox.isSelected())
+						{
+							setDataBufferSize();
+						}
+
 						populateComponents();
 					} catch (Exception exception)
 					{
@@ -3538,17 +3544,12 @@ public class JGeckoUGUI extends JFrame
 		boolean interruptsEnabled = OSThreadRPC.areInterruptsEnabled();
 		interruptsCheckBox.setSelected(interruptsEnabled);
 		considerUpdatingTabs();
-
-		if (recognizeDataBufferSizeCheckBox.isSelected())
-		{
-			setDataBufferSize();
-		}
 	}
 
 	private void setDataBufferSize() throws IOException
 	{
 		MemoryReader memoryReader = new MemoryReader();
-		int size = memoryReader.getDataBufferSize();
+		int size = memoryReader.readDataBufferSize();
 		dataBufferSizeField.setText(Conversions.toHexadecimalNoPadding(size));
 	}
 

@@ -296,7 +296,7 @@ public class MemoryReader extends TCPGecko
 		}
 	}
 
-	public int getDataBufferSize() throws IOException
+	public int readDataBufferSize() throws IOException
 	{
 		try (CloseableReentrantLock ignored = reentrantLock.acquire())
 		{
@@ -334,6 +334,17 @@ public class MemoryReader extends TCPGecko
 			dataSender.flush();
 
 			return dataReceiver.readBoolean();
+		}
+	}
+
+	public int readCodeHandlerInstallationAddress() throws IOException
+	{
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
+		{
+			sendCommand(Command.CODE_HANDLER_INSTALLATION_ADDRESS);
+			dataSender.flush();
+
+			return dataReceiver.readInt();
 		}
 	}
 
