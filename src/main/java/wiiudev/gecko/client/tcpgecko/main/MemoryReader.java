@@ -348,6 +348,15 @@ public class MemoryReader extends TCPGecko
 		}
 	}
 
+	public void directory() throws IOException
+	{
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
+		{
+			sendCommand(Command.DIRECTORY);
+			dataSender.flush();
+		}
+	}
+
 	/*public void disassembleRange(int address, int length) throws IOException
 	{
 		try (CloseableReentrantLock ignored = reentrantLock.acquire())

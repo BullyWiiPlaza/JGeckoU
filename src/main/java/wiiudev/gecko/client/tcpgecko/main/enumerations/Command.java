@@ -28,7 +28,8 @@ public enum Command
 	RPC_BIG(0x80),
 	GET_VERSION(0x99),
 	GET_OS_VERSION(0x9A),
-	GC_FAIL(0xCC);
+	GC_FAIL(0xCC),
+	DIRECTORY(0x53);
 
 	public final byte value;
 

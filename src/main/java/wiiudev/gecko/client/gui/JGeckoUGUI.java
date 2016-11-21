@@ -194,6 +194,7 @@ public class JGeckoUGUI extends JFrame
 	private JCheckBox detectDataBufferSizeCheckBox;
 	private JScrollPane disassemblerTableScrollPane;
 	private JButton codeHandlerInstallationAddressButton;
+	private JButton powerPCAssemblyInterpreterButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -1966,6 +1967,7 @@ public class JGeckoUGUI extends JFrame
 		powerPCAssemblyCompilerButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/PowerPC-Assembly-Compiler/blob/master/PowerPC-Assembly-Compiler.jar?raw=true", actionEvent));
 		pointerSearchApplicationButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/Universal-Pointer-Searcher/blob/master/Universal-Pointer-Searcher.jar?raw=true", actionEvent));
 		universalOffsetPorterButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/Universal-Offset-Porter/blob/master/Universal%20Offset%20Porter.jar?raw=true", actionEvent));
+		powerPCAssemblyInterpreterButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/Java-PowerPC-Interpreter/blob/master/Java-PowerPC-Interpreter.jar?raw=true", actionEvent));
 		addStartHexEditorButtonListener();
 		addStartScientificCalculatorListener();
 	}
