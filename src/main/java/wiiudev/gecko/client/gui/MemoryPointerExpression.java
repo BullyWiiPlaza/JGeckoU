@@ -11,7 +11,7 @@ public class MemoryPointerExpression
 	private int[] offsets;
 	private long value;
 
-	public String notation;
+	private String notation;
 	public static final int INVALID_POINTER = -1;
 
 	public MemoryPointerExpression(long baseAddress, int[] offsets)
@@ -24,7 +24,7 @@ public class MemoryPointerExpression
 	{
 		this.notation = notation;
 		notation = notation.replaceAll(" ", ""); // Remove spaces
-		int pointerDepth = count('[', notation);
+		int pointerDepth = countOpeningBrackets(notation);
 
 		if (pointerDepth == 0)
 		{
@@ -132,13 +132,13 @@ public class MemoryPointerExpression
 		return offsets;
 	}
 
-	private int count(char character, String text)
+	private int countOpeningBrackets(String text)
 	{
 		int counted = 0;
 
 		for (int textIndex = 0; textIndex < text.length(); textIndex++)
 		{
-			if (text.charAt(textIndex) == character)
+			if (text.charAt(textIndex) == '[')
 			{
 				counted++;
 			} else
@@ -150,7 +150,7 @@ public class MemoryPointerExpression
 		return counted;
 	}
 
-	public void setBaseAddress(int baseAddress)
+	private void setBaseAddress(int baseAddress)
 	{
 		if (!isValidMemoryAddress(baseAddress))
 		{
@@ -160,7 +160,7 @@ public class MemoryPointerExpression
 		this.baseAddress = baseAddress;
 	}
 
-	public void setOffsets(int[] offsets)
+	private void setOffsets(int[] offsets)
 	{
 		this.offsets = offsets;
 	}
@@ -170,7 +170,6 @@ public class MemoryPointerExpression
 	 *
 	 * @return The destination address the given POINTER is pointing to OR {@value #INVALID_POINTER} if not
 	 * possibles
-	 * @throws IOException
 	 */
 	public long getDestinationAddress() throws IOException
 	{

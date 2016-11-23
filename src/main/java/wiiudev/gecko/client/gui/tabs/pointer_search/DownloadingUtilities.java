@@ -24,7 +24,7 @@ public class DownloadingUtilities
 	{
 		String fileName = getFileName(downloadURL);
 		download(downloadURL);
-		executeApplication(fileName);
+		executeJavaApplication(fileName);
 	}
 
 	/**
@@ -100,7 +100,7 @@ public class DownloadingUtilities
 		return fileName;
 	}
 
-	private static void executeApplication(String filePath) throws IOException
+	private static void executeJavaApplication(String filePath) throws IOException
 	{
 		ProcessBuilder processBuilder = new ProcessBuilder();
 		processBuilder.command("java", "-jar", filePath);

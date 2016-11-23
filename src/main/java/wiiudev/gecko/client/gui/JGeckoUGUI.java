@@ -195,6 +195,7 @@ public class JGeckoUGUI extends JFrame
 	private JScrollPane disassemblerTableScrollPane;
 	private JButton codeHandlerInstallationAddressButton;
 	private JButton powerPCAssemblyInterpreterButton;
+	private JButton TCPGeckoInstallerButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -1964,6 +1965,17 @@ public class JGeckoUGUI extends JFrame
 
 	private void configureExternalToolsTab()
 	{
+		TCPGeckoInstallerButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				Desktop.getDesktop().browse(new URI("https://github.com/BullyWiiPlaza/tcpgecko/archive/master.zip"));
+			} catch (Exception exception)
+			{
+				exception.printStackTrace();
+			}
+		});
+
 		powerPCAssemblyCompilerButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/PowerPC-Assembly-Compiler/blob/master/PowerPC-Assembly-Compiler.jar?raw=true", actionEvent));
 		pointerSearchApplicationButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/Universal-Pointer-Searcher/blob/master/Universal-Pointer-Searcher.jar?raw=true", actionEvent));
 		universalOffsetPorterButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/Universal-Offset-Porter/blob/master/Universal%20Offset%20Porter.jar?raw=true", actionEvent));
@@ -2144,7 +2156,7 @@ public class JGeckoUGUI extends JFrame
 
 		int selectedAnswer = JOptionPane.showConfirmDialog(
 				rootPane,
-				"Would you like to download and start " + downloadButton.getText() + "?",
+				"Would you like to download and start \"" + downloadButton.getText() + "\"?",
 				"Download and launch?",
 				JOptionPane.YES_NO_OPTION);
 
@@ -3329,14 +3341,23 @@ public class JGeckoUGUI extends JFrame
 	{
 		try
 		{
-			List<CodeListEntry> codeListEntries = codesListManager.getActiveCodes();
-			codeListSender.setCodeListEntries(codeListEntries);
-			codeListSender.applyCodes();
+			if (MemoryReader.isCodeHandlerInstalled())
+			{
+				List<CodeListEntry> codeListEntries = codesListManager.getActiveCodes();
+				codeListSender.setCodeListEntries(codeListEntries);
+				codeListSender.applyCodes();
 
-			JOptionPane.showMessageDialog(rootPane,
-					"Codes have been sent successfully!",
-					"Codes sent",
-					JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(rootPane,
+						"Codes have been sent successfully!",
+						"Success",
+						JOptionPane.INFORMATION_MESSAGE);
+			} else
+			{
+				JOptionPane.showMessageDialog(rootPane,
+						"No code handler installed!",
+						"Error",
+						JOptionPane.ERROR_MESSAGE);
+			}
 		} catch (Exception exception)
 		{
 			StackTraceUtils.handleException(rootPane, exception);

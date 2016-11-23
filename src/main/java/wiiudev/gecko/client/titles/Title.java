@@ -60,7 +60,8 @@ public class Title
 			companyCodePart = companyCode.substring(companyCodeLength - COMPANY_CODE_ID_LENGTH);
 		}
 
-		if (productCodePart.equals("") && companyCodePart.equals(""))
+		if (productCodePart.equals("")
+				&& companyCodePart.equals(""))
 		{
 			return titleId;
 		}

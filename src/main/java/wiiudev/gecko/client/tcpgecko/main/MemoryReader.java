@@ -348,6 +348,14 @@ public class MemoryReader extends TCPGecko
 		}
 	}
 
+	public static boolean isCodeHandlerInstalled() throws IOException
+	{
+		MemoryReader memoryReader = new MemoryReader();
+		int address = memoryReader.readCodeHandlerInstallationAddress();
+
+		return memoryReader.readInt(address) != 0;
+	}
+
 	public void directory() throws IOException
 	{
 		try (CloseableReentrantLock ignored = reentrantLock.acquire())
