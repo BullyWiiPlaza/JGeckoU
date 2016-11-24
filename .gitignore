@@ -19,3 +19,7 @@ config.properties
 /watches
 
 /.idea/dictionaries
+
+# Ignore libraries
+/Libraries
+/libraries
