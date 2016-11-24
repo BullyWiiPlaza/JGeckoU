@@ -4,7 +4,6 @@ import javax.swing.*;
 
 public class ApplicationGUILauncher
 {
-	// TODO Hook assembly in disassembler
 	// TODO Refine search button when not first search
 	// TODO Read compressed bytes from server?
 	// TODO Watch list implement context menu (like for the codes tab)
