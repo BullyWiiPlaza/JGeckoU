@@ -1,3 +1,5 @@
+package wiiudev.gecko.client.tcpgecko;
+
 import lzma.sdk.lzma.Decoder;
 import lzma.streams.LzmaInputStream;
 import lzma.streams.LzmaOutputStream;

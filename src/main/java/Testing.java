@@ -1,3 +1,4 @@
+import wiiudev.gecko.client.tcpgecko.LzmaCompressor;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 
 import java.nio.file.Path;
