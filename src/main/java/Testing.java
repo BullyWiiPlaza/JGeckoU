@@ -7,7 +7,9 @@ public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
-		Connector.getInstance().connect("192.168.178.35");
+		// installAssemblyLibraries();
+
+		// Connector.getInstance().connect("192.168.178.35");
 
 		// MemoryWriter memoryWriter = new MemoryWriter();
 		// memoryWriter.unHook(0x010F4000);

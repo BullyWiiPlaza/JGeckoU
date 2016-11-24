@@ -9,8 +9,11 @@ import javax.net.ssl.X509TrustManager;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.KeyManagementException;
@@ -72,14 +75,17 @@ public class DownloadingUtilities
 		}
 	}
 
-	public static void download(String downloadURL) throws IOException
+	public static Path download(String downloadURL) throws IOException
 	{
 		URL website = new URL(downloadURL);
 		String fileName = getFileName(downloadURL);
 
 		try (InputStream inputStream = website.openStream())
 		{
-			Files.copy(inputStream, Paths.get(fileName), StandardCopyOption.REPLACE_EXISTING);
+			Path downloadedFilePath = Paths.get(fileName);
+			Files.copy(inputStream, downloadedFilePath, StandardCopyOption.REPLACE_EXISTING);
+
+			return downloadedFilePath;
 		}
 	}
 
@@ -97,7 +103,15 @@ public class DownloadingUtilities
 
 		fileName = fileName.replaceAll("-", "");
 
-		return fileName;
+		try
+		{
+			return URLDecoder.decode(fileName, "UTF-8");
+		} catch (UnsupportedEncodingException exception)
+		{
+			exception.printStackTrace();
+		}
+
+		return null;
 	}
 
 	private static void executeJavaApplication(String filePath) throws IOException

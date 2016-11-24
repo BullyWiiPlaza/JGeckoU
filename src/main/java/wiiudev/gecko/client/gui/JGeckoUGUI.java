@@ -19,6 +19,7 @@ import wiiudev.gecko.client.gui.tabs.disassembler.DisassembledInstruction;
 import wiiudev.gecko.client.gui.tabs.disassembler.DisassemblerTableManager;
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Assembler;
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerException;
+import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerFiles;
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerFilesException;
 import wiiudev.gecko.client.gui.tabs.memory_search.SearchResultsTableManager;
 import wiiudev.gecko.client.gui.tabs.memory_search.ValueConversionContextMenu;
@@ -822,7 +823,7 @@ public class JGeckoUGUI extends JFrame
 	private void addTabsChangedListener()
 	{
 		programTabs.addChangeListener(changeEvent ->
-				considerUpdatingTabs());
+				considerPerformingTabActions());
 	}
 
 	private void configureDisassemblerTab()
@@ -1834,10 +1835,16 @@ public class JGeckoUGUI extends JFrame
 		if (tab != null)
 		{
 			int tabIndex = Integer.parseUnsignedInt(tab);
-			if (tabIndex > 0 && tabIndex < programTabs.getComponents().length)
+			if (tabIndex > 0
+					&& tabIndex < programTabs.getComponents().length)
 			{
 				programTabs.setSelectedIndex(tabIndex);
 			}
+		}
+
+		if (programTabs.getSelectedComponent().equals(disassemblerTab))
+		{
+			checkAssemblerFiles();
 		}
 
 		String autoDetectString = simpleProperties.get("IP_ADDRESS_AUTO_DETECT");
@@ -3581,7 +3588,7 @@ public class JGeckoUGUI extends JFrame
 	{
 		boolean interruptsEnabled = OSThreadRPC.areInterruptsEnabled();
 		interruptsCheckBox.setSelected(interruptsEnabled);
-		considerUpdatingTabs();
+		considerPerformingTabActions();
 	}
 
 	private void setDataBufferSize() throws IOException
@@ -3591,7 +3598,7 @@ public class JGeckoUGUI extends JFrame
 		dataBufferSizeField.setText(Conversions.toHexadecimalNoPadding(size));
 	}
 
-	private void considerUpdatingTabs()
+	private void considerPerformingTabActions()
 	{
 		if (TCPGecko.isConnected())
 		{
@@ -3611,7 +3618,70 @@ public class JGeckoUGUI extends JFrame
 			}
 		}
 
+		if (disassemblerTab.isShowing())
+		{
+			checkAssemblerFiles();
+		}
+
 		considerUpdatingRegisters();
+	}
+
+	private void checkAssemblerFiles()
+	{
+		Thread thread = new Thread(() ->
+		{
+			try
+			{
+				Assembler.assembleBytes("");
+			} catch (AssemblerFilesException exception)
+			{
+				Object[] options = {"Yes", "No"};
+
+				int selectedAnswer = JOptionPane.showOptionDialog(rootPanel,
+						"Would you like to download and install the libraries?\n" +
+								"You cannot use the Disassembler without them!",
+						"devkitPPC missing",
+						JOptionPane.YES_NO_CANCEL_OPTION,
+						JOptionPane.QUESTION_MESSAGE,
+						null,
+						options,
+						null);
+
+				if (selectedAnswer == JOptionPane.YES_OPTION)
+				{
+					installAssemblerLibraries();
+				}
+			} catch (Exception other)
+			{
+				StackTraceUtils.handleException(rootPane, other);
+			}
+		});
+
+		thread.start();
+	}
+
+	private void installAssemblerLibraries()
+	{
+		AssemblerFilesInstallingDialog dialog = new AssemblerFilesInstallingDialog();
+		WindowUtilities.setIconImage(dialog);
+		dialog.setLocationRelativeTo(this);
+
+		Thread thread = new Thread(() -> dialog.setVisible(true));
+		thread.start();
+
+		try
+		{
+			AssemblerFiles.installLibraries();
+			dialog.dispose();
+			JOptionPane.showMessageDialog(rootPane,
+					"Files successfully installed!",
+					"Assembler ready",
+					JOptionPane.INFORMATION_MESSAGE,
+					null);
+		} catch (IOException ioException)
+		{
+			StackTraceUtils.handleException(rootPane, ioException);
+		}
 	}
 
 	/**

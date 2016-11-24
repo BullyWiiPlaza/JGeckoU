@@ -1,8 +1,13 @@
 package wiiudev.gecko.client.gui.tabs.disassembler.assembler;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.SystemUtils;
+import wiiudev.gecko.client.gui.tabs.pointer_search.DownloadingUtilities;
+import wiiudev.gecko.client.gui.tabs.pointer_search.ZipUtils;
+import wiiudev.gecko.client.gui.utilities.Unzip;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -44,15 +49,28 @@ public class AssemblerFiles
 	{
 		String librariesDirectory = "libraries" + File.separator;
 
-		if(SystemUtils.IS_OS_WINDOWS)
+		if (SystemUtils.IS_OS_WINDOWS)
 		{
-			librariesDirectory += "windows";
-		}
-		else if(SystemUtils.IS_OS_UNIX)
+			librariesDirectory += "Windows";
+		} else if (SystemUtils.IS_OS_LINUX)
 		{
-			librariesDirectory += "unix";
+			librariesDirectory += "Linux";
+		} else if (SystemUtils.IS_OS_MAC)
+		{
+			librariesDirectory += "Mac OS X";
 		}
 
 		return Paths.get(librariesDirectory);
+	}
+
+	public static void installLibraries() throws IOException
+	{
+		String downloadRepository = "https://github.com/BullyWiiPlaza/devkitPPC/";
+		String masterArchiveDownloadURL = downloadRepository + "archive/master.zip";
+		Path downloadedArchive = DownloadingUtilities.download(masterArchiveDownloadURL);
+		Unzip.unzip(downloadedArchive.toString());
+		Path oldPath = Unzip.unzip(downloadedArchive.toString());
+		String librariesFolderName = FilenameUtils.getName(AssemblerFiles.getLibrariesDirectory().getParent().toString());
+		ZipUtils.rename(oldPath, librariesFolderName);
 	}
 }

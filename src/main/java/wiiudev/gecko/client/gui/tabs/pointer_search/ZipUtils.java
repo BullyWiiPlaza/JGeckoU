@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -51,5 +52,10 @@ public class ZipUtils
 		zipInputStream.close();
 
 		return newFile;
+	}
+
+	public static Path rename(Path path, String name) throws IOException
+	{
+		return Files.move(path, path.resolveSibling(name));
 	}
 }

@@ -8,8 +8,8 @@ Please post them [here](https://github.com/BullyWiiPlaza/JGeckoU/issues).
 You need to download `JGecko U.jar` [here](https://github.com/BullyWiiPlaza/JGeckoU/blob/master/JGecko%20U.jar?raw=true). Double-click it or type `java -jar "JGecko U.jar"` on the command line.
 
 ## What are the necessary steps to connect?
-Download the [TCP Gecko Installer](https://github.com/BullyWiiPlaza/tcpgecko/blob/master/tcpgecko.elf?raw=true). Extract it to your SD Card into the folder `E:\wiiu\apps\TCPGecko`. Alternatively, also download [`CosmoCortney's cheat code handler`](http://cosmocortney.ddns.net/wiiu_tools/codehandler.bin) and place it in ths same directory (recommended).
-Proceed to run the [`Homebrew Launcher`](https://github.com/dimok789/homebrew_launcher) by visiting [this](http://wj44.ml/launcher/) URL with your Wii U. Finally, load the `TCP Gecko Installer` app. Press X to install the real time cheat code handler or A to start without.
+Download the [TCP Gecko Installer](https://github.com/BullyWiiPlaza/tcpgecko/blob/master/tcpgecko.elf?raw=true). Extract it to your SD Card into the folder `E:\wiiu\apps\TCPGecko`. Alternatively, also download [`CosmoCortney's cheat code handler`](http://cosmocortney.ddns.net/wiiu_tools/codehandler.bin) and place it in the same directory (recommended).
+Proceed to run the [`Homebrew Launcher`](https://github.com/dimok789/homebrew_launcher) by visiting [this](http://wj44.ml/launcher/) URL with your Wii U. Finally, load the `TCP Gecko Installer` app. Press X to install the real time cheat code handler or A to start without it.
 
 ## How do I compile this project?
 Since this is an [`IntelliJ IDEA`](https://www.jetbrains.com/idea/) project you have to download IntelliJ IDEA community edition. Then you can clone a Github repository by clicking on `File -> New -> Project from Version Control -> GitHub`.

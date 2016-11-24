@@ -61,7 +61,7 @@ public class Assembler implements Closeable
 		assertExistence(linker);
 	}
 
-	private void assertExistence(Path filePath) throws FileNotFoundException
+	private void assertExistence(Path filePath) throws AssemblerFilesException
 	{
 		if (!Files.exists(filePath))
 		{
