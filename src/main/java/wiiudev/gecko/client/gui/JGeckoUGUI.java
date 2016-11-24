@@ -2861,13 +2861,18 @@ public class JGeckoUGUI extends JFrame
 	{
 		connectButtonText = connectButton.getText();
 
-		try
+		Thread thread = new Thread(() ->
 		{
-			titleDatabaseManager = new TitleDatabaseManager();
-		} catch (Exception exception)
-		{
-			StackTraceUtils.handleException(rootPane, exception);
-		}
+			try
+			{
+				titleDatabaseManager = new TitleDatabaseManager();
+			} catch (Exception exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		thread.start();
 
 		initializeGameTitlesDatabaseConcurrently();
 		addIPAddressDocumentListener();

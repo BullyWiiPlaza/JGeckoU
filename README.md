@@ -5,7 +5,7 @@ This project aims to replace or at least complement [`TCP Gecko.NET`](https://gi
 Please post them [here](https://github.com/BullyWiiPlaza/JGeckoU/issues).
 
 ## How do I run this tool?
-You need to download `JGecko U.jar` [here](https://github.com/BullyWiiPlaza/JGeckoU/blob/master/JGecko%20U.jar?raw=true). Double-click it or type `java -jar "JGecko U.jar"` on the command line.
+You need to download `JGecko U.jar` [here](JGecko%20U.jar?raw=true). Double-click it or type `java -jar "JGecko U.jar"` on the command line.
 
 ## What are the necessary steps to connect?
 Download the [TCP Gecko Installer](https://github.com/BullyWiiPlaza/tcpgecko/blob/master/tcpgecko.elf?raw=true). Extract it to your SD Card into the folder `E:\wiiu\apps\TCPGecko`. Alternatively, also download [`CosmoCortney's cheat code handler`](http://cosmocortney.ddns.net/wiiu_tools/codehandler.bin) and place it in the same directory (recommended).
