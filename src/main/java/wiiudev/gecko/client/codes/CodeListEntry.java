@@ -1,5 +1,9 @@
 package wiiudev.gecko.client.codes;
 
+import wiiudev.gecko.client.conversions.Conversions;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CheatCodeFormatter;
+import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CodeWizardDialog;
+
 import javax.swing.*;
 import java.io.Serializable;
 
@@ -11,6 +15,14 @@ public class CodeListEntry implements Serializable
 	private String codeTitle;
 	private String cheatCode;
 	private String comment;
+
+	public CodeListEntry(int address, int value)
+	{
+		cheatCode = CheatCodeFormatter.format(CodeWizardDialog.generateNoOperationLine());
+		comment = Conversions.toHexadecimal(address)
+				+ " = "
+				+ Conversions.toHexadecimal(value);
+	}
 
 	public CodeListEntry(String codeTitle, String cheatCode, String comment)
 	{

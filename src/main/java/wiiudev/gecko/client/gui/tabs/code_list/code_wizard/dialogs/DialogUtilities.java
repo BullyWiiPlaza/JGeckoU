@@ -1,14 +1,12 @@
 package wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs;
 
 import wiiudev.gecko.client.conversions.SystemClipboard;
+import wiiudev.gecko.client.gui.input_filters.HexadecimalInputFilter;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CheatCodeFormatter;
 import wiiudev.gecko.client.gui.utilities.WindowUtilities;
 
 import javax.swing.*;
-import javax.swing.text.DefaultFormatterFactory;
-import javax.swing.text.MaskFormatter;
 import java.awt.*;
-import java.text.ParseException;
 import java.util.function.Supplier;
 
 public class DialogUtilities
@@ -20,25 +18,10 @@ public class DialogUtilities
 
 	public static void setHexadecimalFormatter(JFormattedTextField formattedTextField, int maximumLength)
 	{
-		String mask = "";
-
-		for (int valueIndex = 0; valueIndex < maximumLength; valueIndex++)
-		{
-			mask += "H";
-		}
-
-		try
-		{
-			MaskFormatter formatter = new MaskFormatter(mask);
-			DefaultFormatterFactory factory = new DefaultFormatterFactory(formatter);
-			formattedTextField.setFormatterFactory(factory);
-		} catch (ParseException parseException)
-		{
-			parseException.printStackTrace();
-		}
+		HexadecimalInputFilter.setHexadecimalInputFilter(formattedTextField, maximumLength);
 	}
 
-	public static void setFrameProperties(JDialog dialog, JPanel contentPane)
+	private static void setFrameProperties(JDialog dialog, JPanel contentPane)
 	{
 		dialog.setContentPane(contentPane);
 		dialog.setModal(true);
@@ -55,26 +38,24 @@ public class DialogUtilities
 		DialogUtilities.setFrameProperties(dialog, contentPane);
 		DialogUtilities.addGenerateCodeButtonListener(dialog,
 				generateButton,
-				generateCode,
-				false);
+				generateCode
+		);
 	}
 
 	public static void addGenerateCodeButtonListener(JButton button,
-	                                                 Supplier<String> supplier,
-	                                                 boolean format)
+	                                                 Supplier<String> supplier)
 	{
-		addGenerateCodeButtonListener(null, button, supplier, format);
+		addGenerateCodeButtonListener(null, button, supplier);
 	}
 
-	public static void addGenerateCodeButtonListener(Window frame,
-	                                                 JButton button,
-	                                                 Supplier<String> supplier,
-	                                                 boolean format)
+	private static void addGenerateCodeButtonListener(Window frame,
+	                                                  JButton button,
+	                                                  Supplier<String> supplier)
 	{
 		button.addActionListener(actionEvent ->
 		{
 			String generatedCode = supplier.get();
-			generatedCode = CheatCodeFormatter.format(generatedCode, format);
+			generatedCode = CheatCodeFormatter.format(generatedCode, false);
 			SystemClipboard.copy(generatedCode);
 			JOptionPane.showMessageDialog(frame,
 					"Code copied to the clipboard!",
@@ -88,12 +69,12 @@ public class DialogUtilities
 		});
 	}
 
-	public static int getBooleanInt(JCheckBox checkBox)
+	static int getBooleanInt(JCheckBox checkBox)
 	{
 		return checkBox.isSelected() ? 1 : 0;
 	}
 
-	public static void addRegisterItems(JComboBox<Integer> registerComboBox)
+	static void addRegisterItems(JComboBox<Integer> registerComboBox)
 	{
 		for (int registerIndex = 0; registerIndex < 8; registerIndex++)
 		{

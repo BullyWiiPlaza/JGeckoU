@@ -26,10 +26,13 @@ import wiiudev.gecko.client.gui.tabs.memory_search.ValueConversionContextMenu;
 import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViewerTableManager;
 import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViews;
 import wiiudev.gecko.client.gui.tabs.pointer_search.DownloadingUtilities;
-import wiiudev.gecko.client.gui.tabs.pointer_search.ZipUtils;
+import wiiudev.gecko.client.gui.tabs.pointer_search.ZipArchiveUtilities;
 import wiiudev.gecko.client.gui.tabs.threads.ThreadsTableManager;
 import wiiudev.gecko.client.gui.tabs.watch_list.*;
-import wiiudev.gecko.client.gui.utilities.*;
+import wiiudev.gecko.client.gui.utilities.DefaultContextMenu;
+import wiiudev.gecko.client.gui.utilities.InternetAvailabilityChecker;
+import wiiudev.gecko.client.gui.utilities.JTableUtilities;
+import wiiudev.gecko.client.gui.utilities.WindowUtilities;
 import wiiudev.gecko.client.memory_search.*;
 import wiiudev.gecko.client.memory_search.enumerations.SearchConditions;
 import wiiudev.gecko.client.memory_search.enumerations.SearchMode;
@@ -198,6 +201,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton codeHandlerInstallationAddressButton;
 	private JButton powerPCAssemblyInterpreterButton;
 	private JButton TCPGeckoInstallerButton;
+	private JPanel codesTab;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -2074,7 +2078,7 @@ public class JGeckoUGUI extends JFrame
 								if (applicationLauncher.shouldUnZip())
 								{
 									startButton.setText("Unzipping...");
-									File unzippedFile = ZipUtils.unZipFile(fileName);
+									File unzippedFile = ZipArchiveUtilities.unZipFile(fileName);
 									Files.delete(Paths.get(fileName));
 									executeFile = unzippedFile;
 								} else
@@ -3256,7 +3260,7 @@ public class JGeckoUGUI extends JFrame
 
 	private boolean isAddressInputValid(String input)
 	{
-		return isAddressInputValid(input, 4);
+		return isAddressInputValid(input, 1);
 	}
 
 	private void configureConversionsTab()
@@ -3328,14 +3332,19 @@ public class JGeckoUGUI extends JFrame
 
 	private void openAddCodeDialog()
 	{
-		CodeInputDialog codeInputDialog = new CodeInputDialog();
+		openAddCodeDialog(null);
+	}
+
+	private void openAddCodeDialog(CodeListEntry codeListEntry)
+	{
+		CodeInputDialog codeInputDialog = codeListEntry == null ? new CodeInputDialog() : new CodeInputDialog(codeListEntry);
 		codeInputDialog.setTitle(addCodeButton.getText());
 		codeInputDialog.display();
 
 		if (codeInputDialog.isConfirmed())
 		{
-			CodeListEntry codeListEntry = codeInputDialog.getCodeListEntry();
-			codesListManager.addCodeListEntry(codeListEntry);
+			CodeListEntry confirmedCodeListEntry = codeInputDialog.getCodeListEntry();
+			codesListManager.addCodeListEntry(confirmedCodeListEntry);
 
 			considerStoringCodeList();
 		}
@@ -4099,5 +4108,17 @@ public class JGeckoUGUI extends JFrame
 		{
 			storeCurrentCodeList(true);
 		}
+	}
+
+	public void switchToCodesTab()
+	{
+		programTabs.setSelectedComponent(codesTab);
+	}
+
+	public static void addCode(CodeListEntry codeListEntry)
+	{
+		JGeckoUGUI instance = JGeckoUGUI.getInstance();
+		instance.switchToCodesTab();
+		instance.openAddCodeDialog(codeListEntry);
 	}
 }

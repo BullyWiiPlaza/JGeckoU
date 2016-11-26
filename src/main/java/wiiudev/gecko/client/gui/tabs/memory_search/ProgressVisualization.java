@@ -8,15 +8,21 @@ public class ProgressVisualization
 {
 	public static void updateProgress(String labelName, long finishedCount, long totalCount)
 	{
-		updateProgressBar(finishedCount, totalCount);
-		updateLabel(labelName, finishedCount, totalCount);
+		SwingUtilities.invokeLater(() ->
+		{
+			updateProgressBar(finishedCount, totalCount);
+			updateLabel(labelName, finishedCount, totalCount);
+		});
 	}
 
 	public static void deleteUpdateLabel()
 	{
-		JLabel addressProgressLabel = JGeckoUGUI.getInstance().getAddressProgressLabel();
-		addressProgressLabel.setText("");
-		setProgressBarCompleted();
+		SwingUtilities.invokeLater(() ->
+		{
+			JLabel addressProgressLabel = JGeckoUGUI.getInstance().getAddressProgressLabel();
+			addressProgressLabel.setText("");
+			setProgressBarCompleted();
+		});
 	}
 
 	private static void setProgressBarCompleted()
@@ -38,10 +44,32 @@ public class ProgressVisualization
 		if (finishedCount == totalCount)
 		{
 			addressProgressLabel.setText("");
-		}
-		else
+		} else
 		{
 			addressProgressLabel.setText(labelName + ": " + finishedCount + "/" + totalCount);
+		}
+	}
+
+	static class Optimizer
+	{
+		private long bytesToDump;
+		private int currentInterval;
+		private int intervalSize;
+
+		Optimizer(long bytesToDump)
+		{
+			this.bytesToDump = bytesToDump;
+			currentInterval = 0;
+			intervalSize = (int) (bytesToDump / 10000);
+		}
+
+		void considerUpdatingProgress(long bytesDumped)
+		{
+			if (bytesDumped > currentInterval * intervalSize)
+			{
+				updateProgress("Dumped Bytes", bytesDumped, bytesToDump);
+				currentInterval++;
+			}
 		}
 	}
 }

@@ -1,4 +1,4 @@
-package wiiudev.gecko.client.gui.tabs.code_list.code_wizard;
+package wiiudev.gecko.client.gui.input_filters;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -8,7 +8,7 @@ import javax.swing.text.PlainDocument;
 
 public class RegisterLimit extends PlainDocument
 {
-	RegisterLimit()
+	public RegisterLimit()
 	{
 		super();
 	}

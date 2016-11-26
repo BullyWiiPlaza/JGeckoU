@@ -1,4 +1,4 @@
-package wiiudev.gecko.client.gui.utilities;
+package wiiudev.gecko.client.gui.tabs.pointer_search;
 
 import org.apache.commons.lang.SystemUtils;
 
@@ -6,11 +6,63 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-public class Unzip
+public class ZipArchiveUtilities
 {
+	public static File unZipFile(String zipFile) throws IOException
+	{
+		byte[] buffer = new byte[1024];
+		File newFile = null;
+
+		String programDirectory = System.getProperty("user.dir");
+		File folder = new File(programDirectory);
+
+		if (!folder.exists())
+		{
+			Files.createDirectories(folder.toPath());
+		}
+
+		ZipInputStream zipInputStream =
+				new ZipInputStream(new FileInputStream(zipFile));
+		ZipEntry zipEntry = zipInputStream.getNextEntry();
+
+		while (zipEntry != null)
+		{
+			String fileName = zipEntry.getName();
+			newFile = new File(programDirectory + File.separator + fileName);
+
+			Files.createDirectories(new File(newFile.getParent()).toPath());
+
+			FileOutputStream fileOutputStream = new FileOutputStream(newFile);
+
+			int length;
+
+			while ((length = zipInputStream.read(buffer)) > 0)
+			{
+				fileOutputStream.write(buffer, 0, length);
+			}
+
+			fileOutputStream.close();
+			zipEntry = zipInputStream.getNextEntry();
+		}
+
+		zipInputStream.closeEntry();
+		zipInputStream.close();
+
+		return newFile;
+	}
+
+	public static Path rename(Path path, String name) throws IOException
+	{
+		return Files.move(path, path.resolveSibling(name));
+	}
+
 	public static Path unzip(String zipFilePath) throws IOException
 	{
 		String currentDirectory = System.getProperty("user.dir");
@@ -92,5 +144,15 @@ public class Unzip
 		}
 
 		bufferedOutputStream.close();
+	}
+
+	public static class FilePermissionUtilities
+	{
+		public static void giveAllPermissionsFor(Path extractedFile) throws IOException
+		{
+			Set<PosixFilePermission> permissions = new HashSet<>();
+			permissions.addAll(Arrays.asList(PosixFilePermission.values()));
+			Files.setPosixFilePermissions(extractedFile, permissions);
+		}
 	}
 }

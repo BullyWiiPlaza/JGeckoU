@@ -6,6 +6,7 @@ import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.MemoryPointerExpression;
 import wiiudev.gecko.client.gui.input_filters.HexadecimalInputFilter;
 import wiiudev.gecko.client.gui.input_filters.InputLengthFilter;
+import wiiudev.gecko.client.gui.input_filters.RegisterLimit;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.dialogs.*;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.CodeType;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.selections.Pointer;
@@ -136,8 +137,8 @@ public class CodeWizardDialog extends JDialog
 		addDialogButtonListener(loadPointerButton, new LoadPointerDialog());
 		addDialogButtonListener(pointerAddOffsetButton, new PointerAddOffsetDialog());
 		addDialogButtonListener(corrupterButton, new CorrupterDialog());
-		DialogUtilities.addGenerateCodeButtonListener(noOperationButton, this::generateNoOperationLine, false);
-		DialogUtilities.addGenerateCodeButtonListener(terminatorButton, this::generateTerminatorCode, false);
+		DialogUtilities.addGenerateCodeButtonListener(noOperationButton, CodeWizardDialog::generateNoOperationLine);
+		DialogUtilities.addGenerateCodeButtonListener(terminatorButton, this::generateTerminatorCode);
 	}
 
 	private void addDialogButtonListener(JButton button, JDialog dialog)
@@ -161,7 +162,7 @@ public class CodeWizardDialog extends JDialog
 		return new CodeWizardDialog().generateTerminatorCode();
 	}
 
-	private String generateNoOperationLine()
+	public static String generateNoOperationLine()
 	{
 		return CodeType.NO_OPERATION.getValue() + "000000" + "DEADC0DE";
 	}
@@ -598,7 +599,7 @@ public class CodeWizardDialog extends JDialog
 			if (selectedCodeType == CodeType.STRING_WRITE)
 			{
 				codeBuilder.append(stringWriteHexadecimal);
-				return CheatCodeFormatter.formatWithPadding(codeBuilder.toString(), "FF");
+				return CheatCodeFormatter.formatWithPadding(codeBuilder.toString());
 			}
 
 			if (valueField.isEnabled())
@@ -648,6 +649,7 @@ public class CodeWizardDialog extends JDialog
 	public static String getPaddedValue(JFormattedTextField textField, int padding)
 	{
 		String text = textField.getText();
+		text = text.trim();
 		return doPadding(text, padding);
 	}
 

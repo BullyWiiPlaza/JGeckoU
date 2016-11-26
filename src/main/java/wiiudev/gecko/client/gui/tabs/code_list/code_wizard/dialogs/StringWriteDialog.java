@@ -39,6 +39,6 @@ public class StringWriteDialog extends JDialog
 				+ CodeWizardDialog.getPaddedValue(addressField)
 				+ Conversions.asciiToHexadecimal(stringWriteHexadecimal);
 
-		return CheatCodeFormatter.formatWithPadding(generatedCode, "FF");
+		return CheatCodeFormatter.formatWithPadding(generatedCode);
 	}
 }

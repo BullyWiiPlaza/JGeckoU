@@ -1,4 +1,4 @@
-package wiiudev.gecko.client.gui.utilities;
+package wiiudev.gecko.client.gui;
 
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 

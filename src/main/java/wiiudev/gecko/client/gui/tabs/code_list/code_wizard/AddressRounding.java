@@ -30,10 +30,10 @@ public class AddressRounding
 
 		long rounded = (long) (address - percentage * address);
 
-		return align_32(rounded);
+		return align32(rounded);
 	}
 
-	private long align_32(long address)
+	private long align32(long address)
 	{
 		return address & -4;
 	}

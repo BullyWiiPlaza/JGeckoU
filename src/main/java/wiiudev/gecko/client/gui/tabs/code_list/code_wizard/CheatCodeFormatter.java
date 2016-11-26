@@ -8,12 +8,7 @@ public class CheatCodeFormatter
 
 	public static String formatWithPadding(String hexadecimal)
 	{
-		return format(hexadecimal, true, "00");
-	}
-
-	public static String formatWithPadding(String hexadecimal, String lastByte)
-	{
-		return format(hexadecimal, true, lastByte);
+		return format(hexadecimal, true, "FF");
 	}
 
 	public static String format(String hexadecimal)
@@ -53,7 +48,7 @@ public class CheatCodeFormatter
 		return hexadecimal;
 	}
 
-	public static String padWithZeroBytes(String text, String lastByte)
+	private static String padWithZeroBytes(String text, String lastByte)
 	{
 		int missingZeroBytes = getMissingZeroBytesCount(text);
 
@@ -67,7 +62,7 @@ public class CheatCodeFormatter
 		return text;
 	}
 
-	public static int getMissingZeroBytesCount(String text)
+	private static int getMissingZeroBytesCount(String text)
 	{
 		int textLength = text.length();
 		int spilloverBytesCount = textLength % 16 / 2;

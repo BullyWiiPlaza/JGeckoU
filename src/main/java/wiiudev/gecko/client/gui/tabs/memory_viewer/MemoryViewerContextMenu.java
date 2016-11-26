@@ -1,10 +1,12 @@
 package wiiudev.gecko.client.gui.tabs.memory_viewer;
 
+import wiiudev.gecko.client.codes.CodeListEntry;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
+import wiiudev.gecko.client.gui.JFileChooserUtilities;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.dialogs.RemoteProcedureCallDialog;
+import wiiudev.gecko.client.gui.tabs.PopupMenuUtilities;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CodeWizardDialog;
-import wiiudev.gecko.client.gui.utilities.JFileChooserUtilities;
 import wiiudev.gecko.client.gui.utilities.JTableUtilities;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
@@ -34,23 +36,13 @@ public class MemoryViewerContextMenu extends JPopupMenu
 
 	public void addContextMenu()
 	{
-		JMenuItem offsetOption = new JMenuItem("Add Offset");
-		KeyStroke offsetKeyStroke = KeyStroke.getKeyStroke("control G");
-		offsetOption.setAccelerator(offsetKeyStroke);
-		offsetOption.addActionListener(actionEvent -> showOffsetDialog());
-		add(offsetOption);
+		KeyStroke offsetKeyStroke = PopupMenuUtilities.addOption(this, "Add Offset", "control G", actionEvent -> showOffsetDialog());
 
-		JMenuItem copyAllCells = new JMenuItem("Copy Cells");
-		KeyStroke copyCellsKeyStroke = KeyStroke.getKeyStroke("control L");
-		copyAllCells.setAccelerator(copyCellsKeyStroke);
-		copyAllCells.addActionListener(actionEvent -> copyCells());
-		add(copyAllCells);
+		KeyStroke addCodeKeyStroke = PopupMenuUtilities.addOption(this, "Add Code", "control K", actionEvent -> addCodeDialog());
 
-		JMenuItem codeWizardOption = new JMenuItem("Code Wizard");
-		KeyStroke codeWizardKeyStroke = KeyStroke.getKeyStroke("control W");
-		codeWizardOption.setAccelerator(codeWizardKeyStroke);
-		codeWizardOption.addActionListener(actionEvent -> displayCodeWizard());
-		add(codeWizardOption);
+		KeyStroke copyCellsKeyStroke = PopupMenuUtilities.addOption(this, "Copy Cells", "control L", actionEvent -> copyCells());
+
+		KeyStroke codeWizardKeyStroke = PopupMenuUtilities.addOption(this, "Code Wizard", "control W", actionEvent -> displayCodeWizard());
 
 		writeStringOption = new JMenuItem("Write Text");
 		KeyStroke writeTextKeyStroke = KeyStroke.getKeyStroke("control T");
@@ -64,23 +56,11 @@ public class MemoryViewerContextMenu extends JPopupMenu
 		uploadFileOption.addActionListener(actionEvent -> uploadFile());
 		add(uploadFileOption);
 
-		JMenuItem dumpFileOption = new JMenuItem("Dump File");
-		KeyStroke dumpFileKeyStroke = KeyStroke.getKeyStroke("control F");
-		dumpFileOption.setAccelerator(dumpFileKeyStroke);
-		dumpFileOption.addActionListener(actionEvent -> switchToDumpingTab());
-		add(dumpFileOption);
+		KeyStroke dumpFileKeyStroke = PopupMenuUtilities.addOption(this, "Dump File", "control F", actionEvent -> switchToDumpingTab());
 
-		JMenuItem disassemblerOption = new JMenuItem("Disassembler");
-		KeyStroke disassemblerKeyStroke = KeyStroke.getKeyStroke("control D");
-		disassemblerOption.setAccelerator(disassemblerKeyStroke);
-		disassemblerOption.addActionListener(actionEvent -> switchToDisassemblerTab());
-		add(disassemblerOption);
+		KeyStroke disassemblerKeyStroke = PopupMenuUtilities.addOption(this, "Disassembler", "control D", actionEvent -> switchToDisassemblerTab());
 
-		JMenuItem rpcOption = new JMenuItem("RPC");
-		KeyStroke rpcKeyStroke = KeyStroke.getKeyStroke("control R");
-		rpcOption.setAccelerator(rpcKeyStroke);
-		rpcOption.addActionListener(actionEvent -> performRemoteProcedureCall());
-		add(rpcOption);
+		KeyStroke rpcKeyStroke = PopupMenuUtilities.addOption(this, "RPC", "control R", actionEvent -> performRemoteProcedureCall());
 
 		serialWriteOption = new JMenuItem("Serial Write");
 		KeyStroke serialWriteKeyStroke = KeyStroke.getKeyStroke("control S");
@@ -111,55 +91,49 @@ public class MemoryViewerContextMenu extends JPopupMenu
 					if (keyEventPressed(pressedEvent, offsetKeyStroke.getKeyCode()))
 					{
 						showOffsetDialog();
-					}
-
-					if (keyEventPressed(pressedEvent, copyCellsKeyStroke.getKeyCode()))
+					} else if (keyEventPressed(pressedEvent, addCodeKeyStroke.getKeyCode()))
+					{
+						addCodeDialog();
+					} else if (keyEventPressed(pressedEvent, copyCellsKeyStroke.getKeyCode()))
 					{
 						copyCells();
-					}
-
-					if (keyEventPressed(pressedEvent, codeWizardKeyStroke.getKeyCode()))
+					} else if (keyEventPressed(pressedEvent, codeWizardKeyStroke.getKeyCode()))
 					{
 						displayCodeWizard();
-					}
-
-					if (keyEventPressed(pressedEvent, writeTextKeyStroke.getKeyCode()))
+					} else if (keyEventPressed(pressedEvent, writeTextKeyStroke.getKeyCode()))
 					{
 						displayStringWriteDialog();
-					}
-
-					if (keyEventPressed(pressedEvent, uploadFileKeyStroke.getKeyCode()))
+					} else if (keyEventPressed(pressedEvent, uploadFileKeyStroke.getKeyCode()))
 					{
 						uploadFile();
-					}
-
-					if (keyEventPressed(pressedEvent, dumpFileKeyStroke.getKeyCode()))
+					} else if (keyEventPressed(pressedEvent, dumpFileKeyStroke.getKeyCode()))
 					{
 						switchToDumpingTab();
-					}
-
-					if (keyEventPressed(pressedEvent, disassemblerKeyStroke.getKeyCode()))
+					} else if (keyEventPressed(pressedEvent, disassemblerKeyStroke.getKeyCode()))
 					{
 						switchToDisassemblerTab();
-					}
-
-					if (keyEventPressed(pressedEvent, rpcKeyStroke.getKeyCode()))
+					} else if (keyEventPressed(pressedEvent, rpcKeyStroke.getKeyCode()))
 					{
 						performRemoteProcedureCall();
-					}
-
-					if (keyEventPressed(pressedEvent, serialWriteKeyStroke.getKeyCode()))
+					} else if (keyEventPressed(pressedEvent, serialWriteKeyStroke.getKeyCode()))
 					{
 						performSerialWrite();
-					}
-
-					if (keyEventPressed(pressedEvent, dereferenceKeyStroke.getKeyCode()))
+					} else if (keyEventPressed(pressedEvent, dereferenceKeyStroke.getKeyCode()))
 					{
 						dereferenceAddress();
 					}
 				}
 			}
 		});
+	}
+
+	private void addCodeDialog()
+	{
+		JGeckoUGUI instance = JGeckoUGUI.getInstance();
+		int address = instance.getSelectedMemoryViewerAddress();
+		int value = instance.getSelectedMemoryViewerValue();
+		CodeListEntry codeListEntry = new CodeListEntry(address, value);
+		JGeckoUGUI.addCode(codeListEntry);
 	}
 
 	private void performSerialWrite()
@@ -170,7 +144,7 @@ public class MemoryViewerContextMenu extends JPopupMenu
 		SerialWriteDialog serialWriteDialog = new SerialWriteDialog(address, serialWriteOption.getText());
 		serialWriteDialog.setVisible(true);
 
-		if(serialWriteDialog.hasWritten())
+		if (serialWriteDialog.hasWritten())
 		{
 			instance.updateMemoryViewer();
 		}

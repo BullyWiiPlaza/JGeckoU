@@ -49,6 +49,7 @@ public class GraphicalSearcher
 			try
 			{
 				long bytesDumped = 0;
+				ProgressVisualization.Optimizer optimizer = new ProgressVisualization.Optimizer(length);
 				MemoryReader memoryReader = new MemoryReader();
 				ByteArrayOutputStream dumpedBytesStream = new ByteArrayOutputStream();
 
@@ -66,10 +67,7 @@ public class GraphicalSearcher
 						length -= bytesToRead;
 						bytesDumped += bytesToRead;
 
-						if (bytesDumped % TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE * 10 == 0)
-						{
-							ProgressVisualization.updateProgress("Dumped Bytes", bytesDumped, startingBytesCount);
-						}
+						optimizer.considerUpdatingProgress(bytesDumped);
 
 						if (JGeckoUGUI.getInstance().isDumpingCanceled())
 						{

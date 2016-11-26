@@ -2,7 +2,7 @@ package wiiudev.gecko.client.gui.tabs.code_list;
 
 import wiiudev.gecko.client.conversions.SystemClipboard;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
-import wiiudev.gecko.client.gui.utilities.PopupMenuUtilities;
+import wiiudev.gecko.client.gui.tabs.PopupMenuUtilities;
 
 import javax.swing.*;
 import java.awt.event.KeyAdapter;

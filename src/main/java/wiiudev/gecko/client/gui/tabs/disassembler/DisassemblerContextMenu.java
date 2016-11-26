@@ -1,12 +1,13 @@
 package wiiudev.gecko.client.gui.tabs.disassembler;
 
+import wiiudev.gecko.client.codes.CodeListEntry;
 import wiiudev.gecko.client.conversions.Conversions;
 import wiiudev.gecko.client.conversions.SystemClipboard;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
+import wiiudev.gecko.client.gui.tabs.PopupMenuUtilities;
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Disassembler;
 import wiiudev.gecko.client.gui.utilities.JTableUtilities;
-import wiiudev.gecko.client.gui.utilities.PopupMenuUtilities;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
@@ -30,6 +31,7 @@ public class DisassemblerContextMenu extends JPopupMenu
 	{
 		KeyStroke memoryViewerKeyStroke = PopupMenuUtilities.addOption(this, "Memory Viewer", "control M", actionEvent -> switchToMemoryViewer());
 		KeyStroke searchKeyStroke = PopupMenuUtilities.addOption(this, "Search", "control S", actionEvent -> switchToSearchTab());
+		KeyStroke addCodeKeyStroke = PopupMenuUtilities.addOption(this, "Add Code", "control K", actionEvent -> displayAddCodeDialog());
 		KeyStroke copyCellsKeyStroke = PopupMenuUtilities.addOption(this, "Copy Cells", "control C", actionEvent -> copyCells());
 		KeyStroke functionStartKeyStroke = PopupMenuUtilities.addOption(this, "Function Start", "control T", actionEvent -> selectFunctionStart());
 		KeyStroke copyFunctionKeyStroke = PopupMenuUtilities.addOption(this, "Copy Function", "control F", actionEvent -> copyFunction());
@@ -86,6 +88,9 @@ public class DisassemblerContextMenu extends JPopupMenu
 					if (PopupMenuUtilities.keyEventPressed(pressedEvent, memoryViewerKeyStroke))
 					{
 						switchToMemoryViewer();
+					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, addCodeKeyStroke))
+					{
+						displayAddCodeDialog();
 					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, searchKeyStroke))
 					{
 						switchToSearchTab();
@@ -114,6 +119,15 @@ public class DisassemblerContextMenu extends JPopupMenu
 				}
 			}
 		});
+	}
+
+	private void displayAddCodeDialog()
+	{
+		DisassembledInstruction disassembledInstruction = tableManager.getSelectedInstruction();
+		int address = disassembledInstruction.getAddress();
+		int value = disassembledInstruction.getValue();
+		CodeListEntry codeListEntry = new CodeListEntry(address, value);
+		JGeckoUGUI.addCode(codeListEntry);
 	}
 
 	private void unHookAddress()

@@ -1,11 +1,12 @@
 package wiiudev.gecko.client.gui.tabs.memory_search;
 
+import wiiudev.gecko.client.codes.CodeListEntry;
 import wiiudev.gecko.client.conversions.Conversions;
 import wiiudev.gecko.client.conversions.SystemClipboard;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
+import wiiudev.gecko.client.gui.tabs.PopupMenuUtilities;
 import wiiudev.gecko.client.gui.utilities.JTableUtilities;
-import wiiudev.gecko.client.gui.utilities.PopupMenuUtilities;
 import wiiudev.gecko.client.memory_search.SearchResult;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
@@ -31,7 +32,8 @@ public class SearchTableContextMenu extends JPopupMenu
 	{
 		KeyStroke memoryViewerKeyStroke = PopupMenuUtilities.addOption(this, "Memory Viewer", "control M", actionEvent -> switchToMemoryViewer());
 		KeyStroke disassemblerKeyStroke = PopupMenuUtilities.addOption(this, "Disassembler", "control D", actionEvent -> switchToDisassembler());
-		KeyStroke pokeKeyStroke = PopupMenuUtilities.addOption(this, "Poke", "control K", actionEvent -> pokeValues());
+		KeyStroke addCodeKeyStroke = PopupMenuUtilities.addOption(this, "Add Code", "control K", actionEvent -> displayAddCodeDialog());
+		KeyStroke pokeKeyStroke = PopupMenuUtilities.addOption(this, "Poke", "control O", actionEvent -> pokeValues());
 		KeyStroke pokePreviousKeyStroke = PopupMenuUtilities.addOption(this, "Poke Previous", "control P", actionEvent -> pokePreviousValues());
 		KeyStroke pokeCurrentKeyStroke = PopupMenuUtilities.addOption(this, "Poke Current", "control U", actionEvent -> pokeCurrentValues());
 		KeyStroke copyAddressKeyStroke = PopupMenuUtilities.addOption(this, "Copy Address", "control R", actionEvent -> copySelectedAddress());
@@ -52,6 +54,9 @@ public class SearchTableContextMenu extends JPopupMenu
 					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, disassemblerKeyStroke))
 					{
 						switchToDisassembler();
+					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, addCodeKeyStroke))
+					{
+						displayAddCodeDialog();
 					} else if (PopupMenuUtilities.keyEventPressed(pressedEvent, pokeKeyStroke))
 					{
 						pokeValues();
@@ -71,6 +76,25 @@ public class SearchTableContextMenu extends JPopupMenu
 				}
 			}
 		});
+	}
+
+	private void displayAddCodeDialog()
+	{
+		try
+		{
+			SearchResult searchResult = getFirstSearchResult();
+			CodeListEntry codeListEntry = new CodeListEntry(searchResult.getAddress(), Conversions.toDecimal(searchResult.getCurrentValueBytes()));
+			JGeckoUGUI.addCode(codeListEntry);
+		} catch (Exception exception)
+		{
+			exception.printStackTrace();
+		}
+	}
+
+	private SearchResult getFirstSearchResult()
+	{
+		List<SearchResult> searchResults = getSelectedSearchResults();
+		return searchResults.get(0);
 	}
 
 	private void copySelectedAddress()

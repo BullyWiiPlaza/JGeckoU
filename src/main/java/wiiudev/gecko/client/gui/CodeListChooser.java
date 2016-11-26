@@ -1,7 +1,6 @@
 package wiiudev.gecko.client.gui;
 
 import wiiudev.gecko.client.codes.CodeListStorage;
-import wiiudev.gecko.client.gui.utilities.JFileChooserUtilities;
 
 import javax.swing.*;
 import java.io.File;

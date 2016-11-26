@@ -1,4 +1,4 @@
-package wiiudev.gecko.client.gui.utilities;
+package wiiudev.gecko.client.gui.tabs;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;

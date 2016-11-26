@@ -362,12 +362,11 @@ public class Conversions
 		return coordinatesBuilder.toString();
 	}
 
-	public static byte[] toByteArray(int[] ints)
+	public static int toDecimal(byte[] bytes)
 	{
-		ByteBuffer byteBuffer = ByteBuffer.allocate(ints.length * 4);
-		IntBuffer intBuffer = byteBuffer.asIntBuffer();
-		intBuffer.put(ints);
+		ByteBuffer byteBuffer = ByteBuffer.wrap(bytes);
+		byteBuffer.order(ByteOrder.BIG_ENDIAN);
 
-		return byteBuffer.array();
+		return byteBuffer.getInt();
 	}
 }

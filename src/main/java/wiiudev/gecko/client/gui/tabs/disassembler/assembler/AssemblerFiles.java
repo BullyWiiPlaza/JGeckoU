@@ -3,8 +3,7 @@ package wiiudev.gecko.client.gui.tabs.disassembler.assembler;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.SystemUtils;
 import wiiudev.gecko.client.gui.tabs.pointer_search.DownloadingUtilities;
-import wiiudev.gecko.client.gui.tabs.pointer_search.ZipUtils;
-import wiiudev.gecko.client.gui.utilities.Unzip;
+import wiiudev.gecko.client.gui.tabs.pointer_search.ZipArchiveUtilities;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,9 +67,9 @@ public class AssemblerFiles
 		String downloadRepository = "https://github.com/BullyWiiPlaza/devkitPPC/";
 		String masterArchiveDownloadURL = downloadRepository + "archive/master.zip";
 		Path downloadedArchive = DownloadingUtilities.download(masterArchiveDownloadURL);
-		Unzip.unzip(downloadedArchive.toString());
-		Path oldPath = Unzip.unzip(downloadedArchive.toString());
+		ZipArchiveUtilities.unzip(downloadedArchive.toString());
+		Path oldPath = ZipArchiveUtilities.unzip(downloadedArchive.toString());
 		String librariesFolderName = FilenameUtils.getName(AssemblerFiles.getLibrariesDirectory().getParent().toString());
-		ZipUtils.rename(oldPath, librariesFolderName);
+		ZipArchiveUtilities.rename(oldPath, librariesFolderName);
 	}
 }
