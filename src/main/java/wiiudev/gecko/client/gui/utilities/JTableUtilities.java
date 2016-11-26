@@ -128,15 +128,6 @@ public class JTableUtilities
 	public static void setSelectedRow(JTable table, int rowIndex, int columnIndex)
 	{
 		table.setRowSelectionInterval(rowIndex, columnIndex);
-
-		try
-		{
-			Thread.sleep(10);
-		} catch (InterruptedException exception)
-		{
-			exception.printStackTrace();
-		}
-
 		scrollToSelectedRow(table);
 	}
 

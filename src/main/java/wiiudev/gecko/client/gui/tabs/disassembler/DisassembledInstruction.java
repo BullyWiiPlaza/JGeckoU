@@ -71,4 +71,23 @@ public class DisassembledInstruction
 	{
 		return Disassembler.disassemble(address, 4).get(0);
 	}
+
+	private static boolean isBranch(String instruction)
+	{
+		DisassembledInstruction disassembledInstruction = new DisassembledInstruction(0, 0, instruction);
+		return disassembledInstruction.isBranchWithDestination();
+	}
+
+	public static String calculateBranch(int currentAddress, String instruction)
+	{
+		if (DisassembledInstruction.isBranch(instruction))
+		{
+			String[] components = instruction.split(" 0x");
+			int absoluteJumpTargetAddress = Integer.parseInt(components[1], 16);
+			int updatedOffset = absoluteJumpTargetAddress - currentAddress;
+			instruction = components[0] + " " + updatedOffset;
+		}
+
+		return instruction;
+	}
 }

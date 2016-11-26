@@ -60,6 +60,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -914,10 +915,13 @@ public class JGeckoUGUI extends JFrame
 				assembling = true;
 				setConnectionButtonsAvailability();
 
-				String instruction = disassemblerInstructionField.getText();
-
 				try
 				{
+					String instruction = disassemblerInstructionField.getText();
+
+					int currentAddress = disassemblerTableManager.getSelectedInstruction().getAddress();
+					instruction = DisassembledInstruction.calculateBranch(currentAddress, instruction);
+
 					String assembled = Assembler.assembleHexadecimal(instruction);
 					DisassembledInstruction disassembledInstruction = disassemblerTableManager.getSelectedInstruction();
 					MemoryWriter memoryWriter = new MemoryWriter();
@@ -1972,23 +1976,25 @@ public class JGeckoUGUI extends JFrame
 
 	private void configureExternalToolsTab()
 	{
-		TCPGeckoInstallerButton.addActionListener(actionEvent ->
-		{
-			try
-			{
-				Desktop.getDesktop().browse(new URI("https://github.com/BullyWiiPlaza/tcpgecko/archive/master.zip"));
-			} catch (Exception exception)
-			{
-				exception.printStackTrace();
-			}
-		});
-
+		TCPGeckoInstallerButton.addActionListener(actionEvent -> downloadTCPGeckoInstallerRepository());
 		powerPCAssemblyCompilerButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/PowerPC-Assembly-Compiler/blob/master/PowerPC-Assembly-Compiler.jar?raw=true", actionEvent));
 		pointerSearchApplicationButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/Universal-Pointer-Searcher/blob/master/Universal-Pointer-Searcher.jar?raw=true", actionEvent));
 		universalOffsetPorterButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/Universal-Offset-Porter/blob/master/Universal%20Offset%20Porter.jar?raw=true", actionEvent));
 		powerPCAssemblyInterpreterButton.addActionListener(actionEvent -> downloadAndLaunch("https://github.com/BullyWiiPlaza/Java-PowerPC-Interpreter/blob/master/Java-PowerPC-Interpreter.jar?raw=true", actionEvent));
+
 		addStartHexEditorButtonListener();
 		addStartScientificCalculatorListener();
+	}
+
+	private void downloadTCPGeckoInstallerRepository()
+	{
+		try
+		{
+			Desktop.getDesktop().browse(new URI("https://github.com/BullyWiiPlaza/tcpgecko/archive/master.zip"));
+		} catch (Exception exception)
+		{
+			exception.printStackTrace();
+		}
 	}
 
 	private void addStartScientificCalculatorListener()
@@ -3353,7 +3359,24 @@ public class JGeckoUGUI extends JFrame
 	{
 		try
 		{
-			if (MemoryReader.isCodeHandlerInstalled())
+			boolean codeHandlerInstalled;
+
+			try
+			{
+				codeHandlerInstalled = MemoryReader.isCodeHandlerInstalled();
+			} catch (SocketTimeoutException socketTimeoutException)
+			{
+				JOptionPane.showMessageDialog(rootPane,
+						"You are not using the recommended TCP Gecko Installer.\n" +
+								"Please get it so it can detect whether you installed\n" +
+								"the code handler or not and possibly other advantages.",
+						"Warning",
+						JOptionPane.WARNING_MESSAGE);
+				downloadTCPGeckoInstallerRepository();
+				codeHandlerInstalled = true;
+			}
+
+			if (codeHandlerInstalled)
 			{
 				List<CodeListEntry> codeListEntries = codesListManager.getActiveCodes();
 				codeListSender.setCodeListEntries(codeListEntries);
