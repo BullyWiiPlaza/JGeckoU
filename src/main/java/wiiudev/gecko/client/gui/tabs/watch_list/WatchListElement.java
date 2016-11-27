@@ -12,7 +12,9 @@ public class WatchListElement
 	private MemoryPointerExpression addressExpression;
 	private ValueSize valueSize;
 
-	public WatchListElement(String name, MemoryPointerExpression addressExpression, ValueSize valueSize)
+	public WatchListElement(String name,
+	                        MemoryPointerExpression addressExpression,
+	                        ValueSize valueSize)
 	{
 		this.name = name;
 		this.addressExpression = addressExpression;
@@ -53,5 +55,11 @@ public class WatchListElement
 		{
 			return valueSize.readValue(destinationAddress);
 		}
+	}
+
+	@Override
+	public String toString()
+	{
+		return name + " " + addressExpression + " " + valueSize;
 	}
 }

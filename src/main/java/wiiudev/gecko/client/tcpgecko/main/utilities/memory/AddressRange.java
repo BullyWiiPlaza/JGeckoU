@@ -110,4 +110,9 @@ public class AddressRange
 	{
 		return addressRange.getStartingAddress() <= address && endAddress <= addressRange.getEndingAddress();
 	}
+
+	public static boolean isInApplicationDataSection(int address)
+	{
+		return isInRange(address, address + 4, mem2Region);
+	}
 }

@@ -202,6 +202,9 @@ public class JGeckoUGUI extends JFrame
 	private JButton powerPCAssemblyInterpreterButton;
 	private JButton TCPGeckoInstallerButton;
 	private JPanel codesTab;
+	private JTextField watchlistValueAssertionTextField;
+	private JCheckBox watchlistUseValueAssertionCheckBox;
+	private JButton copyAssertedAddressExpressionsButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -1559,10 +1562,19 @@ public class JGeckoUGUI extends JFrame
 		keepUpdatingWatchList();
 		addAddAddressExpressionsButtonListener();
 		addClearWatchListActionListener();
-		setWatchButtonsAvailability();
+		setWatchlistButtonsAvailability();
 		saveWatchListButton.addActionListener(actionEvent -> storeWatchList());
 		exportWatchListButton.addActionListener(actionEvent -> exportWatchList());
 		updateWatchlistCheckBox.addItemListener(itemEvent -> keepUpdatingWatchList());
+		HexadecimalInputFilter.setHexadecimalInputFilter(watchlistValueAssertionTextField);
+		watchlistUseValueAssertionCheckBox.addItemListener(itemEvent -> setWatchlistValueAssertionFieldAvailability());
+		copyAssertedAddressExpressionsButton.addActionListener(actionEvent -> watchListManager.copyAssertedMemoryPointerExpressions());
+	}
+
+	private void setWatchlistValueAssertionFieldAvailability()
+	{
+		boolean ticked = watchlistUseValueAssertionCheckBox.isSelected();
+		watchlistValueAssertionTextField.setEnabled(ticked);
 	}
 
 	private void addWatchListDeleteRowsDeleteKey()
@@ -1587,7 +1599,7 @@ public class JGeckoUGUI extends JFrame
 		try
 		{
 			WatchListStorage watchListStorage = new WatchListStorage(gameId);
-			String filePath = watchListStorage.export(watchListManager.getWatchListElements());
+			String filePath = watchListStorage.export(watchListManager.getElements());
 
 			askForOpeningFile(filePath);
 		} catch (IOException exception)
@@ -1601,7 +1613,7 @@ public class JGeckoUGUI extends JFrame
 		try
 		{
 			WatchListStorage watchListStorage = new WatchListStorage(gameId);
-			String filePath = watchListStorage.store(watchListManager.getWatchListElements());
+			String filePath = watchListStorage.store(watchListManager.getElements());
 
 			JOptionPane.showMessageDialog(rootPane,
 					"Watch list stored to " + filePath,
@@ -1640,19 +1652,19 @@ public class JGeckoUGUI extends JFrame
 			@Override
 			public void mouseClicked(MouseEvent mouseEvent)
 			{
-				setWatchButtonsAvailability();
+				setWatchlistButtonsAvailability();
 			}
 
 			@Override
 			public void mousePressed(MouseEvent mouseEvent)
 			{
-				setWatchButtonsAvailability();
+				setWatchlistButtonsAvailability();
 			}
 
 			@Override
 			public void mouseReleased(MouseEvent mouseEvent)
 			{
-				setWatchButtonsAvailability();
+				setWatchlistButtonsAvailability();
 			}
 
 			@Override
@@ -1684,7 +1696,7 @@ public class JGeckoUGUI extends JFrame
 		if (selectedAnswer == JOptionPane.YES_OPTION)
 		{
 			JTableUtilities.deleteSelectedRows(watchListTable);
-			setWatchButtonsAvailability();
+			setWatchlistButtonsAvailability();
 		}
 	}
 
@@ -1705,7 +1717,7 @@ public class JGeckoUGUI extends JFrame
 				}
 			}
 
-			setWatchButtonsAvailability();
+			setWatchlistButtonsAvailability();
 		});
 	}
 
@@ -1730,7 +1742,7 @@ public class JGeckoUGUI extends JFrame
 				JTableUtilities.deleteAllRows(watchListTable);
 			}
 
-			setWatchButtonsAvailability();
+			setWatchlistButtonsAvailability();
 		});
 	}
 
@@ -1763,7 +1775,14 @@ public class JGeckoUGUI extends JFrame
 	{
 		try
 		{
-			watchListManager.updateValues();
+			String assertedValue = "";
+
+			if (watchlistUseValueAssertionCheckBox.isSelected())
+			{
+				assertedValue = watchlistValueAssertionTextField.getText();
+			}
+
+			watchListManager.updateValues(watchListTab, assertedValue);
 		} catch (Exception exception)
 		{
 			StackTraceUtils.handleException(rootPane, exception);
@@ -1777,7 +1796,7 @@ public class JGeckoUGUI extends JFrame
 
 		if (modify)
 		{
-			addWatchDialog.setWatchListElement(watchListManager.getSelectedWatchListElement());
+			addWatchDialog.setWatchListElement(watchListManager.getSelectedElement());
 		}
 
 		addWatchDialog.setVisible(true);
@@ -1794,10 +1813,10 @@ public class JGeckoUGUI extends JFrame
 			watchListManager.addRow(watchListElement);
 		}
 
-		setWatchButtonsAvailability();
+		setWatchlistButtonsAvailability();
 	}
 
-	private void setWatchButtonsAvailability()
+	private void setWatchlistButtonsAvailability()
 	{
 		boolean isRowSelected = watchListManager.isRowSelected();
 		deleteWatchButton.setEnabled(isRowSelected);
@@ -1829,6 +1848,8 @@ public class JGeckoUGUI extends JFrame
 			simpleProperties.put("SEARCH_MODE", searchModeComboBox.getSelectedItem().toString());
 			simpleProperties.put("SEARCH_CONDITION", searchConditionComboBox.getSelectedItem().toString());
 			simpleProperties.put("DETECT_DATA_BUFFER_SIZE", String.valueOf(detectDataBufferSizeCheckBox.isSelected()));
+			simpleProperties.put("WATCH_LIST_USE_VALUE_ASSERTION", String.valueOf(watchlistUseValueAssertionCheckBox.isSelected()));
+			simpleProperties.put("WATCH_LIST_VALUE_ASSERTION_VALUE", watchlistValueAssertionTextField.getText());
 
 			simpleProperties.writeToFile();
 		}));
@@ -1975,6 +1996,19 @@ public class JGeckoUGUI extends JFrame
 		{
 			boolean selected = Boolean.parseBoolean(detectDataBufferSize);
 			detectDataBufferSizeCheckBox.setSelected(selected);
+		}
+
+		String watchlistUseValueAssertion = simpleProperties.get("WATCH_LIST_USE_VALUE_ASSERTION");
+		if (watchlistUseValueAssertion != null)
+		{
+			boolean selected = Boolean.parseBoolean(watchlistUseValueAssertion);
+			watchlistUseValueAssertionCheckBox.setSelected(selected);
+		}
+
+		String watchlistValueAssertionValue = simpleProperties.get("WATCH_LIST_VALUE_ASSERTION_VALUE");
+		if (watchlistValueAssertionValue != null)
+		{
+			watchlistValueAssertionTextField.setText(watchlistValueAssertionValue);
 		}
 	}
 
@@ -3651,7 +3685,7 @@ public class JGeckoUGUI extends JFrame
 
 			if (watchListTab.isShowing())
 			{
-				updateWatchList();
+				updateWatchlistAsynchronously();
 			}
 		}
 
@@ -3661,6 +3695,20 @@ public class JGeckoUGUI extends JFrame
 		}
 
 		considerUpdatingRegisters();
+	}
+
+	private void updateWatchlistAsynchronously()
+	{
+		new SwingWorker<String, String>()
+		{
+			@Override
+			protected String doInBackground() throws Exception
+			{
+				updateWatchList();
+
+				return null;
+			}
+		}.execute();
 	}
 
 	private void checkAssemblerFiles()
@@ -3757,6 +3805,8 @@ public class JGeckoUGUI extends JFrame
 			{
 				watchListManager.setRows(watchListElements);
 			}
+
+			setWatchlistButtonsAvailability();
 		} catch (Exception exception)
 		{
 			StackTraceUtils.handleException(rootPane, exception);

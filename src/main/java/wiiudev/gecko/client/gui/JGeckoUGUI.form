@@ -675,7 +675,7 @@
                       <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Delete Watch"/>
+                      <text value="Delete Watch(es)"/>
                       <toolTipText value="Deletes the currently selected watch list element"/>
                     </properties>
                   </component>
@@ -721,7 +721,7 @@
                     </constraints>
                     <properties>
                       <selected value="true"/>
-                      <text value="Update Watchlist"/>
+                      <text value="Keep Updating Watchlist"/>
                     </properties>
                   </component>
                 </children>
@@ -750,26 +750,42 @@
                       <toolTipText value="The watch list update delay in milliseconds"/>
                     </properties>
                   </component>
-                  <hspacer id="81c3f">
+                  <component id="5083e" class="javax.swing.JLabel">
                     <constraints>
-                      <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
-                  </hspacer>
-                  <hspacer id="3447c">
+                    <properties>
+                      <text value="Value Assertion:"/>
+                    </properties>
+                  </component>
+                  <component id="f5220" class="javax.swing.JTextField" binding="watchlistValueAssertionTextField">
                     <constraints>
-                      <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                      <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                        <preferred-size width="150" height="-1"/>
+                      </grid>
                     </constraints>
-                  </hspacer>
-                  <hspacer id="c564c">
+                    <properties>
+                      <toolTipText value="The value to assert"/>
+                    </properties>
+                  </component>
+                  <component id="f57ac" class="javax.swing.JCheckBox" binding="watchlistUseValueAssertionCheckBox">
                     <constraints>
-                      <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                      <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
-                  </hspacer>
-                  <hspacer id="2daff">
+                    <properties>
+                      <text value="Use"/>
+                      <toolTipText value="Whether to assert a certain value for all watch list items"/>
+                    </properties>
+                  </component>
+                  <component id="ea679" class="javax.swing.JButton" binding="copyAssertedAddressExpressionsButton" default-binding="true">
                     <constraints>
-                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                      <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
-                  </hspacer>
+                    <properties>
+                      <text value="Copy Asserted Address Expressions"/>
+                      <toolTipText value="Copies the address expressions which fulfilled the assertion (or all, if not using value assertion)"/>
+                    </properties>
+                  </component>
                 </children>
               </grid>
             </children>

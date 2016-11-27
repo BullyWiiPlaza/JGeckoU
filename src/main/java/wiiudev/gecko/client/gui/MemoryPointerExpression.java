@@ -2,6 +2,7 @@ package wiiudev.gecko.client.gui;
 
 import wiiudev.gecko.client.conversions.Conversions;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 
 import java.io.IOException;
 
@@ -16,7 +17,7 @@ public class MemoryPointerExpression
 
 	public MemoryPointerExpression(long baseAddress, int[] offsets)
 	{
-		this.baseAddress = baseAddress;
+		setBaseAddress((int) baseAddress);
 		this.offsets = offsets;
 	}
 
@@ -29,9 +30,14 @@ public class MemoryPointerExpression
 		if (pointerDepth == 0)
 		{
 			baseAddress = Long.parseLong(notation, 16);
-			return;
+		} else
+		{
+			parseOffsets(notation, pointerDepth);
 		}
+	}
 
+	private void parseOffsets(String notation, int pointerDepth)
+	{
 		offsets = new int[pointerDepth];
 
 		int lastOpeningBracket = notation.lastIndexOf("[");
@@ -152,7 +158,7 @@ public class MemoryPointerExpression
 
 	private void setBaseAddress(int baseAddress)
 	{
-		if (!isValidMemoryAddress(baseAddress))
+		if (!AddressRange.isInApplicationDataSection(baseAddress))
 		{
 			throw new IllegalArgumentException("Invalid base address");
 		}
@@ -166,9 +172,9 @@ public class MemoryPointerExpression
 	}
 
 	/**
-	 * Gets the destination address the given POINTER is pointing to
+	 * Gets the destination address the given pointer is pointing to
 	 *
-	 * @return The destination address the given POINTER is pointing to OR {@value #INVALID_POINTER} if not
+	 * @return The destination address the given pointer is pointing to OR {@value #INVALID_POINTER} if not
 	 * possibles
 	 */
 	public long getDestinationAddress() throws IOException
@@ -179,29 +185,37 @@ public class MemoryPointerExpression
 		{
 			for (int offset : offsets)
 			{
-				int pointerValue = new MemoryReader().readInt((int) destinationAddress);
+				MemoryReader memoryReader = new MemoryReader();
+				// System.out.println("getDestinationAddress() Reading from " + Long.toHexString(destinationAddress).toUpperCase());
+				int pointerValue = memoryReader.readInt((int) destinationAddress);
+				// System.out.println("getDestinationAddress() Pointer value read: " + Long.toHexString(pointerValue).toUpperCase());
+
+				try
+				{
+					Thread.sleep(10);
+				} catch (InterruptedException exception)
+				{
+					exception.printStackTrace();
+				}
 
 				destinationAddress = pointerValue + offset;
+				// System.out.println("getDestinationAddress() New destination address after adding: " + Long.toHexString(destinationAddress).toUpperCase());
 
-				if (!MemoryPointerExpression.isValidMemoryAddress((int) destinationAddress))
+				if (!AddressRange.isInApplicationDataSection((int) destinationAddress))
 				{
+					// System.out.println("getDestinationAddress() Invalid pointer (not in data section)");
 					destinationAddress = INVALID_POINTER;
 
 					break;
 				}
+
+				// System.out.println("getDestinationAddress() Valid pointer in data section");
 			}
+
+			// System.out.println();
 		}
 
 		return destinationAddress;
-	}
-
-	/**
-	 * @param address The address to check
-	 * @return True if the given address is within valid memory bounds, false otherwise
-	 */
-	private static boolean isValidMemoryAddress(int address)
-	{
-		return address >= 0x10000000 && address < 0x50000000;
 	}
 
 	@Override
