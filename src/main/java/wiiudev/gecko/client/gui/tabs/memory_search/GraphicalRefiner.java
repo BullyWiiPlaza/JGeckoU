@@ -63,7 +63,7 @@ public class GraphicalRefiner
 
 					bytesDumped += dumped.length;
 
-					optimizer.considerUpdatingProgress(bytesDumped);
+					optimizer.considerUpdatingProgress("Refined Bytes Dumped", bytesDumped);
 
 					if (JGeckoUGUI.getInstance().isDumpingCanceled())
 					{

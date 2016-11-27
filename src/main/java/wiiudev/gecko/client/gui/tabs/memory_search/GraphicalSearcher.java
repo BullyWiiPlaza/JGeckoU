@@ -44,8 +44,6 @@ public class GraphicalSearcher
 		@Override
 		protected Long doInBackground() throws Exception
 		{
-			long startingBytesCount = length;
-
 			try
 			{
 				long bytesDumped = 0;
@@ -67,7 +65,7 @@ public class GraphicalSearcher
 						length -= bytesToRead;
 						bytesDumped += bytesToRead;
 
-						optimizer.considerUpdatingProgress(bytesDumped);
+						optimizer.considerUpdatingProgress("(Optimized) Bytes Dumped", bytesDumped);
 
 						if (JGeckoUGUI.getInstance().isDumpingCanceled())
 						{

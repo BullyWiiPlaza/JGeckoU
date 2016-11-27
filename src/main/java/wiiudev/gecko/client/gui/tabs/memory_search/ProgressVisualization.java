@@ -50,24 +50,29 @@ public class ProgressVisualization
 		}
 	}
 
-	static class Optimizer
+	public static class Optimizer
 	{
 		private long bytesToDump;
 		private int currentInterval;
 		private int intervalSize;
 
-		Optimizer(long bytesToDump)
+		public Optimizer(long bytesToDump)
+		{
+			this(bytesToDump, 10000);
+		}
+
+		public Optimizer(long bytesToDump, int updateInterval)
 		{
 			this.bytesToDump = bytesToDump;
 			currentInterval = 0;
-			intervalSize = (int) (bytesToDump / 10000);
+			intervalSize = (int) (bytesToDump / updateInterval);
 		}
 
-		void considerUpdatingProgress(long bytesDumped)
+		public void considerUpdatingProgress(String labelName, long bytesDumped)
 		{
 			if (bytesDumped > currentInterval * intervalSize)
 			{
-				updateProgress("Dumped Bytes", bytesDumped, bytesToDump);
+				updateProgress(labelName, bytesDumped, bytesToDump);
 				currentInterval++;
 			}
 		}

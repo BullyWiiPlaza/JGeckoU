@@ -64,6 +64,8 @@ public class MemorySearcher
 
 		if (isFirstSearch)
 		{
+			ProgressVisualization.Optimizer optimizer = new ProgressVisualization.Optimizer(limit, 100000);
+
 			while (valuesReader.position() + valueSizeBytesCount <= limit)
 			{
 				BigInteger currentValue = getValue(valuesReader, valueSizeBytesCount, aligned);
@@ -92,14 +94,11 @@ public class MemorySearcher
 					}
 				}
 
-				if (position % 1000000 == 0)
-				{
-					ProgressVisualization.updateProgress("Evaluated Bytes", position, limit);
+				optimizer.considerUpdatingProgress("Evaluated Bytes", position);
 
-					if (JGeckoUGUI.getInstance().isDumpingCanceled())
-					{
-						return null;
-					}
+				if (JGeckoUGUI.getInstance().isDumpingCanceled())
+				{
+					return null;
 				}
 			}
 
