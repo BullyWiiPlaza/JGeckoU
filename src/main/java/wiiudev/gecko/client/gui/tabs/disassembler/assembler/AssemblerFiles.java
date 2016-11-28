@@ -7,6 +7,7 @@ import wiiudev.gecko.client.gui.tabs.pointer_search.ZipArchiveUtilities;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -54,9 +55,6 @@ public class AssemblerFiles
 		} else if (SystemUtils.IS_OS_LINUX)
 		{
 			librariesDirectory += "Linux";
-		} else if (SystemUtils.IS_OS_MAC)
-		{
-			librariesDirectory += "Mac OS X";
 		}
 
 		return Paths.get(librariesDirectory);
@@ -71,5 +69,6 @@ public class AssemblerFiles
 		Path oldPath = ZipArchiveUtilities.unzip(downloadedArchive.toString());
 		String librariesFolderName = FilenameUtils.getName(AssemblerFiles.getLibrariesDirectory().getParent().toString());
 		ZipArchiveUtilities.rename(oldPath, librariesFolderName);
+		Files.delete(downloadedArchive);
 	}
 }

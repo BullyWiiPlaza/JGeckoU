@@ -78,8 +78,7 @@ public class Disassembler
 
 	private static String readOutput(Process process) throws IOException
 	{
-		BufferedReader reader =
-				new BufferedReader(new InputStreamReader(process.getInputStream()));
+		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 		StringBuilder builder = new StringBuilder();
 		String readLine;
 
