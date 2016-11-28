@@ -1568,7 +1568,20 @@ public class JGeckoUGUI extends JFrame
 		updateWatchlistCheckBox.addItemListener(itemEvent -> keepUpdatingWatchList());
 		HexadecimalInputFilter.setHexadecimalInputFilter(watchlistValueAssertionTextField);
 		watchlistUseValueAssertionCheckBox.addItemListener(itemEvent -> setWatchlistValueAssertionFieldAvailability());
-		copyAssertedAddressExpressionsButton.addActionListener(actionEvent -> watchListManager.copyAssertedMemoryPointerExpressions());
+		addCopyAssertedAddressExpressionsListener();
+	}
+
+	private void addCopyAssertedAddressExpressionsListener()
+	{
+		copyAssertedAddressExpressionsButton.addActionListener(actionEvent ->
+		{
+			int copiedRowsCount = watchListManager.copyAssertedMemoryPointerExpressions();
+
+			JOptionPane.showMessageDialog(this,
+					copiedRowsCount + " row(s) copied to the clipboard!",
+					"Success",
+					JOptionPane.INFORMATION_MESSAGE);
+		});
 	}
 
 	private void setWatchlistValueAssertionFieldAvailability()
@@ -3402,7 +3415,7 @@ public class JGeckoUGUI extends JFrame
 	{
 		try
 		{
-			boolean codeHandlerInstalled;
+			boolean codeHandlerInstalled = true;
 
 			try
 			{
@@ -3416,7 +3429,6 @@ public class JGeckoUGUI extends JFrame
 						"Warning",
 						JOptionPane.WARNING_MESSAGE);
 				downloadTCPGeckoInstallerRepository();
-				codeHandlerInstalled = true;
 			}
 
 			if (codeHandlerInstalled)

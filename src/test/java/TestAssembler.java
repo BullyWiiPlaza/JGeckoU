@@ -59,7 +59,7 @@ public class TestAssembler
 	public void testLibrariesMissing() throws Exception
 	{
 		// Make sure the library is not found
-		Path compiler = AssemblerFiles.getCompilerFilePath();
+		Path compiler = AssemblerFiles.getAssemblerFilePath();
 		Path renamed = rename(compiler, "powerpc-eabi-gcc2.exe");
 
 		try

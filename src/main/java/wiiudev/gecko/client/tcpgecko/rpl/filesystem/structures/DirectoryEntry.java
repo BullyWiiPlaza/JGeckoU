@@ -24,6 +24,7 @@ public class DirectoryEntry extends FileSystemObject
 
 	private ByteBuffer byteBuffer;
 	private int bytesCount = 7 * 4 + 3 * 8 + 48 + 256;
+	private FileSystemPath fileSystemPath;
 
 	public DirectoryEntry() throws IOException
 	{
@@ -90,6 +91,16 @@ public class DirectoryEntry extends FileSystemObject
 	public boolean isDirectory()
 	{
 		return (flag & 0x80000000) != 0;
+	}
+
+	public void setFileSystemPath(FileSystemPath fileSystemPath)
+	{
+		this.fileSystemPath = fileSystemPath;
+	}
+
+	public String getFileSystemPath()
+	{
+		return fileSystemPath.getPath();
 	}
 
 	private static class StringReadingUtilities

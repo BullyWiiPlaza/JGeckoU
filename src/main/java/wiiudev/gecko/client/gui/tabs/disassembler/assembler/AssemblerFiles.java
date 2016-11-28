@@ -13,8 +13,8 @@ import java.nio.file.Paths;
 public class AssemblerFiles
 {
 	private static final String FILE_HEADER = "powerpc-eabi-";
-	private static final String COMPILER = FILE_HEADER + "gcc";
-	private static final String LINKER = FILE_HEADER + "ld";
+	private static final String ASSEMBLER = FILE_HEADER + "as";
+	private static final String OBJECT_COPY = FILE_HEADER + "objcopy";
 	private static final String DISASSEMBLER = "vdappc";
 
 	public static Path getDisassemblerFilePath()
@@ -22,14 +22,14 @@ public class AssemblerFiles
 		return getExecutableName(DISASSEMBLER);
 	}
 
-	public static Path getCompilerFilePath()
+	public static Path getAssemblerFilePath()
 	{
-		return getExecutableName(COMPILER);
+		return getExecutableName(ASSEMBLER);
 	}
 
-	public static Path getLinkerFilePath()
+	public static Path getObjectCopyFilePath()
 	{
-		return getExecutableName(LINKER);
+		return getExecutableName(OBJECT_COPY);
 	}
 
 	private static Path getExecutableName(String executable)

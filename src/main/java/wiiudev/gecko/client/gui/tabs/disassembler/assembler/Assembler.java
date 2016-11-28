@@ -17,8 +17,8 @@ import java.util.UUID;
 
 public class Assembler implements Closeable
 {
-	private Path compiler;
-	private Path linker;
+	private Path assembler;
+	private Path objectCopy;
 
 	private Path sourceFile;
 	private Path objectCodeFile;
@@ -28,7 +28,7 @@ public class Assembler implements Closeable
 	{
 		String assemblyFileName = UUID.randomUUID().toString();
 		Path sourceFile = Paths.get(AssemblerFiles.getLibrariesDirectory()
-				+ File.separator + assemblyFileName + ".s");
+				+ File.separator + assemblyFileName + ".as");
 
 		this.sourceFile = sourceFile;
 
@@ -48,17 +48,17 @@ public class Assembler implements Closeable
 
 	private void setUtilityPaths()
 	{
-		objectCodeFile = sourceFile.getParent().resolve(UUID.randomUUID() + ".o");
+		objectCodeFile = sourceFile.getParent().resolve(UUID.randomUUID() + ".obj");
 		binaryFile = sourceFile.getParent().resolve(UUID.randomUUID() + ".bin");
 	}
 
 	private void initializeLibraries() throws FileNotFoundException
 	{
-		compiler = AssemblerFiles.getCompilerFilePath();
-		assertExistence(compiler);
+		assembler = AssemblerFiles.getAssemblerFilePath();
+		assertExistence(assembler);
 
-		linker = AssemblerFiles.getLinkerFilePath();
-		assertExistence(linker);
+		objectCopy = AssemblerFiles.getObjectCopyFilePath();
+		assertExistence(objectCopy);
 	}
 
 	private void assertExistence(Path filePath) throws AssemblerFilesException
@@ -71,40 +71,70 @@ public class Assembler implements Closeable
 
 	private byte[] getAssembledBytes() throws Exception
 	{
-		compile();
-		link();
+		assemble();
+		copyObject();
 
 		return Files.readAllBytes(binaryFile);
 	}
 
-	private void compile() throws Exception
+	private void assemble() throws Exception
 	{
-		executeCommand(compiler.getFileName().toString(), "-nostdinc", "-fno-builtin", "-mregnames", "-c", sourceFile.getFileName().toString(), "-o", objectCodeFile.getFileName().toString());
+		// powerpc-eabi-as -mregnames asm.s -o asm.o
+		executeCommand(assembler.getFileName().toString(), "-mregnames", sourceFile.getFileName().toString(), "-o", objectCodeFile.getFileName().toString());
 	}
 
-	private void link() throws Exception
+	private void copyObject() throws Exception
 	{
-		executeCommand(linker.getFileName().toString(), "-Ttext", "1800000", "--oformat", "binary", objectCodeFile.getFileName().toString(), "-o", binaryFile.getFileName().toString());
+		// powerpc-eabi-objcopy -O "binary" asm.o asm
+		executeCommand(objectCopy.getFileName().toString(), "-O", "binary", objectCodeFile.getFileName().toString(), binaryFile.getFileName().toString());
 	}
 
 	private void executeCommand(String... parameters) throws Exception
 	{
 		List<String> parametersList = Arrays.asList(parameters);
+		String command = getCommand(parameters);
+		System.out.println(command);
 		ProcessBuilder processBuilder = new ProcessBuilder();
 		processBuilder.directory(sourceFile.getParent().toFile());
 		processBuilder.command(parametersList);
 		Process process = processBuilder.start();
-		String errorMessage = IOUtils.toString(process.getErrorStream(), "UTF-8");
-		errorMessage = errorMessage.toLowerCase();
+		String processOutput = IOUtils.toString(process.getErrorStream(), "UTF-8");
+		processOutput = processOutput.toLowerCase();
 		String baseSourceFileName = getBaseFileName(sourceFile.toFile().getAbsolutePath());
-		errorMessage = errorMessage.replaceAll(baseSourceFileName, "assembly_instruction");
+		processOutput = processOutput.replaceAll(baseSourceFileName, "assembly_instruction");
 
-		if (errorMessage.contains("error"))
+		if (processOutput.contains("error")
+				|| processOutput.contains("undefined"))
 		{
-			throw new AssemblerException(errorMessage);
+			throw new AssemblerException(processOutput);
 		}
 
 		process.waitFor();
+	}
+
+	private String getCommand(String[] parameters)
+	{
+		StringBuilder commandBuilder = new StringBuilder();
+		for (String parameter : parameters)
+		{
+			boolean containsSpace = parameter.contains(" ");
+
+			if (containsSpace)
+			{
+				commandBuilder.append("\"");
+			}
+
+			commandBuilder.append(parameter);
+
+			if (containsSpace)
+			{
+				commandBuilder.append("\"");
+			}
+
+			commandBuilder.append(" ");
+		}
+
+		return commandBuilder.toString().trim();
 	}
 
 	private String getBaseFileName(String absoluteFileName)

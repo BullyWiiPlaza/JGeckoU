@@ -55,6 +55,18 @@ public class RemoteFileSystem extends TCPGecko
 		}
 	}
 
+	public FileSystemStatus addClient(FileSystemClient client) throws IOException
+	{
+		ExportedSymbol addClient = remoteProcedureCall.getSymbol(RPL.CORE_INIT.toString(),
+				"FSAddClientEx");
+		int status = remoteProcedureCall.callInt(addClient,
+				client.getAddress(),
+				0,
+				-1);
+
+		return FileSystemStatus.getStatus(status);
+	}
+
 	private FileSystemStatus registerClient(FileSystemClient client,
 	                                        FileSystemReturnFlag returnFlag,
 	                                        boolean register) throws IOException
@@ -116,22 +128,24 @@ public class RemoteFileSystem extends TCPGecko
 
 	public int readFile(FileSystemClient client,
 	                    FileSystemCommandBlock commandBlock,
-	                    AllocatedMemory destinationBuffer,
-	                    FileSystemHandle handle,
+	                    AllocatedMemory dataBuffer,
+	                    FileSystemHandle fileDescriptor,
 	                    FileSystemReturnFlag returnFlag) throws IOException
 
 	{
-		ExportedSymbol exportedSymbol = remoteProcedureCall.getSymbol(RPL.CORE_INIT.toString(), "FSReadFile");
+		ExportedSymbol readFile = remoteProcedureCall.getSymbol(RPL.CORE_INIT.toString(), "FSReadFile");
 
-		return remoteProcedureCall.callInt(exportedSymbol,
+		return remoteProcedureCall.callInt(readFile,
 				client.getAddress(),
 				commandBlock.getAddress(),
-				destinationBuffer.getAddress(),
+				dataBuffer.getAddress(),
 				0x1,
-				destinationBuffer.getSize(),
-				handle.dereference(),
+				0x1000,
+				// dataBuffer.getSize(),
+				fileDescriptor.dereference(),
 				0,
-				returnFlag.getValue());
+				// returnFlag.getValue());
+				-1);
 	}
 
 	public FileSystemStatus readDirectory(FileSystemClient client,

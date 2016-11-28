@@ -37,7 +37,7 @@ public class TCPGeckoTesting
 		System.out.println("Connected to TCP Gecko...");
 	}
 
-	@Test
+	@Ignore
 	public void testAddressValidation() throws IOException
 	{
 		MemoryReader memoryReader = new MemoryReader();
@@ -82,7 +82,7 @@ public class TCPGeckoTesting
 		Assert.assertFalse(isAddressValid);
 	}
 
-	@Test
+	@Ignore
 	public void testRemoteProcedureCalls() throws Exception
 	{
 		CoreInit.getOSTime(); // Can't check correctness but just run it
@@ -105,7 +105,7 @@ public class TCPGeckoTesting
 		Assert.assertEquals(cores, 3);
 	}
 
-	@Test
+	@Ignore
 	public void testRemoteDisassembler() throws IOException
 	{
 		/*String disassembled = RemoteDisassembler.disassembleValue(0x60000000);
@@ -115,7 +115,7 @@ public class TCPGeckoTesting
 		Assert.assertEquals(disassembled, "addi r11, r11, 4");*/
 	}
 
-	@Test
+	@Ignore
 	public void testMemoryAllocation() throws IOException
 	{
 		int allocated = CoreInit.allocateDefaultHeapMemory(0x50, 0x20);
@@ -167,7 +167,7 @@ public class TCPGeckoTesting
 
 		try (FileSystemClient client = new FileSystemClient();
 		     FileSystemCommandBlock commandBlock = new FileSystemCommandBlock();
-		     FileSystemHandle handle = new FileSystemHandle();
+		     FileSystemHandle fileDescriptor = new FileSystemHandle();
 		     FileSystemPath path = new FileSystemPath(filePath);
 		     FileSystemAccessMode accessMode = new FileSystemAccessMode(FileAccessMode.READ);
 		     AllocatedMemory destinationBuffer = new AllocatedMemory(0x400 * 256, 0x40))
@@ -184,7 +184,7 @@ public class TCPGeckoTesting
 			fileSystem.initializeCommandBlock(commandBlock);
 
 			// Register the client
-			status = fileSystem.registerClient(client, FileSystemReturnFlag.NONE);
+			status = fileSystem.addClient(client);
 
 			if (status != FileSystemStatus.OK)
 			{
@@ -192,7 +192,12 @@ public class TCPGeckoTesting
 			}
 
 			// Open the file
-			status = fileSystem.openFile(client, commandBlock, path, accessMode, handle, FileSystemReturnFlag.ALL);
+			status = fileSystem.openFile(client,
+					commandBlock,
+					path,
+					accessMode,
+					fileDescriptor,
+					FileSystemReturnFlag.ALL);
 
 			if (status != FileSystemStatus.OK)
 			{
@@ -203,7 +208,11 @@ public class TCPGeckoTesting
 			int bytesRead;
 
 			// Read all bytes from the file
-			while ((bytesRead = fileSystem.readFile(client, commandBlock, destinationBuffer, handle, FileSystemReturnFlag.ALL)) > 0)
+			while ((bytesRead = fileSystem.readFile(client,
+					commandBlock,
+					destinationBuffer,
+					fileDescriptor,
+					FileSystemReturnFlag.ALL)) > 0)
 			{
 				MemoryReader memoryReader = new MemoryReader();
 				byte[] readBytes = memoryReader.readBytes(destinationBuffer.getAddress(), bytesRead);
@@ -214,7 +223,7 @@ public class TCPGeckoTesting
 			System.out.println("File reading exit status: " + status);
 
 			// Close the file
-			status = fileSystem.closeFile(client, commandBlock, handle, FileSystemReturnFlag.NONE);
+			status = fileSystem.closeFile(client, commandBlock, fileDescriptor, FileSystemReturnFlag.NONE);
 
 			if (status != FileSystemStatus.OK)
 			{
@@ -246,16 +255,18 @@ public class TCPGeckoTesting
 		Files.write(targetFilePath, bytes);
 	}
 
-	@Ignore
+	@Test
 	public void testFileSystem() throws IOException
 	{
+		String directoryPath = "/vol/content";
+
 		List<DirectoryEntry> directoryEntries = new ArrayList<>();
 
 		try (FileSystemClient client = new FileSystemClient();
 		     FileSystemCommandBlock commandBlock = new FileSystemCommandBlock();
 		     FileSystemHandle directoryHandle = new FileSystemHandle();
 		     FileSystemHandle fileHandle = new FileSystemHandle();
-		     FileSystemPath filePath = new FileSystemPath("/vol/content");
+		     FileSystemPath filePath = new FileSystemPath(directoryPath);
 		     DirectoryEntry directoryEntry = new DirectoryEntry();
 		     FileSystemAccessMode fileSystemAccessMode = new FileSystemAccessMode(FileAccessMode.READ);
 		     AllocatedMemory destinationBuffer = new AllocatedMemory(0x40, 0x1000))
@@ -263,61 +274,106 @@ public class TCPGeckoTesting
 			RemoteFileSystem remoteFileSystem = new RemoteFileSystem();
 
 			// Initialize the file system
-			if (remoteFileSystem.initialize() == FileSystemStatus.OK)
+			if (remoteFileSystem.initialize() != FileSystemStatus.OK)
 			{
-				// Initialize the command block
-				remoteFileSystem.initializeCommandBlock(commandBlock);
-
-				// Add the client
-				if (remoteFileSystem.registerClient(client, FileSystemReturnFlag.NONE)
-						== FileSystemStatus.OK)
-				{
-					// Open the (base) directory
-					if (remoteFileSystem.openDirectory(client, commandBlock, filePath,
-							directoryHandle, FileSystemReturnFlag.ALL) == FileSystemStatus.OK)
-					{
-						while (remoteFileSystem.readDirectory(client, commandBlock, directoryHandle,
-								directoryEntry, FileSystemReturnFlag.ALL) == FileSystemStatus.OK)
-						{
-							int flag = directoryEntry.getFlag();
-							System.out.println("Flag: " + flag);
-							System.out.println("Directory: " +
-									directoryEntry.isDirectory());
-							int size = directoryEntry.getSize();
-							System.out.println("Size: " + size);
-							String name = directoryEntry.getName();
-							System.out.println("Name: " + name);
-
-							if (directoryEntry.isDirectory())
-							{
-								// TODO Recurse?
-							} else
-							{
-								directoryEntries.add(directoryEntry);
-
-								/*// TODO Stuck, no reply but no freeze?
-								if(remoteFileSystem.openFile(client, commandBlock, filePath,
-										fileSystemAccessMode, fileHandle, FileSystemReturnFlag.NONE) == FileSystemStatus.OK)
-								{
-									int fileSize = remoteFileSystem.readFile(client, commandBlock, destinationBuffer,
-											fileHandle, FileSystemReturnFlag.NONE);
-									MemoryReader memoryReader = new MemoryReader();
-									byte[] bytes = memoryReader.readBytes(destinationBuffer.getAddress(), fileSize);
-									Files.write(Paths.get(name), bytes);
-								}
-
-								remoteFileSystem.closeFile(client, commandBlock, directoryHandle, FileSystemReturnFlag.NONE);
-								break;*/
-							}
-						}
-
-						remoteFileSystem.closeDirectory(client, commandBlock, directoryHandle, FileSystemReturnFlag.NONE);
-					}
-				}
+				Assert.fail("Could not initialize file system");
 			}
+
+			// Initialize the command block
+			remoteFileSystem.initializeCommandBlock(commandBlock);
+
+			// Add the client
+			if (remoteFileSystem.registerClient(client, FileSystemReturnFlag.NONE) != FileSystemStatus.OK)
+			{
+				Assert.fail("Could not add client");
+			}
+
+			readDirectory(directoryEntries, client, commandBlock, directoryHandle, filePath, directoryEntry, remoteFileSystem);
 		}
 
 		System.out.println(directoryEntries.size());
+	}
+
+	private void readDirectory(List<DirectoryEntry> directoryEntries,
+	                           FileSystemClient client,
+	                           FileSystemCommandBlock commandBlock,
+	                           FileSystemHandle directoryHandle,
+	                           FileSystemPath filePath,
+	                           DirectoryEntry directoryEntry,
+	                           RemoteFileSystem remoteFileSystem) throws IOException
+	{
+		// Open the (base) directory
+		if (remoteFileSystem.openDirectory(client, commandBlock, filePath,
+				directoryHandle, FileSystemReturnFlag.ALL) != FileSystemStatus.OK)
+		{
+			Assert.fail("Could not open directory");
+		}
+
+		FileSystemStatus status;
+
+		// Read all files and folders in this directory
+		while ((status = remoteFileSystem.readDirectory(client, commandBlock, directoryHandle,
+				directoryEntry, FileSystemReturnFlag.ALL)) == FileSystemStatus.OK)
+		{
+			int flag = directoryEntry.getFlag();
+			System.out.println("Flag: " + flag);
+			System.out.println("Directory: " +
+					directoryEntry.isDirectory());
+			int size = directoryEntry.getSize();
+			System.out.println("Size: " + size);
+			String name = directoryEntry.getName();
+			System.out.println("Name: " + name);
+			filePath.append(directoryEntry.getName());
+			directoryEntry.setFileSystemPath(filePath);
+			System.out.println("File System Path: " + filePath);
+
+			directoryEntries.add(directoryEntry);
+
+			if (directoryEntry.isDirectory())
+			{
+				// TODO Getting stuck on re-opening directory inside recursive call
+				/*if (remoteFileSystem.closeDirectory(client, commandBlock, directoryHandle, FileSystemReturnFlag.NONE) != FileSystemStatus.OK)
+				{
+					Assert.fail("Failed closing directory");
+				}
+
+				readDirectory(directoryEntries,
+						client,
+						commandBlock,
+						directoryHandle,
+						filePath,
+						directoryEntry,
+						remoteFileSystem);
+
+				if (remoteFileSystem.openDirectory(client, commandBlock, filePath,
+						directoryHandle, FileSystemReturnFlag.ALL) != FileSystemStatus.OK)
+				{
+					Assert.fail("Failed re-opening directory");
+				}*/
+			} else
+			{
+					/*// TODO Stuck, no reply but no freeze?
+					if(remoteFileSystem.openFile(client, commandBlock, filePath,
+							fileSystemAccessMode, fileHandle, FileSystemReturnFlag.NONE) == FileSystemStatus.OK)
+					{
+						int fileSize = remoteFileSystem.readFile(client, commandBlock, destinationBuffer,
+								fileHandle, FileSystemReturnFlag.NONE);
+						MemoryReader memoryReader = new MemoryReader();
+						byte[] bytes = memoryReader.readBytes(destinationBuffer.getAddress(), fileSize);
+						Files.write(Paths.get(name), bytes);
+					}
+
+					remoteFileSystem.closeFile(client, commandBlock, directoryHandle, FileSystemReturnFlag.NONE);
+					break;*/
+			}
+		}
+
+		System.out.println("File System Status: " + status);
+
+		if (remoteFileSystem.closeDirectory(client, commandBlock, directoryHandle, FileSystemReturnFlag.NONE) != FileSystemStatus.OK)
+		{
+			Assert.fail("Failed closing directory");
+		}
 	}
 
 	private void testFileSystem(String[] folders) throws IOException
@@ -408,7 +464,7 @@ public class TCPGeckoTesting
 		}*/
 	}
 
-	@Test
+	@Ignore
 	public void testMemoryReading() throws IOException, URISyntaxException
 	{
 		MemoryReader memoryReader = new MemoryReader();
@@ -467,7 +523,7 @@ public class TCPGeckoTesting
 		return Paths.get(ClassLoader.getSystemResource("dump.bin").toURI());
 	}
 
-	@Test
+	@Ignore
 	public void testMemoryWriting() throws IOException
 	{
 		MemoryWriter memoryWriter = new MemoryWriter();
