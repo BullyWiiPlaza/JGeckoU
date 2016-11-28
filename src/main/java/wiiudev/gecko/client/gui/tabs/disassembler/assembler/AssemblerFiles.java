@@ -20,34 +20,35 @@ public class AssemblerFiles
 
 	public static Path getDisassemblerFilePath()
 	{
-		return getExecutableName(DISASSEMBLER);
+		return getExecutableFilePath(DISASSEMBLER);
 	}
 
 	public static Path getAssemblerFilePath()
 	{
-		return getExecutableName(ASSEMBLER);
+		return getExecutableFilePath(ASSEMBLER);
 	}
 
 	public static Path getObjectCopyFilePath()
 	{
-		return getExecutableName(OBJECT_COPY);
+		return getExecutableFilePath(OBJECT_COPY);
 	}
 
-	private static Path getExecutableName(String executable)
+	private static Path getExecutableFilePath(String executableFileName)
 	{
-		executable = getLibrariesDirectory() + File.separator + executable;
+		String executableFilePath = getLibrariesDirectory() + File.separator + executableFileName;
 
 		if (SystemUtils.IS_OS_WINDOWS)
 		{
-			executable += ".exe";
+			executableFilePath += ".exe";
 		}
 
-		return Paths.get(executable);
+		return Paths.get(executableFilePath);
 	}
 
 	public static Path getLibrariesDirectory()
 	{
-		String librariesDirectory = "libraries" + File.separator;
+		String currentDirectory = getCurrentDirectory();
+		String librariesDirectory = currentDirectory + File.separator + "libraries" + File.separator;
 
 		if (SystemUtils.IS_OS_WINDOWS)
 		{
@@ -58,6 +59,11 @@ public class AssemblerFiles
 		}
 
 		return Paths.get(librariesDirectory);
+	}
+
+	private static String getCurrentDirectory()
+	{
+		return new File("").getAbsolutePath();
 	}
 
 	public static void installLibraries() throws IOException

@@ -80,13 +80,13 @@ public class Assembler implements Closeable
 	private void assemble() throws Exception
 	{
 		// powerpc-eabi-as -mregnames asm.s -o asm.o
-		executeCommand(assembler.getFileName().toString(), "-mregnames", sourceFile.getFileName().toString(), "-o", objectCodeFile.getFileName().toString());
+		executeCommand(assembler.toString(), "-mregnames", sourceFile.getFileName().toString(), "-o", objectCodeFile.getFileName().toString());
 	}
 
 	private void copyObject() throws Exception
 	{
 		// powerpc-eabi-objcopy -O "binary" asm.o asm
-		executeCommand(objectCopy.getFileName().toString(), "-O", "binary", objectCodeFile.getFileName().toString(), binaryFile.getFileName().toString());
+		executeCommand(objectCopy.toString(), "-O", "binary", objectCodeFile.getFileName().toString(), binaryFile.getFileName().toString());
 	}
 
 	private void executeCommand(String... parameters) throws Exception
