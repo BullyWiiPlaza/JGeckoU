@@ -1,7 +1,10 @@
+# Ignore the IntelliJ configurations
+/.idea
+
 # Ignore the compiled classes
 /target
 
-# Ignore the codes
+# Ignore the cheat codes
 /codes
 
 # Ignore the log files
@@ -18,8 +21,5 @@ config.properties
 
 /watches
 
-/.idea/dictionaries
-
 # Ignore libraries
-/Libraries
 /libraries
