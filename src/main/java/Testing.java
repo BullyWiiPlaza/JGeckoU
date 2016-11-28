@@ -1,4 +1,5 @@
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Assembler;
+import wiiudev.gecko.client.gui.utilities.ProgramDirectoryUtilities;
 import wiiudev.gecko.client.tcpgecko.LzmaCompressor;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 
@@ -9,6 +10,10 @@ public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
+		String currentDirectory = ProgramDirectoryUtilities.getProgramDirectory();
+		System.out.println(currentDirectory);
+		System.exit(0);
+
 		String assembled = Assembler.assembleHexadecimal("nop\nli r0, 1");
 		System.out.println(assembled);
 

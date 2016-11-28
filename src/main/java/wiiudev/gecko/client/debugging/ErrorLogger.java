@@ -1,5 +1,7 @@
 package wiiudev.gecko.client.debugging;
 
+import wiiudev.gecko.client.gui.utilities.ProgramDirectoryUtilities;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,9 +26,9 @@ public class ErrorLogger
 	{
 		try
 		{
-			String logsFolder = "logs";
-			Files.createDirectories(Paths.get(logsFolder));
-			FileHandler fileHandler = new FileHandler(logsFolder + File.separator + getCurrentTimeString() + ".log");
+			String logsDirectoryFolder = ProgramDirectoryUtilities.getProgramDirectory() + File.separator + "logs";
+			Files.createDirectories(Paths.get(logsDirectoryFolder));
+			FileHandler fileHandler = new FileHandler(logsDirectoryFolder + File.separator + getCurrentTimeString() + ".log");
 			logger.addHandler(fileHandler);
 			SimpleFormatter formatter = new SimpleFormatter();
 			fileHandler.setFormatter(formatter);

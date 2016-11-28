@@ -6,6 +6,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import wiiudev.gecko.client.gui.utilities.ProgramDirectoryUtilities;
 import wiiudev.gecko.client.gui.utilities.XMLHelper;
 import wiiudev.gecko.client.titles.Title;
 import wiiudev.gecko.client.titles.TitleDatabaseManager;
@@ -30,7 +31,7 @@ public class CodeListStorage
 	private static String codeAttributeTagName = "code";
 	private static String codeAttributeCommentTagName = "comment";
 	private static String codeAttributeEnabledTagName = "enabled";
-	public static String codesDirectory = "codes";
+	public static String codesDirectory = ProgramDirectoryUtilities.getProgramDirectory() + File.separator + "codes";
 	public static String fileExtension = "xml";
 
 	private String codeListFilePath;

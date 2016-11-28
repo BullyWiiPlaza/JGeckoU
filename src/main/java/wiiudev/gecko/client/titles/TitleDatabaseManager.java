@@ -8,6 +8,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import wiiudev.gecko.client.gui.utilities.InternetAvailabilityChecker;
+import wiiudev.gecko.client.gui.utilities.ProgramDirectoryUtilities;
 import wiiudev.gecko.client.gui.utilities.XMLHelper;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -38,7 +39,7 @@ public class TitleDatabaseManager
 	public TitleDatabaseManager() throws Exception
 	{
 		titleDatabase = Collections.synchronizedList(new LinkedList<>());
-		titleDatabaseFilePath = "Titles.xml";
+		titleDatabaseFilePath = ProgramDirectoryUtilities.getProgramDirectory() + File.separator + "Titles.xml";
 
 		boolean titleDatabaseFileExists = new File(titleDatabaseFilePath).exists();
 		boolean isInternetAvailable = InternetAvailabilityChecker.isInternetAvailable();

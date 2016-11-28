@@ -71,7 +71,7 @@ public class ResultsStorage
 			SearchBounds searchBounds = new SearchBounds(startingAddress, length);
 
 			List<SearchResult> searchResults = new ArrayList<>();
-			NodeList results = getNodesList("result");
+			NodeList results = getNodesList();
 
 			for (int nodeIndex = 0; nodeIndex < results.getLength(); nodeIndex++)
 			{
@@ -104,12 +104,12 @@ public class ResultsStorage
 		return element.getTextContent();
 	}
 
-	private NodeList getNodesList(String tagName) throws ParserConfigurationException, SAXException, IOException
+	private NodeList getNodesList() throws ParserConfigurationException, SAXException, IOException
 	{
 		File xmlFile = new File(documentFilePath);
 		Document document = XMLHelper.getDocument(xmlFile);
 
-		return document.getElementsByTagName(tagName);
+		return document.getElementsByTagName("result");
 	}
 
 	public void writeResults(List<SearchResult> searchResults, SearchBounds searchBounds) throws Exception

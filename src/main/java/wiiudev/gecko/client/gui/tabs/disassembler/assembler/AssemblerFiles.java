@@ -4,6 +4,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.SystemUtils;
 import wiiudev.gecko.client.gui.tabs.pointer_search.DownloadingUtilities;
 import wiiudev.gecko.client.gui.tabs.pointer_search.ZipArchiveUtilities;
+import wiiudev.gecko.client.gui.utilities.ProgramDirectoryUtilities;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +48,7 @@ public class AssemblerFiles
 
 	public static Path getLibrariesDirectory()
 	{
-		String currentDirectory = getCurrentDirectory();
+		String currentDirectory = ProgramDirectoryUtilities.getProgramDirectory();
 		String librariesDirectory = currentDirectory + File.separator + "libraries" + File.separator;
 
 		if (SystemUtils.IS_OS_WINDOWS)
@@ -59,11 +60,6 @@ public class AssemblerFiles
 		}
 
 		return Paths.get(librariesDirectory);
-	}
-
-	private static String getCurrentDirectory()
-	{
-		return new File("").getAbsolutePath();
 	}
 
 	public static void installLibraries() throws IOException

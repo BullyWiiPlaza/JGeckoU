@@ -10,7 +10,9 @@ public class SearchBackup
 	private ValueSize valueSize;
 	private List<SearchResult> searchResults;
 
-	public SearchBackup(SearchBounds searchBounds, ValueSize valueSize, List<SearchResult> searchResults)
+	public SearchBackup(SearchBounds searchBounds,
+	                    ValueSize valueSize,
+	                    List<SearchResult> searchResults)
 	{
 		this.searchBounds = searchBounds;
 		this.valueSize = valueSize;

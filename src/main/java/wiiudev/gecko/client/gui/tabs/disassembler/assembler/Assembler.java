@@ -92,8 +92,8 @@ public class Assembler implements Closeable
 	private void executeCommand(String... parameters) throws Exception
 	{
 		List<String> parametersList = Arrays.asList(parameters);
-		String command = getCommand(parameters);
-		System.out.println(command);
+		/*String command = getCommand(parameters);
+		System.out.println(command);*/
 		ProcessBuilder processBuilder = new ProcessBuilder();
 		processBuilder.directory(sourceFile.getParent().toFile());
 		processBuilder.command(parametersList);

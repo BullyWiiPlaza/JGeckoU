@@ -29,10 +29,7 @@ import wiiudev.gecko.client.gui.tabs.pointer_search.DownloadingUtilities;
 import wiiudev.gecko.client.gui.tabs.pointer_search.ZipArchiveUtilities;
 import wiiudev.gecko.client.gui.tabs.threads.ThreadsTableManager;
 import wiiudev.gecko.client.gui.tabs.watch_list.*;
-import wiiudev.gecko.client.gui.utilities.DefaultContextMenu;
-import wiiudev.gecko.client.gui.utilities.InternetAvailabilityChecker;
-import wiiudev.gecko.client.gui.utilities.JTableUtilities;
-import wiiudev.gecko.client.gui.utilities.WindowUtilities;
+import wiiudev.gecko.client.gui.utilities.*;
 import wiiudev.gecko.client.memory_search.*;
 import wiiudev.gecko.client.memory_search.enumerations.SearchConditions;
 import wiiudev.gecko.client.memory_search.enumerations.SearchMode;
@@ -515,7 +512,7 @@ public class JGeckoUGUI extends JFrame
 
 	private Path setSearchResultsCurrentDirectory(JFileChooser fileChooser) throws Exception
 	{
-		String targetDirectory = "searches";
+		String targetDirectory = ProgramDirectoryUtilities.getProgramDirectory() + File.separator + "searches";
 
 		if (TCPGecko.isConnected())
 		{

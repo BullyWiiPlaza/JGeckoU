@@ -1,11 +1,13 @@
 package wiiudev.gecko.client.gui;
 
 import wiiudev.gecko.client.conversions.Conversions;
+import wiiudev.gecko.client.gui.utilities.ProgramDirectoryUtilities;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryRange;
 import wiiudev.gecko.client.titles.Title;
 import wiiudev.gecko.client.titles.TitleDatabaseManager;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -23,7 +25,7 @@ public class MemoryRangeAdjustment
 		Title gameTitle = titleDatabaseManager.readTitle();
 		String gameId = gameTitle.getGameId();
 		String boundsFolderName = "bounds";
-		boundsFolderPath = Paths.get(boundsFolderName);
+		boundsFolderPath = Paths.get(ProgramDirectoryUtilities.getProgramDirectory() + File.separator + boundsFolderName);
 		gameSpecificBoundsPath = boundsFolderPath.resolve(gameId + ".txt");
 	}
 
