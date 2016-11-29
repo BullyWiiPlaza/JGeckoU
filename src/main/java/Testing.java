@@ -2,6 +2,8 @@ import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Assembler;
 import wiiudev.gecko.client.gui.utilities.ProgramDirectoryUtilities;
 import wiiudev.gecko.client.tcpgecko.LzmaCompressor;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
+import wiiudev.gecko.client.titles.Title;
+import wiiudev.gecko.client.titles.TitleDatabaseManager;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,6 +12,11 @@ public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
+		TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
+		Title title = titleDatabaseManager.getTitle("0005000C-1010ED00");
+		System.out.println(title);
+		System.exit(0);
+
 		String currentDirectory = ProgramDirectoryUtilities.getProgramDirectory();
 		System.out.println(currentDirectory);
 		System.exit(0);

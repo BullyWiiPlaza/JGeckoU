@@ -1,8 +1,5 @@
 package wiiudev.gecko.client.titles;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -10,6 +7,8 @@ import org.xml.sax.SAXException;
 import wiiudev.gecko.client.gui.utilities.InternetAvailabilityChecker;
 import wiiudev.gecko.client.gui.utilities.ProgramDirectoryUtilities;
 import wiiudev.gecko.client.gui.utilities.XMLHelper;
+import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
+import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLOutputFactory;
@@ -17,29 +16,26 @@ import javax.xml.stream.XMLStreamWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class TitleDatabaseManager
 {
+	private static final String titleDatabaseFileName = "Titles.xml";
+
 	private static String titleTagName = "title";
 	private static String idTagName = "id";
 	private static String descriptionTagName = "description";
 	private static String productTagName = "product";
 	private static String companyTagName = "company";
 
-	private List<Title> titleDatabase;
+	private List<Title> titles;
 	private String titleDatabaseFilePath;
 
 	public TitleDatabaseManager() throws Exception
 	{
-		titleDatabase = Collections.synchronizedList(new LinkedList<>());
-		titleDatabaseFilePath = ProgramDirectoryUtilities.getProgramDirectory() + File.separator + "Titles.xml";
+		titles = new LinkedList<>();
+		titleDatabaseFilePath = ProgramDirectoryUtilities.getProgramDirectory() + File.separator + titleDatabaseFileName;
 
 		boolean titleDatabaseFileExists = new File(titleDatabaseFilePath).exists();
 		boolean isInternetAvailable = InternetAvailabilityChecker.isInternetAvailable();
@@ -64,7 +60,7 @@ public class TitleDatabaseManager
 
 	public Title getTitle(String dashedTitleId)
 	{
-		for (Title currentTitle : titleDatabase)
+		for (Title currentTitle : titles)
 		{
 			if (currentTitle.getTitleId().equals(dashedTitleId))
 			{
@@ -79,7 +75,7 @@ public class TitleDatabaseManager
 	{
 		int gameIdLength = gameId.length();
 
-		for (Title title : titleDatabase)
+		for (Title title : titles)
 		{
 			// Using title id as game id
 			if (gameIdLength == Title.TITLE_ID_DASHED_LENGTH)
@@ -139,62 +135,15 @@ public class TitleDatabaseManager
 				String company = XMLHelper.getText(element, companyTagName);
 
 				Title title = new Title(entryName, codeName, codeComment, company);
-				titleDatabase.add(title);
+				titles.add(title);
 			}
 		}
 	}
 
 	public void update() throws Exception
 	{
-		update(titleDatabase);
+		titles = TitlesDownloader.getTitles();
 		store();
-	}
-
-	/**
-	 * Parses and stores all Wii U game's title ids.
-	 * This method may take a while and slow down your computer
-	 */
-	private static void update(List<Title> titlesDatabase) throws Exception
-	{
-		titlesDatabase.clear();
-		int poolSize = Runtime.getRuntime().availableProcessors() * 2;
-		ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
-		List<Future<?>> tasks = new ArrayList<>();
-
-		// Connect to the website and parse the table
-		String titleDatabaseURL = "http://wiiubrew.org/wiki/Title_database";
-		Document titleDatabaseDocument = Jsoup.connect(titleDatabaseURL).get();
-		Elements titlesTable = titleDatabaseDocument.select("#mw-content-text > table:nth-child(16) > tbody");
-		Elements rows = titlesTable.select("tr");
-		int rowsCount = rows.size();
-
-		for (int rowsIndex = 1; rowsIndex < rowsCount; rowsIndex++)
-		{
-			org.jsoup.nodes.Element row = rows.get(rowsIndex);
-
-			// Parse each row multi-threaded
-			Future task = threadPool.submit(new Thread(() ->
-			{
-				int columnIndex = 0;
-				String titleId = row.child(columnIndex++).text();
-				String gameName = row.child(columnIndex++).text();
-				String productCode = row.child(columnIndex++).text();
-				String companyCode = row.child(columnIndex).text();
-
-				Title title = new Title(titleId, gameName, productCode, companyCode);
-				titlesDatabase.add(title);
-			}));
-
-			tasks.add(task);
-		}
-
-		// Wait for all tasks to finish
-		for (Future<?> task : tasks)
-		{
-			task.get();
-		}
-
-		threadPool.shutdownNow();
 	}
 
 	private void store() throws Exception
@@ -207,7 +156,7 @@ public class TitleDatabaseManager
 		String rootElementName = "titles";
 		xMLStreamWriter.writeStartElement(rootElementName);
 
-		for (Title title : titleDatabase)
+		for (Title title : titles)
 		{
 			xMLStreamWriter.writeStartElement(titleTagName);
 			xMLStreamWriter.writeAttribute(idTagName, title.getTitleId());
@@ -235,7 +184,38 @@ public class TitleDatabaseManager
 	{
 		TitleNotFoundException(String titleId)
 		{
-			super("The title id " + titleId + " has not been found in the database!");
+			super("The title id " + titleId + " has not been found in the " + titleDatabaseFileName + "!\nPlease make sure you're connected to the Internet\nso it can be downloaded automatically.");
+		}
+	}
+
+	/**
+	 * A class for reading the game's title id from the memory
+	 */
+	private static class TitleIdentifierUtilities
+	{
+		public static String readDashedTitleID() throws IOException
+		{
+			long titleID = CoreInit.getTitleID();
+			String titleIDString = new Hexadecimal(titleID, 16).toString();
+			titleIDString = titleIDString.toUpperCase();
+
+			return getDashedTitleID(titleIDString);
+		}
+
+		/**
+		 * This is needed for comparing with the title database entries
+		 *
+		 * @return The dashed title id
+		 */
+		private static String getDashedTitleID(String titleID)
+		{
+			int startingIndex = 0;
+			int stepSize = 8;
+
+			String firstPart = titleID.substring(startingIndex, stepSize);
+			String secondPart = titleID.substring(stepSize, stepSize + stepSize);
+
+			return firstPart + "-" + secondPart;
 		}
 	}
 }

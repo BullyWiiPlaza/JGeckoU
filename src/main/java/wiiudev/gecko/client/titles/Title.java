@@ -76,4 +76,10 @@ public class Title
 
 		return title.getTitleId().replace("-", "");
 	}
+
+	@Override
+	public String toString()
+	{
+		return gameName + " " + titleId + " " + productCode + " " + companyCode;
+	}
 }

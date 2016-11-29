@@ -19,7 +19,11 @@
 # Ignore the persistent settings file
 config.properties
 
+# Ignore the watch list files
 /watches
 
 # Ignore libraries
 /libraries
+
+# Memory bounds
+/bounds

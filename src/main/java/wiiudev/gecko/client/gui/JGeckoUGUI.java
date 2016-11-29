@@ -516,7 +516,6 @@ public class JGeckoUGUI extends JFrame
 
 		if (TCPGecko.isConnected())
 		{
-			TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
 			Title title = titleDatabaseManager.readTitle();
 			String parentFolderName = title.getGameId();
 			targetDirectory += File.separator + parentFolderName;
@@ -3791,8 +3790,15 @@ public class JGeckoUGUI extends JFrame
 			connector.connect(ipAddress);
 		}
 
-		MemoryRangeAdjustment memoryRangeAdjustment = new MemoryRangeAdjustment(titleDatabaseManager);
-		memoryRangeAdjustment.setAdjustedMemoryRanges();
+		try
+		{
+			MemoryRangeAdjustment memoryRangeAdjustment = new MemoryRangeAdjustment(titleDatabaseManager);
+			memoryRangeAdjustment.setAdjustedMemoryRanges();
+		} catch (TitleDatabaseManager.TitleNotFoundException exception)
+		{
+			StackTraceUtils.handleException(rootPane, exception);
+		}
+
 		// monitorGeckoServerHealthConcurrently();
 		String ipAddressAddition = (autoDetectCheckBox.isSelected() ? (" [" + ipAddress + "]") : "");
 		connectButton.setText(connectButtonText + "ed" + ipAddressAddition);
