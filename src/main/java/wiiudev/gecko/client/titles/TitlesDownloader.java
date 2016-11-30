@@ -23,14 +23,14 @@ public class TitlesDownloader
 	{
 		List<Title> titles = Collections.synchronizedList(new LinkedList<>());
 
-		int poolSize = Runtime.getRuntime().availableProcessors() * 2;
+		int poolSize = 1; // Runtime.getRuntime().availableProcessors() * 2;
 		ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
 		List<Future<?>> tasks = new ArrayList<>();
 
 		// Connect to the website and parse the table
 		String titleDatabaseURL = "http://wiiubrew.org/wiki/Title_database";
 		Document titleDatabaseDocument = Jsoup.connect(titleDatabaseURL).get();
-		Elements titlesTable = titleDatabaseDocument.select("#mw-content-text > table:nth-child(16) > tbody");
+		Elements titlesTable = titleDatabaseDocument.select("#mw-content-text > table:nth-child(14) > tbody");
 		Elements rows = titlesTable.select("tr");
 		int rowsCount = rows.size();
 
