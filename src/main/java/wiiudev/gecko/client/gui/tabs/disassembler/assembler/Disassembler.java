@@ -1,7 +1,9 @@
 package wiiudev.gecko.client.gui.tabs.disassembler.assembler;
 
+import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.tabs.disassembler.DisassembledInstruction;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -14,6 +16,9 @@ import java.util.List;
 
 public class Disassembler
 {
+	public static final int INVALID_ADDRESS = -1;
+	public static final int CANCELED = -2;
+
 	public static List<DisassembledInstruction> disassemble(int address, int length) throws Exception
 	{
 		MemoryReader memoryReader = new MemoryReader();
@@ -89,5 +94,39 @@ public class Disassembler
 		}
 
 		return builder.toString().trim();
+	}
+
+	public static int search(int address, String regularExpression) throws Exception
+	{
+		// Start at the next instruction
+		address += 4;
+
+		while (true)
+		{
+			try
+			{
+				List<DisassembledInstruction> disassembledInstructions = Disassembler.disassemble(address, TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE);
+
+				for (DisassembledInstruction disassembledInstruction : disassembledInstructions)
+				{
+					String instruction = disassembledInstruction.getInstruction();
+					if (instruction.matches(regularExpression))
+					{
+						return disassembledInstruction.getAddress();
+					}
+
+					if (JGeckoUGUI.getInstance().isRegularExpressionSearchCanceled())
+					{
+						return CANCELED;
+					}
+				}
+			} catch (IOException exception)
+			{
+				exception.printStackTrace();
+				return INVALID_ADDRESS;
+			}
+
+			address += TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE;
+		}
 	}
 }

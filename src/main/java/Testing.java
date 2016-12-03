@@ -1,19 +1,45 @@
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Assembler;
+import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Disassembler;
 import wiiudev.gecko.client.gui.utilities.ProgramDirectoryUtilities;
+import wiiudev.gecko.client.memory_search.SearchResult;
+import wiiudev.gecko.client.memory_search.enumerations.ValueSize;
 import wiiudev.gecko.client.tcpgecko.LzmaCompressor;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.titles.Title;
 import wiiudev.gecko.client.titles.TitleDatabaseManager;
 
+import java.math.BigInteger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Testing
 {
 	public static void main(String[] arguments) throws Exception
 	{
+		Connector.getInstance().connect("192.168.178.35");
+		Disassembler.search(0x01000000, "lwz r3.*");
+		Connector.getInstance().closeConnection();
+
+		System.exit(0);
+
+		long milliseconds = System.currentTimeMillis();
+		int size = 1000000;
+		List<SearchResult> searchResults = new ArrayList<>();
+
+		for (int i = 0; i < size; i++)
+		{
+			// System.out.println(i);
+			SearchResult searchResult = new SearchResult(0x12345678, new BigInteger("3"), new BigInteger("1"), ValueSize.EIGHT_BIT);
+			searchResults.add(searchResult);
+		}
+
+		System.out.println((System.currentTimeMillis() - milliseconds) / (double) 1000 + " seconds");
+		System.exit(0);
+
 		TitleDatabaseManager titleDatabaseManager = new TitleDatabaseManager();
-		Title title = titleDatabaseManager.getTitle("0005000C-1010ED00");
+		Title title = titleDatabaseManager.getTitle("00050000-1010ED00");
 		System.out.println(title);
 		System.exit(0);
 

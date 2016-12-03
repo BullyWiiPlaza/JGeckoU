@@ -6,8 +6,8 @@ import wiiudev.gecko.client.codes.GeckoCode;
 import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 public class CodesListManager
@@ -21,7 +21,7 @@ public class CodesListManager
 	@SuppressWarnings("unchecked")
 	public CodesListManager(JList<JCheckBox> checkboxList, JRootPane rootPane)
 	{
-		codeListEntries = new LinkedList<>();
+		codeListEntries = new ArrayList<>();
 		checkboxList.setModel(new DefaultListModel<>());
 		checkboxList.setCellRenderer(new CheckBoxListCellRenderer());
 		this.checkboxList = checkboxList;
@@ -197,7 +197,7 @@ public class CodesListManager
 
 	public List<CodeListEntry> getActiveCodes()
 	{
-		List<CodeListEntry> activeCodes = new LinkedList<>();
+		List<CodeListEntry> activeCodes = new ArrayList<>();
 
 		for (int codeEntryIndex = 0; codeEntryIndex < codeListEntries.size(); codeEntryIndex++)
 		{
@@ -241,7 +241,7 @@ public class CodesListManager
 
 	public List<GeckoCode> getCodeListBackup()
 	{
-		List<GeckoCode> codeListBackup = new LinkedList<>();
+		List<GeckoCode> codeListBackup = new ArrayList<>();
 
 		for (int codeListBackupIndex = 0; codeListBackupIndex < codeListEntries.size(); codeListBackupIndex++)
 		{

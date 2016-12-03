@@ -7,13 +7,15 @@ import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SearchQueryOptimizer
 {
+	private static double OPTIMIZATION_THRESHOLD = 0.1;
+
 	private int address;
 	private int length;
 
@@ -29,14 +31,15 @@ public class SearchQueryOptimizer
 		int updatedAddress = searchBounds.getAddress();
 		int updatedLength = searchBounds.getLength();
 
-		if (searchResults.isEmpty())
+		if (searchResults.isEmpty() // First search
+				|| hasManySearchResults(searchResults, updatedLength)) // Refined search
 		{
 			return dumpAllBytes(updatedAddress, updatedLength);
 		}
 
 		// Only dump the bytes that are still in the results
 		long bytesToDump = 0;
-		List<MemoryDumpingChunk> memoryDumpingChunks = new LinkedList<>();
+		List<MemoryDumpingChunk> memoryDumpingChunks = new ArrayList<>();
 
 		// For performance optimization, use this set
 		Set<Integer> addressesMap = searchResults.stream().map(SearchResult::getAddress).collect(Collectors.toSet());
@@ -84,6 +87,7 @@ public class SearchQueryOptimizer
 
 			MemoryDumpingChunk memoryDumpingChunk = new MemoryDumpingChunk(searchResultAddress, chunkLength);
 			memoryDumpingChunks.add(memoryDumpingChunk);
+
 			bytesToDump += chunkLength;
 			searchResultAddress += chunkLength;
 		}
@@ -92,7 +96,7 @@ public class SearchQueryOptimizer
 		int maximumChunksSize = (updatedLength / TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE) + 1;
 
 		// Decide whether to use the "optimized" chunks or dump everything again
-		if (memoryDumpingChunksSize / maximumChunksSize <= 0.1)
+		if (memoryDumpingChunksSize / maximumChunksSize <= OPTIMIZATION_THRESHOLD)
 		{
 			GraphicalRefiner graphicalRefiner = new GraphicalRefiner(updatedAddress, updatedLength, memoryDumpingChunks,
 					bytesToDump);
@@ -102,6 +106,23 @@ public class SearchQueryOptimizer
 		{
 			return dumpAllBytes(updatedAddress, updatedLength);
 		}
+	}
+
+	/**
+	 * Determines heuristically whether we still have many search results
+	 * in regards to the total possible amount
+	 *
+	 * @param searchResults The search results list
+	 * @param length        The total length
+	 * @return Whether there are many search results
+	 */
+	private boolean hasManySearchResults(List<SearchResult> searchResults, int length)
+	{
+		int valueSizeBytesCount = searchResults.get(0).getValueSize().getBytesCount();
+		int searchResultsSize = searchResults.size();
+		int maximumSearchResultsSize = length / valueSizeBytesCount;
+
+		return searchResultsSize > maximumSearchResultsSize * OPTIMIZATION_THRESHOLD;
 	}
 
 	private ByteBuffer dumpAllBytes(int updatedAddress, int updatedLength) throws Exception

@@ -10,7 +10,6 @@ import javax.swing.*;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 import java.util.stream.Collectors;
@@ -37,7 +36,8 @@ public class MemorySearcher
 		isFirstSearch = true;
 	}
 
-	public List<SearchResult> search(SearchRefinement searchRefinement, boolean aligned) throws Exception
+	public List<SearchResult> search(SearchRefinement searchRefinement,
+	                                 boolean aligned) throws Exception
 	{
 		ValueSize valueSize = searchRefinement.getValueSize();
 		int valueSizeBytesCount = valueSize.getBytesCount();
@@ -53,23 +53,22 @@ public class MemorySearcher
 		SearchMode searchMode = searchRefinement.getSearchMode();
 		boolean isUnknownValueSearch = searchMode == SearchMode.UNKNOWN;
 		SearchQueryOptimizer searchQueryOptimizer = new SearchQueryOptimizer(address, length);
-		ByteBuffer valuesReader = searchQueryOptimizer.dumpBytes(searchResults);
-		List<SearchResult> updatedSearchResults = new LinkedList<>();
-
+		ByteBuffer valuesBuffer = searchQueryOptimizer.dumpBytes(searchResults);
+		List<SearchResult> updatedSearchResults = new ArrayList<>();
 		JButton searchButton = JGeckoUGUI.getInstance().getSearchButton();
-
-		int limit = valuesReader.limit();
-
+		int limit = valuesBuffer.limit();
 		searchButton.setText("Searching...");
+		ProgressVisualization.Optimizer optimizer;
 
 		if (isFirstSearch)
 		{
-			ProgressVisualization.Optimizer optimizer = new ProgressVisualization.Optimizer(limit, 100000);
+			optimizer = new ProgressVisualization.Optimizer(limit, 100000);
 
-			while (valuesReader.position() + valueSizeBytesCount <= limit)
+			// Iterate over all values
+			while (valuesBuffer.position() + valueSizeBytesCount <= limit)
 			{
-				BigInteger currentValue = getValue(valuesReader, valueSizeBytesCount, aligned);
-				int position = valuesReader.position();
+				BigInteger currentValue = getValue(valuesBuffer, valueSizeBytesCount, aligned);
+				int position = valuesBuffer.position();
 				int searchResultAddress = address + position - Math.min(valueSize.getBytesCount(), 4);
 
 				if (!aligned)
@@ -105,16 +104,19 @@ public class MemorySearcher
 			ProgressVisualization.deleteUpdateLabel();
 		} else
 		{
+			optimizer = new ProgressVisualization.Optimizer(searchResults.size(), 1000);
+
 			// Not the first search, refine the search results
 			int searchResultsIndex = 0;
 
+			// Go through the search results when not the first search
 			for (SearchResult searchResult : searchResults)
 			{
 				int currentAddress = searchResult.getAddress();
 				int position = currentAddress - address;
-				valuesReader.position(position);
+				valuesBuffer.position(position);
 
-				BigInteger currentValue = getValue(valuesReader, valueSizeBytesCount, aligned);
+				BigInteger currentValue = getValue(valuesBuffer, valueSizeBytesCount, aligned);
 				SearchConditions searchCondition = searchRefinement.getSearchCondition();
 
 				BigInteger targetValue = isUnknownValueSearch ?
@@ -129,12 +131,8 @@ public class MemorySearcher
 
 				searchResultsIndex++;
 
-				if (searchResultsIndex % 1000 == 0)
-				{
-					ProgressVisualization.updateProgress("Evaluated Search Results",
-							searchResultsIndex,
-							searchResults.size());
-				}
+				optimizer.considerUpdatingProgress("Evaluated Search Results",
+						searchResultsIndex);
 
 				if (JGeckoUGUI.getInstance().isDumpingCanceled())
 				{
@@ -152,16 +150,21 @@ public class MemorySearcher
 		// Do not smash the RAM
 		if (searchResults.size() < SearchResult.SEARCH_RESULTS_THRESHOLD)
 		{
-			pushSearchResults();
+			pushSearchResultsAsynchronously();
 		}
 
 		return searchResults;
 	}
 
-	private void pushSearchResults()
+	private void pushSearchResultsAsynchronously()
 	{
-		List<SearchResult> clonedSearchResults = cloneList(searchResults);
-		searchResultsStack.add(clonedSearchResults);
+		Thread thread = new Thread(() ->
+		{
+			List<SearchResult> clonedSearchResults = cloneList(searchResults);
+			searchResultsStack.add(clonedSearchResults);
+		});
+
+		thread.start();
 	}
 
 	private static List<SearchResult> cloneList(List<SearchResult> searchResults)
@@ -246,6 +249,6 @@ public class MemorySearcher
 	public void loadSearchResults(List<SearchResult> searchResults)
 	{
 		this.searchResults = searchResults;
-		pushSearchResults();
+		pushSearchResultsAsynchronously();
 	}
 }

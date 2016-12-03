@@ -17,10 +17,7 @@ import wiiudev.gecko.client.gui.tabs.code_list.CodesListManager;
 import wiiudev.gecko.client.gui.tabs.code_list.code_wizard.CodeWizardDialog;
 import wiiudev.gecko.client.gui.tabs.disassembler.DisassembledInstruction;
 import wiiudev.gecko.client.gui.tabs.disassembler.DisassemblerTableManager;
-import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Assembler;
-import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerException;
-import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerFiles;
-import wiiudev.gecko.client.gui.tabs.disassembler.assembler.AssemblerFilesException;
+import wiiudev.gecko.client.gui.tabs.disassembler.assembler.*;
 import wiiudev.gecko.client.gui.tabs.memory_search.SearchResultsTableManager;
 import wiiudev.gecko.client.gui.tabs.memory_search.ValueConversionContextMenu;
 import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViewerTableManager;
@@ -66,6 +63,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * A class defining the main frame of the application
@@ -202,6 +201,10 @@ public class JGeckoUGUI extends JFrame
 	private JTextField watchlistValueAssertionTextField;
 	private JCheckBox watchlistUseValueAssertionCheckBox;
 	private JButton copyAssertedAddressExpressionsButton;
+	private JTextField disassemblerRegularExpressionField;
+	private JButton disassemblerSearchButton;
+	private JButton disassemblerCancelSearchButton;
+	private JButton regularExpressionTutorialButton;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -229,6 +232,8 @@ public class JGeckoUGUI extends JFrame
 	private boolean dumpingMemory;
 	private Connector connector;
 	private boolean updatingGameTitles;
+	private boolean isDisassemblerRegularExpressionSearchCanceled;
+	private boolean isDisassemblerSearching;
 
 	private JGeckoUGUI()
 	{
@@ -852,6 +857,32 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
+		addDisassemblerSearchButtonListener();
+		addDisassemblerCancelSearchButtonListener();
+		addRegularExpressionTutorialButtonListener();
+		disassemblerRegularExpressionField.getDocument().addDocumentListener(new DocumentListener()
+		{
+			@Override
+			public void insertUpdate(DocumentEvent documentEvent)
+			{
+				validateRegularExpression();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent documentEvent)
+			{
+				validateRegularExpression();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent documentEvent)
+			{
+				validateRegularExpression();
+			}
+		});
+
+		validateRegularExpression();
+
 		disassemblerInstructionField.addKeyListener(new KeyAdapter()
 		{
 			public void keyReleased(KeyEvent keyEvent)
@@ -895,15 +926,116 @@ public class JGeckoUGUI extends JFrame
 				if (keyEvent.getKeyCode() == KeyEvent.VK_ENTER
 						&& updateDisassemblerButton.isEnabled())
 				{
-					int cursorPosition = disassemblerAddressField.getCaretPosition();
 					updateDisassembler();
-					disassemblerAddressField.requestFocus();
-					disassemblerAddressField.setCaretPosition(cursorPosition);
 				}
 			}
 		});
 
 		configureDisassemblerAddressField();
+	}
+
+	private void validateRegularExpression()
+	{
+		String regularExpression = disassemblerRegularExpressionField.getText();
+		disassemblerRegularExpressionField.setBackground(isRegularExpressionValid(regularExpression) ? Color.GREEN : Color.RED);
+	}
+
+	private boolean isRegularExpressionValid(String regularExpression)
+	{
+		try
+		{
+			Pattern.compile(regularExpression);
+			return true;
+		} catch (PatternSyntaxException exception)
+		{
+			return false;
+		}
+	}
+
+	private void addRegularExpressionTutorialButtonListener()
+	{
+		regularExpressionTutorialButton.addActionListener(actionEvent ->
+		{
+			try
+			{
+				Desktop.getDesktop().browse(new URI("http://www.vogella.com/tutorials/JavaRegularExpressions/article.html"));
+			} catch (Exception exception)
+			{
+				exception.printStackTrace();
+			}
+		});
+	}
+
+	private void addDisassemblerCancelSearchButtonListener()
+	{
+		disassemblerCancelSearchButton.addActionListener(actionEvent -> isDisassemblerRegularExpressionSearchCanceled = true);
+	}
+
+	private void addDisassemblerSearchButtonListener()
+	{
+		disassemblerSearchButton.addActionListener(actionEvent ->
+		{
+			isDisassemblerSearching = true;
+			isDisassemblerRegularExpressionSearchCanceled = false;
+			String regularExpression = disassemblerRegularExpressionField.getText();
+			int address = Conversions.toDecimal(disassemblerAddressField.getText());
+			String buttonText = disassemblerSearchButton.getText();
+			disassemblerSearchButton.setText("Searching...");
+			setConnectionButtonsAvailability();
+
+			new SwingWorker<String, String>()
+			{
+				@Override
+				protected String doInBackground() throws Exception
+				{
+					try
+					{
+						int foundAddress = Disassembler.search(address, regularExpression);
+
+						switch (foundAddress)
+						{
+							case Disassembler.CANCELED:
+								JOptionPane.showMessageDialog(JGeckoUGUI.this,
+										"Search canceled",
+										"Success",
+										JOptionPane.INFORMATION_MESSAGE);
+								break;
+
+							case Disassembler.INVALID_ADDRESS:
+								JOptionPane.showMessageDialog(JGeckoUGUI.this,
+										"The regular expression " + regularExpression + " did not match!",
+										"Error",
+										JOptionPane.ERROR_MESSAGE);
+								break;
+
+							default:
+								updateDisassembler(foundAddress);
+								Thread.sleep(100);
+								updateDisassembler(foundAddress);
+						}
+					} catch (PatternSyntaxException syntax)
+					{
+						JOptionPane.showMessageDialog(rootPane,
+								syntax.getMessage(),
+								"Syntax Error",
+								JOptionPane.ERROR_MESSAGE);
+					} catch (Exception exception)
+					{
+						StackTraceUtils.handleException(rootPane, exception);
+					}
+
+					return null;
+				}
+
+				@Override
+				protected void done()
+				{
+					disassemblerSearchButton.setText(buttonText);
+					isDisassemblerSearching = false;
+					setConnectionButtonsAvailability();
+				}
+			}.execute();
+		});
 	}
 
 	private void assembleInstruction()
@@ -990,6 +1122,7 @@ public class JGeckoUGUI extends JFrame
 	{
 		if (isDisassemblerAddressValid())
 		{
+			int cursorPosition = disassemblerAddressField.getCaretPosition();
 			String stringAddress = disassemblerAddressField.getText();
 			stringAddress = CodeWizardDialog.doPadding(stringAddress);
 			disassemblerAddressField.setText(stringAddress);
@@ -1007,6 +1140,10 @@ public class JGeckoUGUI extends JFrame
 			} catch (Exception exception)
 			{
 				StackTraceUtils.handleException(rootPane, exception);
+			} finally
+			{
+				disassemblerAddressField.requestFocus();
+				disassemblerAddressField.setCaretPosition(cursorPosition);
 			}
 		}
 	}
@@ -1859,6 +1996,7 @@ public class JGeckoUGUI extends JFrame
 			simpleProperties.put("DETECT_DATA_BUFFER_SIZE", String.valueOf(detectDataBufferSizeCheckBox.isSelected()));
 			simpleProperties.put("WATCH_LIST_USE_VALUE_ASSERTION", String.valueOf(watchlistUseValueAssertionCheckBox.isSelected()));
 			simpleProperties.put("WATCH_LIST_VALUE_ASSERTION_VALUE", watchlistValueAssertionTextField.getText());
+			simpleProperties.put("DISASSEMBLER_REGULAR_EXPRESSION", disassemblerRegularExpressionField.getText());
 
 			simpleProperties.writeToFile();
 		}));
@@ -2018,6 +2156,12 @@ public class JGeckoUGUI extends JFrame
 		if (watchlistValueAssertionValue != null)
 		{
 			watchlistValueAssertionTextField.setText(watchlistValueAssertionValue);
+		}
+
+		String disassemblerRegularExpression = simpleProperties.get("DISASSEMBLER_REGULAR_EXPRESSION");
+		if (disassemblerRegularExpression != null)
+		{
+			disassemblerRegularExpressionField.setText(disassemblerRegularExpression);
 		}
 	}
 
@@ -3969,6 +4113,8 @@ public class JGeckoUGUI extends JFrame
 		convertEffectiveToPhysicalButton.setEnabled(connected);
 		codeHandlerInstallationAddressButton.setEnabled(connected);
 		setMemoryViewerSearchButtonAvailability();
+		disassemblerSearchButton.setEnabled(connected && !isDisassemblerSearching);
+		disassemblerCancelSearchButton.setEnabled(connected && isDisassemblerSearching);
 
 		if (isAutoDetect)
 		{
@@ -4185,5 +4331,10 @@ public class JGeckoUGUI extends JFrame
 		JGeckoUGUI instance = JGeckoUGUI.getInstance();
 		instance.switchToCodesTab();
 		instance.openAddCodeDialog(codeListEntry);
+	}
+
+	public boolean isRegularExpressionSearchCanceled()
+	{
+		return isDisassemblerRegularExpressionSearchCanceled;
 	}
 }

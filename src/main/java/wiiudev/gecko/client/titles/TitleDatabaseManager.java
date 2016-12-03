@@ -16,7 +16,7 @@ import javax.xml.stream.XMLStreamWriter;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class TitleDatabaseManager
@@ -34,7 +34,7 @@ public class TitleDatabaseManager
 
 	public TitleDatabaseManager() throws Exception
 	{
-		titles = new LinkedList<>();
+		titles = new ArrayList<>();
 		titleDatabaseFilePath = ProgramDirectoryUtilities.getProgramDirectory() + File.separator + titleDatabaseFileName;
 
 		boolean titleDatabaseFileExists = new File(titleDatabaseFilePath).exists();
@@ -62,7 +62,8 @@ public class TitleDatabaseManager
 	{
 		for (Title currentTitle : titles)
 		{
-			if (currentTitle.getTitleId().equals(dashedTitleId))
+			String titleId = currentTitle.getTitleId();
+			if (titleId.equals(dashedTitleId))
 			{
 				return currentTitle;
 			}

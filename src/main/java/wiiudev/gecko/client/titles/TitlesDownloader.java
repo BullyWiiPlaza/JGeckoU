@@ -7,7 +7,6 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,9 +20,9 @@ public class TitlesDownloader
 	 */
 	public static List<Title> getTitles() throws Exception
 	{
-		List<Title> titles = Collections.synchronizedList(new LinkedList<>());
+		List<Title> titles = Collections.synchronizedList(new ArrayList<>());
 
-		int poolSize = 1; // Runtime.getRuntime().availableProcessors() * 2;
+		int poolSize = Runtime.getRuntime().availableProcessors() * 2;
 		ExecutorService threadPool = Executors.newFixedThreadPool(poolSize);
 		List<Future<?>> tasks = new ArrayList<>();
 

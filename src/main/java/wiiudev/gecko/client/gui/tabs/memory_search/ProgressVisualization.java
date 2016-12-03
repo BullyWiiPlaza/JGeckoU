@@ -56,7 +56,7 @@ public class ProgressVisualization
 		private int currentInterval;
 		private int intervalSize;
 
-		public Optimizer(long bytesToDump)
+		Optimizer(long bytesToDump)
 		{
 			this(bytesToDump, 10000);
 		}
@@ -72,6 +72,7 @@ public class ProgressVisualization
 		{
 			if (bytesDumped > currentInterval * intervalSize)
 			{
+				// System.out.println(bytesDumped / (double) bytesToDump);
 				updateProgress(labelName, bytesDumped, bytesToDump);
 				currentInterval++;
 			}
