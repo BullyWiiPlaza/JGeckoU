@@ -51,4 +51,9 @@ public class RemoteString implements Closeable
 	{
 		CoreInit.freeSystemMemory(address);
 	}
+
+	public boolean isAllocated()
+	{
+		return address != 0;
+	}
 }

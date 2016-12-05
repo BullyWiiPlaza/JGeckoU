@@ -3,9 +3,11 @@ package wiiudev.gecko.client.gui.tabs;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
+import wiiudev.gecko.client.gui.utilities.ProgramDirectoryUtilities;
 import wiiudev.gecko.client.tcpgecko.main.CloseableReentrantLock;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
+import wiiudev.gecko.client.titles.Title;
 
 import javax.swing.*;
 import java.awt.*;
@@ -129,5 +131,18 @@ public class GraphicalMemoryDumper
 
 			return null;
 		}
+	}
+
+	public static String getDirectory(Title title)
+	{
+		String programDirectory = ProgramDirectoryUtilities.getProgramDirectory();
+		String memoryDumpsFolderName = "dumps";
+		String gameId = title.getGameId();
+
+		return programDirectory
+				+ File.separator
+				+ memoryDumpsFolderName
+				+ File.separator
+				+ gameId;
 	}
 }

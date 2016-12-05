@@ -7,7 +7,10 @@ import wiiudev.gecko.client.conversions.ConversionType;
 import wiiudev.gecko.client.conversions.Conversions;
 import wiiudev.gecko.client.conversions.Validation;
 import wiiudev.gecko.client.debugging.StackTraceUtils;
-import wiiudev.gecko.client.gui.dialogs.*;
+import wiiudev.gecko.client.gui.dialogs.ConversionDialog;
+import wiiudev.gecko.client.gui.dialogs.MessageTextDialog;
+import wiiudev.gecko.client.gui.dialogs.NewGameDialog;
+import wiiudev.gecko.client.gui.dialogs.RemoteProcedureCallDialog;
 import wiiudev.gecko.client.gui.input_filters.HexadecimalInputFilter;
 import wiiudev.gecko.client.gui.input_filters.InputLengthFilter;
 import wiiudev.gecko.client.gui.input_filters.ValueSizes;
@@ -43,7 +46,6 @@ import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
 import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
-import wiiudev.gecko.client.tcpgecko.rpl.RemoteDisassembler;
 import wiiudev.gecko.client.tcpgecko.rpl.structures.OSSystemInfo;
 import wiiudev.gecko.client.titles.Title;
 import wiiudev.gecko.client.titles.TitleDatabaseManager;
@@ -162,7 +164,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton powerPCAssemblyDocumentationButton;
 	private JButton osTimeButton;
 	private JButton processPFIDButton;
-	private JButton remoteDisassemblerButton;
+	// private JButton remoteDisassemblerButton;
 	private JButton titleIDButton;
 	private JButton osIDButton;
 	private JButton appFlagsButton;
@@ -1311,7 +1313,7 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		remoteDisassemblerButton.addActionListener(actionEvent ->
+		/*remoteDisassemblerButton.addActionListener(actionEvent ->
 		{
 			RemoteDisassemblerDialog remoteDisassemblerDialog = new RemoteDisassemblerDialog();
 			remoteDisassemblerDialog.setTitle(remoteDisassemblerButton.getText());
@@ -1334,7 +1336,7 @@ public class JGeckoUGUI extends JFrame
 					StackTraceUtils.handleException(rootPane, exception);
 				}
 			}
-		});
+		});*/
 
 		convertEffectiveToPhysicalButton.addActionListener(actionEvent ->
 		{
@@ -2488,7 +2490,30 @@ public class JGeckoUGUI extends JFrame
 
 		chooseFilePathButton.addActionListener(actionEvent ->
 		{
-			JFileChooser fileChooser = new JFileChooser();
+			try
+			{
+				SaveMemoryDumpsFileDialog openMemoryDumpsFileDialog = new SaveMemoryDumpsFileDialog(this);
+				String chosenFile = dumpFilePathField.getText();
+				if (!chosenFile.equals(""))
+				{
+					openMemoryDumpsFileDialog.setDirectory(null);
+					openMemoryDumpsFileDialog.setDirectory(new File(chosenFile).getParent());
+				}
+
+				openMemoryDumpsFileDialog.showDialog();
+				Path selectedFile = openMemoryDumpsFileDialog.getSelectedFilePath();
+
+				if (selectedFile != null)
+				{
+					dumpFilePathField.setText(selectedFile.toString());
+					handleDumpMemoryButtonAvailability();
+				}
+			} catch (Exception exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+
+			/*JFileChooser fileChooser = new JFileChooser();
 			fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			String applicationDirectory = System.getProperty("user.dir");
 			fileChooser.setCurrentDirectory(new File(applicationDirectory));
@@ -2516,7 +2541,7 @@ public class JGeckoUGUI extends JFrame
 
 				dumpFilePathField.setText(selectedFilePath);
 				handleDumpMemoryButtonAvailability();
-			}
+			}*/
 		});
 	}
 
@@ -4088,7 +4113,7 @@ public class JGeckoUGUI extends JFrame
 		appFlagsButton.setEnabled(connected);
 		coresCountButton.setEnabled(connected);
 		titleIDButton.setEnabled(connected);
-		remoteDisassemblerButton.setEnabled(connected);
+		// remoteDisassemblerButton.setEnabled(connected);
 		displayMessageButton.setEnabled(connected);
 		osTimeButton.setEnabled(connected);
 		assembleInstructionButton.setEnabled(connected && !assembling);

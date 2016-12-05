@@ -1,13 +1,20 @@
 import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Assembler;
-import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Disassembler;
 import wiiudev.gecko.client.gui.utilities.ProgramDirectoryUtilities;
+import wiiudev.gecko.client.gui.utilities.SaveMemoryDumpsFileDialog;
 import wiiudev.gecko.client.memory_search.SearchResult;
 import wiiudev.gecko.client.memory_search.enumerations.ValueSize;
 import wiiudev.gecko.client.tcpgecko.LzmaCompressor;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
+import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
+import wiiudev.gecko.client.tcpgecko.rpl.filesystem.RemoteFileSystem;
+import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.FileSystemReturnFlag;
+import wiiudev.gecko.client.tcpgecko.rpl.filesystem.enumerations.FileSystemStatus;
+import wiiudev.gecko.client.tcpgecko.rpl.filesystem.structures.*;
+import wiiudev.gecko.client.tcpgecko.rpl.structures.AllocatedMemory;
 import wiiudev.gecko.client.titles.Title;
 import wiiudev.gecko.client.titles.TitleDatabaseManager;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -16,12 +23,143 @@ import java.util.List;
 
 public class Testing
 {
+	private static void readFile() throws IOException
+	{
+		RemoteFileSystem remoteFileSystem = new RemoteFileSystem();
+		FileSystemStatus status = remoteFileSystem.initialize();
+
+		if (status == FileSystemStatus.OK)
+		{
+			FileSystemClient client = new FileSystemClient();
+
+			if (client.isAllocated())
+			{
+				status = remoteFileSystem.addClient(client);
+
+				if (status == FileSystemStatus.OK)
+				{
+					FileSystemCommandBlock commandBlock = new FileSystemCommandBlock();
+
+					if (commandBlock.isAllocated())
+					{
+						remoteFileSystem.initializeCommandBlock(commandBlock);
+
+						int bufferSize = 0x1000;
+						FileSystemHandle fileSystemHandle = new FileSystemHandle();
+
+						if (fileSystemHandle.isAllocated())
+						{
+							FileSystemPath allocatedDirectory = new FileSystemPath("/vol/content");
+
+							if (allocatedDirectory.isAllocated())
+							{
+								status = remoteFileSystem.openDirectory(client, commandBlock, allocatedDirectory, fileSystemHandle, FileSystemReturnFlag.ALL);
+
+								if (status == FileSystemStatus.OK)
+								{
+									DirectoryEntry directoryEntry = new DirectoryEntry();
+
+									if (directoryEntry.isAllocated())
+									{
+										status = remoteFileSystem.readDirectory(client, commandBlock, fileSystemHandle, directoryEntry, FileSystemReturnFlag.ALL);
+
+										if (status == FileSystemStatus.OK)
+										{
+											FileSystemPath allocatedRemoteFilePath = new FileSystemPath("/vol/content/afghanistan_gump_arena.ipak");
+
+											if (allocatedRemoteFilePath.isAllocated())
+											{
+												FileSystemAccessMode accessMode = new FileSystemAccessMode(FileAccessMode.READ);
+
+												if (accessMode.isAllocated())
+												{
+													status = remoteFileSystem.openFile(client, commandBlock, allocatedRemoteFilePath, accessMode, fileSystemHandle, FileSystemReturnFlag.ALL);
+
+													if (status == FileSystemStatus.OK)
+													{
+														int totalFileSize = 0;
+														int bytesRead;
+
+														AllocatedMemory dataBuffer = new AllocatedMemory(0x40, bufferSize);
+
+														if (dataBuffer.isAllocated())
+														{
+															while ((bytesRead = remoteFileSystem.readFile(client, commandBlock, dataBuffer, fileSystemHandle, FileSystemReturnFlag.ALL)) > 0)
+															{
+																totalFileSize += bytesRead;
+															}
+
+															dataBuffer.close();
+														}
+
+														status = remoteFileSystem.closeFile(client, commandBlock, fileSystemHandle, FileSystemReturnFlag.ALL);
+
+														if (status == FileSystemStatus.OK)
+														{
+															System.out.println("Total file size: " + totalFileSize);
+														} else
+														{
+															System.out.println("Failed closing file: " + status);
+														}
+													}
+
+													accessMode.close();
+												}
+
+												allocatedRemoteFilePath.close();
+											}
+										}
+
+										directoryEntry.close();
+									}
+
+									status = remoteFileSystem.closeDirectory(client, commandBlock, fileSystemHandle, FileSystemReturnFlag.ALL);
+
+									if (status != FileSystemStatus.OK)
+									{
+										System.out.println("Failed closing directory: " + status);
+									}
+								}
+
+								allocatedDirectory.close();
+							}
+
+							fileSystemHandle.close();
+						}
+
+						commandBlock.close();
+					}
+				}
+
+				client.close();
+			}
+		}
+	}
+
 	public static void main(String[] arguments) throws Exception
 	{
-		Connector.getInstance().connect("192.168.178.35");
-		Disassembler.search(0x01000000, "lwz r3.*");
-		Connector.getInstance().closeConnection();
+		SaveMemoryDumpsFileDialog openFileDialog = new SaveMemoryDumpsFileDialog(null);
+		openFileDialog.showDialog();
+		Path selectedFilePath = openFileDialog.getSelectedFilePath();
 
+		if (selectedFilePath == null)
+		{
+			System.out.println("Canceled");
+		} else
+		{
+			System.out.println(selectedFilePath.toString());
+		}
+
+		System.exit(0);
+
+		Connector.getInstance().connect("192.168.178.35");
+		MemoryReader.setDataBufferSize();
+		readFile();
+		/*MemoryReader memoryReader = new MemoryReader();
+		memoryReader.readFile("/vol/content/afghanistan_gump_arena.ipak");*/
+		// System.out.println(b);
+		// Disassembler.search(0x01000000, "lwz r3.*");
+		Connector.getInstance().closeConnection();
 		System.exit(0);
 
 		long milliseconds = System.currentTimeMillis();

@@ -32,4 +32,9 @@ public class AllocatedMemory implements Closeable
 	{
 		return size;
 	}
+
+	public boolean isAllocated()
+	{
+		return address != 0;
+	}
 }

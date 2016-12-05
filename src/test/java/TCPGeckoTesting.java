@@ -1,9 +1,7 @@
 import org.junit.*;
-import wiiudev.gecko.client.conversions.Conversions;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.MemoryWriter;
-import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSContext;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThread;
 import wiiudev.gecko.client.tcpgecko.main.threads.OSThreadState;
@@ -33,11 +31,11 @@ public class TCPGeckoTesting
 	public static void connect() throws IOException
 	{
 		connector.connect("192.168.178.35");
-		TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE = 0x5000;
+		MemoryReader.setDataBufferSize();
 		System.out.println("Connected to TCP Gecko...");
 	}
 
-	@Ignore
+	@Test
 	public void testAddressValidation() throws IOException
 	{
 		MemoryReader memoryReader = new MemoryReader();
@@ -82,7 +80,7 @@ public class TCPGeckoTesting
 		Assert.assertFalse(isAddressValid);
 	}
 
-	@Ignore
+	@Test
 	public void testRemoteProcedureCalls() throws Exception
 	{
 		CoreInit.getOSTime(); // Can't check correctness but just run it
@@ -105,17 +103,7 @@ public class TCPGeckoTesting
 		Assert.assertEquals(cores, 3);
 	}
 
-	@Ignore
-	public void testRemoteDisassembler() throws IOException
-	{
-		/*String disassembled = RemoteDisassembler.disassembleValue(0x60000000);
-		Assert.assertEquals(disassembled, "nop");
-
-		disassembled = RemoteDisassembler.disassembleAddress(0x01087BC0);
-		Assert.assertEquals(disassembled, "addi r11, r11, 4");*/
-	}
-
-	@Ignore
+	@Test
 	public void testMemoryAllocation() throws IOException
 	{
 		int allocated = CoreInit.allocateDefaultHeapMemory(0x50, 0x20);
@@ -127,7 +115,7 @@ public class TCPGeckoTesting
 		Assert.assertEquals(allocated, allocated2);
 	}
 
-	@Ignore
+	@Test
 	public void testThreads() throws Exception
 	{
 		List<OSThread> osThreads = OSThread.readThreads();
@@ -255,7 +243,7 @@ public class TCPGeckoTesting
 		Files.write(targetFilePath, bytes);
 	}
 
-	@Test
+	@Ignore
 	public void testFileSystem() throws IOException
 	{
 		String directoryPath = "/vol/content";
@@ -464,7 +452,7 @@ public class TCPGeckoTesting
 		}*/
 	}
 
-	@Ignore
+	@Test
 	public void testMemoryReading() throws IOException, URISyntaxException
 	{
 		MemoryReader memoryReader = new MemoryReader();
@@ -512,10 +500,10 @@ public class TCPGeckoTesting
 		Assert.assertEquals(foundAddress, 0x10004744);
 
 		int size = memoryReader.readDataBufferSize();
-		System.out.println("Data buffer size: 0x" + Conversions.toHexadecimalNoPadding(size));
+		Assert.assertEquals(size, 0x5000);
 
 		int address = memoryReader.readCodeHandlerInstallationAddress();
-		System.out.println("Code handler installation address: 0x" + Conversions.toHexadecimal(address));
+		Assert.assertEquals(address, 0x010F4000);
 	}
 
 	private Path getDumpFile() throws URISyntaxException
@@ -523,7 +511,7 @@ public class TCPGeckoTesting
 		return Paths.get(ClassLoader.getSystemResource("dump.bin").toURI());
 	}
 
-	@Ignore
+	@Test
 	public void testMemoryWriting() throws IOException
 	{
 		MemoryWriter memoryWriter = new MemoryWriter();

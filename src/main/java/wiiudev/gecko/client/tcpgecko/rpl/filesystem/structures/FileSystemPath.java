@@ -11,7 +11,11 @@ public class FileSystemPath extends FileSystemObject
 	public FileSystemPath(String targetPath) throws IOException
 	{
 		super(0x200, 0x20);
-		setPath(targetPath);
+
+		if (isAllocated())
+		{
+			setPath(targetPath);
+		}
 	}
 
 	public void setPath(String targetPath) throws IOException

@@ -58,11 +58,11 @@ public class MemorySearcher
 		JButton searchButton = JGeckoUGUI.getInstance().getSearchButton();
 		int limit = valuesBuffer.limit();
 		searchButton.setText("Searching...");
-		ProgressVisualization.Optimizer optimizer;
+		ProgressVisualization.Optimizer progressOptimizer;
 
 		if (isFirstSearch)
 		{
-			optimizer = new ProgressVisualization.Optimizer(limit, 100000);
+			progressOptimizer = new ProgressVisualization.Optimizer(limit, 100000);
 
 			// Iterate over all values
 			while (valuesBuffer.position() + valueSizeBytesCount <= limit)
@@ -93,7 +93,7 @@ public class MemorySearcher
 					}
 				}
 
-				optimizer.considerUpdatingProgress("Evaluated Bytes", position);
+				progressOptimizer.considerUpdatingProgress("Evaluated Bytes", position);
 
 				if (JGeckoUGUI.getInstance().isDumpingCanceled())
 				{
@@ -104,7 +104,7 @@ public class MemorySearcher
 			ProgressVisualization.deleteUpdateLabel();
 		} else
 		{
-			optimizer = new ProgressVisualization.Optimizer(searchResults.size(), 1000);
+			progressOptimizer = new ProgressVisualization.Optimizer(searchResults.size(), 1000);
 
 			// Not the first search, refine the search results
 			int searchResultsIndex = 0;
@@ -131,7 +131,7 @@ public class MemorySearcher
 
 				searchResultsIndex++;
 
-				optimizer.considerUpdatingProgress("Evaluated Search Results",
+				progressOptimizer.considerUpdatingProgress("Evaluated Search Results",
 						searchResultsIndex);
 
 				if (JGeckoUGUI.getInstance().isDumpingCanceled())

@@ -365,6 +365,40 @@ public class MemoryReader extends TCPGecko
 		}
 	}
 
+	public void readFile(String absoluteFilePath) throws IOException
+	{
+		try (CloseableReentrantLock ignored = reentrantLock.acquire())
+		{
+			// Send the command
+			sendCommand(Command.READ_FILE);
+			dataSender.flush();
+
+			// Send the file path length
+			int length = absoluteFilePath.length();
+			dataSender.writeInt(length);
+			dataSender.flush();
+
+			// Send the file path itself
+			dataSender.writeBytes(absoluteFilePath);
+			dataSender.writeByte(0);
+			dataSender.flush();
+
+			int readLength = dataReceiver.readInt();
+			System.out.println(readLength);
+
+			byte[] bytes = new byte[readLength];
+			dataReceiver.readFully(bytes);
+			String readString = new String(bytes);
+			System.out.println(readString);
+		}
+	}
+
+	public static void setDataBufferSize() throws IOException
+	{
+		MemoryReader memoryReader = new MemoryReader();
+		TCPGecko.MAXIMUM_MEMORY_CHUNK_SIZE = memoryReader.readDataBufferSize();
+	}
+
 	/*public void disassembleRange(int address, int length) throws IOException
 	{
 		try (CloseableReentrantLock ignored = reentrantLock.acquire())

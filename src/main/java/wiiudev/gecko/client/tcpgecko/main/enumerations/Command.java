@@ -29,7 +29,8 @@ public enum Command
 	GET_VERSION(0x99),
 	GET_OS_VERSION(0x9A),
 	GC_FAIL(0xCC),
-	DIRECTORY(0x53);
+	DIRECTORY(0x53),
+	READ_FILE(0x52);
 
 	public final byte value;
 

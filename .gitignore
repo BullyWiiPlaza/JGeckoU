@@ -1,6 +1,3 @@
-# Ignore the IntelliJ configurations
-/.idea
-
 # Ignore the compiled classes
 /target
 
