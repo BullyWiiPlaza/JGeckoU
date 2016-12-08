@@ -18,9 +18,6 @@ public class WiiUFinder
 	 * Gets all addresses from the computer's sub network AND checks them to find the Wii U console
 	 *
 	 * @return The Wii U console's local IP address
-	 * @throws IOException
-	 * @throws InterruptedException
-	 * @throws ExecutionException
 	 */
 	public static String getNintendoWiiUInternetProtocolAddress() throws IOException, InterruptedException,
 			ExecutionException
@@ -52,11 +49,18 @@ public class WiiUFinder
 					if (PingUtilities.isReachable(subNetworkAddress))
 					{
 						Connector.getInstance().connect(subNetworkAddress);
-						assert new MemoryReader().readInt(0x10000000) == 0x1000 : "Read value didn't match";
+						MemoryReader memoryReader = new MemoryReader();
+						int readValue = memoryReader.read(0x10000000);
+						int expected = 0x1000;
+
+						if (readValue != expected)
+						{
+							throw new IllegalStateException("Read value was " + readValue + " but expected " + expected + "!");
+						}
 
 						return subNetworkAddress;
 					}
-				} catch (IOException ignored)
+				} catch (Exception ignored)
 				{
 
 				}

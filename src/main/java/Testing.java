@@ -23,8 +23,16 @@ import java.util.List;
 
 public class Testing
 {
-	private static void readFile() throws IOException
+	private static void readFile(String remoteFilePath) throws IOException
 	{
+		Path remoteFile = Paths.get(remoteFilePath);
+		boolean isFile = remoteFile.toString().contains(".");
+
+		if (!isFile)
+		{
+			throw new IllegalArgumentException("Not a remote file path");
+		}
+
 		RemoteFileSystem remoteFileSystem = new RemoteFileSystem();
 		FileSystemStatus status = remoteFileSystem.initialize();
 
@@ -49,11 +57,16 @@ public class Testing
 
 						if (fileSystemHandle.isAllocated())
 						{
-							FileSystemPath allocatedDirectory = new FileSystemPath("/vol/content");
+							String parentDirectory = remoteFile.getParent().toString().replace("\\", "/");
+							FileSystemPath allocatedDirectory = new FileSystemPath(parentDirectory);
 
 							if (allocatedDirectory.isAllocated())
 							{
-								status = remoteFileSystem.openDirectory(client, commandBlock, allocatedDirectory, fileSystemHandle, FileSystemReturnFlag.ALL);
+								status = remoteFileSystem.openDirectory(client,
+										commandBlock,
+										allocatedDirectory,
+										fileSystemHandle,
+										FileSystemReturnFlag.ALL);
 
 								if (status == FileSystemStatus.OK)
 								{
@@ -61,11 +74,15 @@ public class Testing
 
 									if (directoryEntry.isAllocated())
 									{
-										status = remoteFileSystem.readDirectory(client, commandBlock, fileSystemHandle, directoryEntry, FileSystemReturnFlag.ALL);
+										status = remoteFileSystem.readDirectory(client,
+												commandBlock,
+												fileSystemHandle,
+												directoryEntry,
+												FileSystemReturnFlag.ALL);
 
 										if (status == FileSystemStatus.OK)
 										{
-											FileSystemPath allocatedRemoteFilePath = new FileSystemPath("/vol/content/afghanistan_gump_arena.ipak");
+											FileSystemPath allocatedRemoteFilePath = new FileSystemPath(remoteFilePath);
 
 											if (allocatedRemoteFilePath.isAllocated())
 											{
@@ -73,7 +90,12 @@ public class Testing
 
 												if (accessMode.isAllocated())
 												{
-													status = remoteFileSystem.openFile(client, commandBlock, allocatedRemoteFilePath, accessMode, fileSystemHandle, FileSystemReturnFlag.ALL);
+													status = remoteFileSystem.openFile(client,
+															commandBlock,
+															allocatedRemoteFilePath,
+															accessMode,
+															fileSystemHandle,
+															FileSystemReturnFlag.ALL);
 
 													if (status == FileSystemStatus.OK)
 													{
@@ -84,7 +106,11 @@ public class Testing
 
 														if (dataBuffer.isAllocated())
 														{
-															while ((bytesRead = remoteFileSystem.readFile(client, commandBlock, dataBuffer, fileSystemHandle, FileSystemReturnFlag.ALL)) > 0)
+															while ((bytesRead = remoteFileSystem.readFile(client,
+																	commandBlock,
+																	dataBuffer,
+																	fileSystemHandle,
+																	FileSystemReturnFlag.ALL)) > 0)
 															{
 																totalFileSize += bytesRead;
 															}
@@ -92,7 +118,10 @@ public class Testing
 															dataBuffer.close();
 														}
 
-														status = remoteFileSystem.closeFile(client, commandBlock, fileSystemHandle, FileSystemReturnFlag.ALL);
+														status = remoteFileSystem.closeFile(client,
+																commandBlock,
+																fileSystemHandle,
+																FileSystemReturnFlag.ALL);
 
 														if (status == FileSystemStatus.OK)
 														{
@@ -113,7 +142,10 @@ public class Testing
 										directoryEntry.close();
 									}
 
-									status = remoteFileSystem.closeDirectory(client, commandBlock, fileSystemHandle, FileSystemReturnFlag.ALL);
+									status = remoteFileSystem.closeDirectory(client,
+											commandBlock,
+											fileSystemHandle,
+											FileSystemReturnFlag.ALL);
 
 									if (status != FileSystemStatus.OK)
 									{
@@ -138,6 +170,15 @@ public class Testing
 
 	public static void main(String[] arguments) throws Exception
 	{
+		String remoteFilePath = "/vol/content/afghanistan_gump_arena.ipak";
+		boolean b = Paths.get(remoteFilePath).toString().contains(".");
+		System.out.println("Is File: " + b);
+		String parentDirectory = Paths.get(remoteFilePath).getParent().toString().replace("\\", "/");
+		System.out.println(remoteFilePath);
+		System.out.println(parentDirectory);
+
+		System.exit(0);
+
 		SaveMemoryDumpsFileDialog openFileDialog = new SaveMemoryDumpsFileDialog(null);
 		openFileDialog.showDialog();
 		Path selectedFilePath = openFileDialog.getSelectedFilePath();
@@ -154,7 +195,7 @@ public class Testing
 
 		Connector.getInstance().connect("192.168.178.35");
 		MemoryReader.setDataBufferSize();
-		readFile();
+		readFile("/vol/content/afghanistan_gump_arena.ipak");
 		/*MemoryReader memoryReader = new MemoryReader();
 		memoryReader.readFile("/vol/content/afghanistan_gump_arena.ipak");*/
 		// System.out.println(b);

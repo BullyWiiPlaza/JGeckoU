@@ -1,4 +1,4 @@
-package wiiudev.gecko.client.memory_viewer;
+package wiiudev.gecko.client.gui.tabs.memory_viewer;
 
 public enum ValueOperations
 {

@@ -73,7 +73,7 @@ public class RemoteProcedureCallDialog extends JDialog
 		coreInitDocumentationButton.addActionListener(actionEvent ->
 				openURL("http://wiiubrew.org/wiki/Coreinit.rpl"));
 
-		HexadecimalInputFilter.setHexadecimalInputFilter(functionAddressField);
+		HexadecimalInputFilter.addTo(functionAddressField);
 		functionAddressField.setText("");
 
 		callAddressCheckBox.addItemListener(itemEvent ->

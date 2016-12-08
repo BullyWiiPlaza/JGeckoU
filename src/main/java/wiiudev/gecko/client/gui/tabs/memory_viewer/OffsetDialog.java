@@ -24,7 +24,7 @@ public class OffsetDialog extends JDialog
 		setLocationRelativeTo(rootPane);
 		getRootPane().setDefaultButton(okayButton);
 		setTitle("Add Offset");
-		HexadecimalInputFilter.setHexadecimalInputFilter(offsetField);
+		HexadecimalInputFilter.addTo(offsetField);
 		okayButton.addActionListener(actionEvent -> onOK());
 		cancelButton.addActionListener(actionEvent -> onCancel());
 

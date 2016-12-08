@@ -1,14 +1,13 @@
 package wiiudev.gecko.client.gui.tabs.disassembler.assembler;
 
+import wiiudev.gecko.client.gui.ApplicationUtilities;
 import wiiudev.gecko.client.gui.JGeckoUGUI;
 import wiiudev.gecko.client.gui.tabs.disassembler.DisassembledInstruction;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -44,9 +43,9 @@ public class Disassembler
 		return disassembledInstructions;
 	}
 
-	private static DisassembledInstruction parse(String disassembledLine)
+	private static DisassembledInstruction parse(String disassembled)
 	{
-		String[] addressAndValueInstruction = disassembledLine.split(":");
+		String[] addressAndValueInstruction = disassembled.split(":");
 		int instructionAddress = Integer.parseUnsignedInt(addressAndValueInstruction[0], 16);
 		String valuePart = addressAndValueInstruction[1].trim();
 		int spaceIndex = valuePart.indexOf("\t");
@@ -74,26 +73,11 @@ public class Disassembler
 				machineInstructionsFilePath.toString(),
 				"0x" + Integer.toHexString(address));
 		Process process = processBuilder.start();
-		String output = readOutput(process);
+		String output = ApplicationUtilities.toString(process.getInputStream());
 
 		process.waitFor();
 
 		return output;
-	}
-
-	private static String readOutput(Process process) throws IOException
-	{
-		BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-		StringBuilder builder = new StringBuilder();
-		String readLine;
-
-		while ((readLine = reader.readLine()) != null)
-		{
-			builder.append(readLine);
-			builder.append(System.lineSeparator());
-		}
-
-		return builder.toString().trim();
 	}
 
 	public static int search(int address, String regularExpression) throws Exception

@@ -13,7 +13,7 @@ public class HexadecimalInputFilter extends DocumentFilter
 {
 	private int maximumLength;
 
-	public HexadecimalInputFilter(int maximumLength)
+	private HexadecimalInputFilter(int maximumLength)
 	{
 		this.maximumLength = maximumLength;
 	}
@@ -69,12 +69,12 @@ public class HexadecimalInputFilter extends DocumentFilter
 		return text.toUpperCase();
 	}
 
-	public static void setHexadecimalInputFilter(JTextComponent textComponent)
+	public static void addTo(JTextComponent textComponent)
 	{
-		setHexadecimalInputFilter(textComponent, 8);
+		addTo(textComponent, 8);
 	}
 
-	public static void setHexadecimalInputFilter(JTextComponent textComponent, int maximumInputLength)
+	public static void addTo(JTextComponent textComponent, int maximumInputLength)
 	{
 		PlainDocument plainDocument = (PlainDocument) textComponent.getDocument();
 		plainDocument.setDocumentFilter(new HexadecimalInputFilter(maximumInputLength));

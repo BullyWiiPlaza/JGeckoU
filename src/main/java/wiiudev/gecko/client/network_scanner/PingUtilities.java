@@ -15,7 +15,6 @@ public class PingUtilities
 	 *
 	 * @param internetProtocolAddress The internet protocol address to ping
 	 * @return True if the address is responsive, false otherwise
-	 * @throws IOException
 	 */
 	public static boolean isReachable(String internetProtocolAddress) throws IOException
 	{

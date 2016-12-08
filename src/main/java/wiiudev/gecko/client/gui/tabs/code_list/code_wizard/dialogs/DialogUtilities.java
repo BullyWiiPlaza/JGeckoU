@@ -18,7 +18,7 @@ public class DialogUtilities
 
 	public static void setHexadecimalFormatter(JFormattedTextField formattedTextField, int maximumLength)
 	{
-		HexadecimalInputFilter.setHexadecimalInputFilter(formattedTextField, maximumLength);
+		HexadecimalInputFilter.addTo(formattedTextField, maximumLength);
 	}
 
 	private static void setFrameProperties(JDialog dialog, JPanel contentPane)

@@ -25,6 +25,7 @@ import wiiudev.gecko.client.gui.tabs.memory_search.SearchResultsTableManager;
 import wiiudev.gecko.client.gui.tabs.memory_search.ValueConversionContextMenu;
 import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViewerTableManager;
 import wiiudev.gecko.client.gui.tabs.memory_viewer.MemoryViews;
+import wiiudev.gecko.client.gui.tabs.memory_viewer.ValueOperations;
 import wiiudev.gecko.client.gui.tabs.pointer_search.DownloadingUtilities;
 import wiiudev.gecko.client.gui.tabs.pointer_search.ZipArchiveUtilities;
 import wiiudev.gecko.client.gui.tabs.threads.ThreadsTableManager;
@@ -34,7 +35,6 @@ import wiiudev.gecko.client.memory_search.*;
 import wiiudev.gecko.client.memory_search.enumerations.SearchConditions;
 import wiiudev.gecko.client.memory_search.enumerations.SearchMode;
 import wiiudev.gecko.client.memory_search.enumerations.ValueSize;
-import wiiudev.gecko.client.memory_viewer.ValueOperations;
 import wiiudev.gecko.client.network_scanner.WiiUFinder;
 import wiiudev.gecko.client.tcpgecko.main.Connector;
 import wiiudev.gecko.client.tcpgecko.main.MemoryReader;
@@ -45,6 +45,7 @@ import wiiudev.gecko.client.tcpgecko.main.threads.OSThreadRPC;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
 import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
+import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryRange;
 import wiiudev.gecko.client.tcpgecko.rpl.CoreInit;
 import wiiudev.gecko.client.tcpgecko.rpl.structures.OSSystemInfo;
 import wiiudev.gecko.client.titles.Title;
@@ -207,6 +208,7 @@ public class JGeckoUGUI extends JFrame
 	private JButton disassemblerSearchButton;
 	private JButton disassemblerCancelSearchButton;
 	private JButton regularExpressionTutorialButton;
+	private JComboBox<MemoryRangeType> memoryRangeTypeSelection;
 	private MemoryViewerTableManager memoryViewerTableManager;
 	private CodesListManager codesListManager;
 	private ListSelectionModel listSelectionModel;
@@ -367,8 +369,8 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		HexadecimalInputFilter.setHexadecimalInputFilter(searchStartingAddressField);
-		HexadecimalInputFilter.setHexadecimalInputFilter(searchEndingAddressField);
+		HexadecimalInputFilter.addTo(searchStartingAddressField);
+		HexadecimalInputFilter.addTo(searchEndingAddressField);
 
 		searchEndingAddressField.getDocument().addDocumentListener(new DocumentListener()
 		{
@@ -1093,7 +1095,7 @@ public class JGeckoUGUI extends JFrame
 		updateDisassemblerButton.addActionListener(actionEvent ->
 				updateDisassembler());
 
-		HexadecimalInputFilter.setHexadecimalInputFilter(disassemblerAddressField);
+		HexadecimalInputFilter.addTo(disassemblerAddressField);
 
 		disassemblerAddressField.getDocument().addDocumentListener(new DocumentListener()
 		{
@@ -1701,7 +1703,7 @@ public class JGeckoUGUI extends JFrame
 		saveWatchListButton.addActionListener(actionEvent -> storeWatchList());
 		exportWatchListButton.addActionListener(actionEvent -> exportWatchList());
 		updateWatchlistCheckBox.addItemListener(itemEvent -> keepUpdatingWatchList());
-		HexadecimalInputFilter.setHexadecimalInputFilter(watchlistValueAssertionTextField);
+		HexadecimalInputFilter.addTo(watchlistValueAssertionTextField);
 		watchlistUseValueAssertionCheckBox.addItemListener(itemEvent -> setWatchlistValueAssertionFieldAvailability());
 		addCopyAssertedAddressExpressionsListener();
 	}
@@ -1999,6 +2001,7 @@ public class JGeckoUGUI extends JFrame
 			simpleProperties.put("WATCH_LIST_USE_VALUE_ASSERTION", String.valueOf(watchlistUseValueAssertionCheckBox.isSelected()));
 			simpleProperties.put("WATCH_LIST_VALUE_ASSERTION_VALUE", watchlistValueAssertionTextField.getText());
 			simpleProperties.put("DISASSEMBLER_REGULAR_EXPRESSION", disassemblerRegularExpressionField.getText());
+			simpleProperties.put("DUMPING_MEMORY_RANGE", memoryRangeTypeSelection.getSelectedItem().toString());
 
 			simpleProperties.writeToFile();
 		}));
@@ -2164,6 +2167,13 @@ public class JGeckoUGUI extends JFrame
 		if (disassemblerRegularExpression != null)
 		{
 			disassemblerRegularExpressionField.setText(disassemblerRegularExpression);
+		}
+
+		String dumpingMemoryRange = simpleProperties.get("DUMPING_MEMORY_RANGE");
+		if (dumpingMemoryRange != null)
+		{
+			MemoryRangeType memoryRangeType = MemoryRangeType.parse(dumpingMemoryRange);
+			memoryRangeTypeSelection.setSelectedItem(memoryRangeType);
 		}
 	}
 
@@ -2397,6 +2407,18 @@ public class JGeckoUGUI extends JFrame
 
 	private void configureMemoryDumpingTab()
 	{
+		memoryRangeTypeSelection.setModel(new DefaultComboBoxModel<>(MemoryRangeType.values()));
+
+		memoryRangeTypeSelection.addItemListener(itemEvent ->
+		{
+			if (itemEvent.getStateChange() == ItemEvent.SELECTED)
+			{
+				setDumpingTabSelectedMemoryRange();
+			}
+		});
+
+		setDumpingTabSelectedMemoryRange();
+
 		dumpStartingAddressField.setDocument(new InputLengthFilter(8));
 		dumpEndingAddressField.setDocument(new InputLengthFilter(8));
 		new DefaultContextMenu().addTo(dumpStartingAddressField);
@@ -2545,6 +2567,27 @@ public class JGeckoUGUI extends JFrame
 		});
 	}
 
+	private void setDumpingTabSelectedMemoryRange()
+	{
+		int selectedIndex = memoryRangeTypeSelection.getSelectedIndex();
+		MemoryRangeType memoryRangeType = memoryRangeTypeSelection.getItemAt(selectedIndex);
+		MemoryRange memoryRange = memoryRangeType.getMemoryRange();
+
+		if (memoryRange != null)
+		{
+			int startingAddress = memoryRange.getStartingAddress();
+			int endingAddress = memoryRange.getEndingAddress();
+			dumpStartingAddressField.setText(Conversions.toHexadecimal(startingAddress));
+			dumpStartingAddressField.setEnabled(false);
+			dumpEndingAddressField.setText(Conversions.toHexadecimal(endingAddress));
+			dumpEndingAddressField.setEnabled(false);
+		} else
+		{
+			dumpStartingAddressField.setEnabled(true);
+			dumpEndingAddressField.setEnabled(true);
+		}
+	}
+
 	private void handleDumpMemoryButtonAvailability()
 	{
 		boolean validMemoryAddresses = false;
@@ -2645,7 +2688,7 @@ public class JGeckoUGUI extends JFrame
 
 		updateMemoryViewerButton.addActionListener(actionEvent -> updateMemoryViewer(true, true));
 
-		HexadecimalInputFilter.setHexadecimalInputFilter(memoryViewerAddressField);
+		HexadecimalInputFilter.addTo(memoryViewerAddressField);
 		addMemoryViewerAddressChangedListener();
 		new DefaultContextMenu().addTo(memoryViewerAddressField);
 
@@ -2678,7 +2721,7 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		HexadecimalInputFilter.setHexadecimalInputFilter(memoryViewerValueField, ValueSizes.THIRTY_TWO_BIT.getSize());
+		HexadecimalInputFilter.addTo(memoryViewerValueField, ValueSizes.THIRTY_TWO_BIT.getSize());
 		new DefaultContextMenu().addTo(memoryViewerValueField);
 
 		memoryViewerValueField.addKeyListener(new KeyAdapter()
@@ -2759,7 +2802,7 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		HexadecimalInputFilter.setHexadecimalInputFilter(kernelReadAddressField);
+		HexadecimalInputFilter.addTo(kernelReadAddressField);
 	}
 
 	private void configureMemoryViewerSearchListeners()
@@ -2811,7 +2854,7 @@ public class JGeckoUGUI extends JFrame
 			}
 		});
 
-		HexadecimalInputFilter.setHexadecimalInputFilter(searchLengthField);
+		HexadecimalInputFilter.addTo(searchLengthField);
 		DefaultContextMenu.addDefaultContextMenu(searchLengthField);
 
 		searchLengthField.getDocument().addDocumentListener(new DocumentListener()
@@ -2884,7 +2927,7 @@ public class JGeckoUGUI extends JFrame
 	private void changePokeValueSize(int byteValueSize)
 	{
 		String currentValue = memoryViewerValueField.getText();
-		HexadecimalInputFilter.setHexadecimalInputFilter(memoryViewerValueField, byteValueSize);
+		HexadecimalInputFilter.addTo(memoryViewerValueField, byteValueSize);
 
 		// Cut the value if it is too big
 		if (currentValue.length() > byteValueSize)

@@ -22,7 +22,7 @@ public class RemoteDisassemblerDialog extends JDialog
 			dispose();
 		});
 
-		HexadecimalInputFilter.setHexadecimalInputFilter(valueField);
+		HexadecimalInputFilter.addTo(valueField);
 	}
 
 	public int getEnteredValue()

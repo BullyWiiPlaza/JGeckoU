@@ -5,6 +5,8 @@ import wiiudev.gecko.client.gui.tabs.disassembler.assembler.Disassembler;
 import wiiudev.gecko.client.gui.utilities.JTableUtilities;
 import wiiudev.gecko.client.tcpgecko.main.TCPGecko;
 import wiiudev.gecko.client.tcpgecko.main.utilities.conversions.Hexadecimal;
+import wiiudev.gecko.client.tcpgecko.main.utilities.memory.AddressRange;
+import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryAccessLevel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -16,9 +18,10 @@ import java.util.List;
 
 public class DisassemblerTableManager
 {
+	private static final int INSTRUCTION_BYTES_COUNT = 4;
+
 	private JTable table;
 	private int length;
-
 	private List<DisassembledInstruction> disassembledInstructions;
 
 	public DisassemblerTableManager(JTable table)
@@ -111,11 +114,19 @@ public class DisassemblerTableManager
 	{
 		disassembledInstructions.clear();
 
-		disassembledInstructions = Disassembler.disassemble(address - length / 2, length);
+		int startingAddress = address - length / 2;
+
+		// Avoid out of bounds errors
+		while (!AddressRange.isValidAccess(startingAddress, length, MemoryAccessLevel.READ))
+		{
+			startingAddress += INSTRUCTION_BYTES_COUNT;
+		}
+
+		disassembledInstructions = Disassembler.disassemble(startingAddress, length);
 		JTableUtilities.deleteAllRows(table);
 		disassembledInstructions.forEach(this::addRow);
 
-		int index = (length / 4) / 2;
+		int index = (length / INSTRUCTION_BYTES_COUNT) / 2;
 		JTableUtilities.setSelectedRow(table, index, index);
 	}
 

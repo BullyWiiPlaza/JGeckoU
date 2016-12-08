@@ -76,7 +76,7 @@ public class CodeWizardDialog extends JDialog
 		valueSizeSelection.setModel(valueSizeDefaultComboBoxModel);
 		valueSizeSelection.setSelectedItem(ValueSize.THIRTY_TWO_BIT);
 
-		HexadecimalInputFilter.setHexadecimalInputFilter(addressField);
+		HexadecimalInputFilter.addTo(addressField);
 
 		valueSizeSelection.addItemListener(itemEvent ->
 		{
@@ -123,7 +123,7 @@ public class CodeWizardDialog extends JDialog
 		pointerRangeEndAddress2Field.setDocument(new InputLengthFilter(8));
 		InputLengthFilter inputLengthFilter = new InputLengthFilter(4);
 		writesCountField.setDocument(inputLengthFilter);
-		HexadecimalInputFilter.setHexadecimalInputFilter(writesCountField, 4);
+		HexadecimalInputFilter.addTo(writesCountField, 4);
 		writesOffsetField.setDocument(new InputLengthFilter(8));
 		valueIncrementField.setDocument(new InputLengthFilter(8));
 		addParsePointerExpressionButtonListener();

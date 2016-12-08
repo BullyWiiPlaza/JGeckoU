@@ -9,7 +9,6 @@ public class NetworkUtilities
 {
 	/**
 	 * @return The local Internet protocol address of this machine
-	 * @throws SocketException
 	 */
 	public static String getLocalInternetProtocolAddress() throws SocketException
 	{
@@ -31,8 +30,6 @@ public class NetworkUtilities
 
 	/**
 	 * @return The network mask length is bytes the computer is currently in
-	 * @throws UnknownHostException
-	 * @throws SocketException
 	 */
 	public static int getLocalNetworkMaskLength() throws UnknownHostException, SocketException
 	{
