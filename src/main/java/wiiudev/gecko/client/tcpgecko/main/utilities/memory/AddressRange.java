@@ -108,7 +108,7 @@ public class AddressRange
 
 	private static boolean isInRange(int address, int endAddress, MemoryRange addressRange)
 	{
-		return addressRange.getStartingAddress() <= address && endAddress <= addressRange.getEndingAddress();
+		return addressRange.getStartingAddress() <= address && endAddress <= addressRange.getEndingAddress() + 1;
 	}
 
 	public static boolean isInApplicationDataSection(int address)

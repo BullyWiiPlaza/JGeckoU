@@ -53,7 +53,7 @@ public class MemoryRange
 
 		if (convergeDownwards)
 		{
-			setStartingAddress(middle);
+			setStartingAddress(middle + 1);
 		} else
 		{
 			setEndingAddress(middle);

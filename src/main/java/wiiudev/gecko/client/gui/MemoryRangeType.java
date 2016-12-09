@@ -5,22 +5,30 @@ import wiiudev.gecko.client.tcpgecko.main.utilities.memory.MemoryRange;
 
 public enum MemoryRangeType
 {
-	CUSTOM("Custom", null),
-	CODE_SECTION("Code Section", AddressRange.appExecutableLibraries),
-	DATA_SECTION("Data Section", AddressRange.mem2Region);
+	CUSTOM("Custom"),
+	CODE_SECTION("Code Section"),
+	DATA_SECTION("Data Section");
 
 	private String text;
-	private MemoryRange memoryRange;
 
-	MemoryRangeType(String text, MemoryRange memoryRange)
+	MemoryRangeType(String text)
 	{
 		this.text = text;
-		this.memoryRange = memoryRange;
 	}
 
 	public MemoryRange getMemoryRange()
 	{
-		return memoryRange;
+		switch (this)
+		{
+			case CODE_SECTION:
+				return AddressRange.appExecutableLibraries;
+
+			case DATA_SECTION:
+				return AddressRange.mem2Region;
+
+			default:
+				return null;
+		}
 	}
 
 	@Override

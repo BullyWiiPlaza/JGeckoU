@@ -4002,14 +4002,7 @@ public class JGeckoUGUI extends JFrame
 			connector.connect(ipAddress);
 		}
 
-		try
-		{
-			MemoryRangeAdjustment memoryRangeAdjustment = new MemoryRangeAdjustment(titleDatabaseManager);
-			memoryRangeAdjustment.setAdjustedMemoryRanges();
-		} catch (TitleDatabaseManager.TitleNotFoundException exception)
-		{
-			StackTraceUtils.handleException(rootPane, exception);
-		}
+		findGameSpecificMemoryBounds();
 
 		// monitorGeckoServerHealthConcurrently();
 		String ipAddressAddition = (autoDetectCheckBox.isSelected() ? (" [" + ipAddress + "]") : "");
@@ -4019,6 +4012,25 @@ public class JGeckoUGUI extends JFrame
 		setGameSpecificTitle();
 		restoreCodesList();
 		restoreWatchList();
+	}
+
+	private void findGameSpecificMemoryBounds()
+	{
+		Thread thread = new Thread(() ->
+		{
+			try
+			{
+				MemoryRangeAdjustment memoryRangeAdjustment = new MemoryRangeAdjustment(titleDatabaseManager);
+				memoryRangeAdjustment.setAdjustedMemoryRanges();
+
+				setDumpingTabSelectedMemoryRange();
+			} catch (Exception exception)
+			{
+				StackTraceUtils.handleException(rootPane, exception);
+			}
+		});
+
+		thread.start();
 	}
 
 	private void restoreWatchList()
